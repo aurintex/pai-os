@@ -1,0 +1,80 @@
+---
+title: Getting Started
+description: Set up your development environment for paiOS
+---
+
+Welcome! This guide will help you set up your development environment for **paiOS**.
+
+## Prerequisites
+
+- **Rust**: Edition 2021 (install via [rustup](https://rustup.rs/))
+- **Node.js**: For building documentation (v18 or later)
+- **Docker**: For building OS images (optional, for OS development)
+- **Git**: For version control
+
+## Build Tooling
+
+Depending on what you want to build, we provide different toolchains:
+
+### Local Rust (Core Development)
+If you are contributing to the **PAI Engine** or the **OS Recipes**, you should set up Rust locally as described above.
+
+### Dockerized Toolchain (App Development)
+For 3rd party app developers, we provide the **`pai-builder`** Docker image. This image encapsulates the entire cross-compilation toolchain and system headers (sysroot).
+- **No manual SDK installation**: Just run your build command inside the container.
+- **Reproducible**: Ensures your app builds the same way as in our CI/CD.
+
+```bash frame="none"
+# Example: Build an app using the builder container
+docker run --rm -v $(pwd):/workspace \
+  pai/pai-builder:latest \
+  cargo build --release --target aarch64-unknown-linux-gnu
+```
+
+## Quick Start (Local Engine)
+
+1. **Clone the repository:**
+   ```bash frame="none"
+   git clone https://github.com/aurintex/pai-os.git
+   cd pai-os
+   ```
+
+2. **Set up the engine:**
+   ```bash frame="none"
+   cd engine
+   cargo build
+   ```
+
+3. **Set up the documentation:**
+   ```bash frame="none"
+   cd docs
+   npm install
+   npm run dev
+   ```
+
+4. **Install Pre-commit Hooks (Recommended):**
+   To ensure your code always follows our standards, install the pre-commit hooks:
+   ```bash frame="none"
+   # We use basic hooks for formatting and linting
+   # Make sure you have rustfmt and clippy installed
+   ```
+
+5. **Configure Git for automatic DCO sign-off** (see [DCO Guide](/guides/contributing/dco/#1-auto-sign-recommended) for details):
+   ```bash frame="none"
+   git config format.signoff true
+   ```
+
+## Next Steps
+
+- Explore the [Architecture](/architecture/) section to understand the system design
+- Check out the [Reference](/reference/) documentation for API details
+- Read the [Contributing Guide](/guides/contributing/) to start contributing
+
+## Getting Help
+
+If you have questions, found a bug, or need clarification, please reach out:
+
+-   **Email**: [info@aurintex.com](mailto:info@aurintex.com)
+-   **GitHub**: Open an [issue](https://github.com/aurintex/pai-os/issues) or a [discussion](https://github.com/aurintex/pai-os/discussions)
+-   *(Discord, Slack, or Matrix coming soon!)*
+

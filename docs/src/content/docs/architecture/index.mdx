@@ -1,0 +1,65 @@
+---
+title: Architecture Overview
+description: System architecture and design patterns for paiOS
+---
+
+This section covers the system architecture, design patterns, and architectural decisions for **paiOS**.
+
+## Clean Architecture
+
+paiOS follows **Clean Architecture** principles, ensuring testability, maintainability, and clear separation of concerns.
+
+### Core Layers
+
+The `pai-engine` follows Clean Architecture with distinct module responsibilities:
+
+- **`rpc/`** - Interface Adapter (Ingress): Handles all gRPC/UDS communication
+- **`core/`** - Domain Layer: Contains `SystemController` and business logic
+- **`orchestrator/`** - Application Logic: Contains `InferenceOrchestrator` for resource scheduling
+- **`hal/`** - Infrastructure Layer: Hardware abstraction (Audio, HID, LED, NPU/GPU/CPU backends)
+
+### Dependency Flow
+
+```
+rpc/ → core/ ← orchestrator/ → hal/
+```
+
+The domain layer (`core/`) has no dependencies on other modules, ensuring pure business logic.
+
+## Sys-Crate Pattern
+
+To maintain a strict separation between safe and unsafe code, we follow the **Sys-Crate Pattern**:
+
+- **Hardware bindings** (e.g., NPU drivers, custom hardware interfaces) are isolated in separate `*-sys` crates located in `pai-engine/libs/`.
+- These sys-crates handle all `bindgen` FFI bindings and `unsafe` code blocks.
+- They provide **safe Rust wrapper traits** that the main engine uses.
+- The main `pai-engine/src/` remains **pure Safe Rust**, depending on sys-crates only via trait interfaces.
+
+### Benefits
+
+- **Security**: Clear boundaries for unsafe code, making security audits easier.
+- **Testability**: The main engine can be tested without hardware dependencies by mocking sys-crate traits.
+- **Swappability**: Hardware backends can be swapped without changing business logic.
+
+### Example Structure
+
+```
+pai-engine/
+├── libs/
+│   └── rknn-sys/          # Hardware bindings (AGPL-3.0)
+│       ├── Cargo.toml
+│       ├── build.rs        # bindgen configuration
+│       └── src/lib.rs      # Safe Rust wrapper
+└── src/                    # Pure Safe Rust
+    └── hal/
+        └── npu.rs          # Uses rknn-sys via trait
+```
+
+## IPC Strategy
+
+We use **gRPC** (via `tonic` in Rust) over **Unix Domain Sockets (UDS)** for maximum performance and type safety.
+
+## Architecture Decision Records (ADR)
+
+All major architectural decisions are documented in [Architecture Decision Records](/architecture/adr/).
+

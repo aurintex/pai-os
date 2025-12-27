@@ -8,7 +8,7 @@
 
 ## Vision
 
-**PAI** is an open-source, local-first AI ecosystem designed to act as your privacy-conscious second brain. It processes voice, context, and intelligence directly on trusted hardware -> no cloud required.
+**PAI** is an open-source, local-first AI ecosystem designed to act as your privacy-conscious second brain. It processes voice, context, and intelligence directly on trusted hardware, giving you full control over your data.
 
 **The Product: paiOS**
 The core of this repository is **paiOS**, an embedded operating system built to run strictly local inference pipelines.
@@ -34,4 +34,12 @@ We are currently executing the **"Great Pivot"**: Transitioning from our interna
 
 * **Architecture:** Clean Architecture (Rust)
 * **License:** AGPL-3.0 (Planned)
-* **Documentation:** *Coming soon at docs.pai.dev*
+* **Documentation:** Available at [docs.aurintex.com](https://docs.aurintex.com) (source in `docs/`)
+
+## Getting Help
+
+If you have questions, found a bug, or need clarification, please reach out:
+
+- **Email**: [info@aurintex.com](mailto:info@aurintex.com)
+- **GitHub**: Open an [issue](https://github.com/aurintex/pai-os/issues) or a [discussion](https://github.com/aurintex/pai-os/discussions)
+- *(Discord, Slack, or Matrix coming soon!)*

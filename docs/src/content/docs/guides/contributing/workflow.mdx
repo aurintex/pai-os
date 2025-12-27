@@ -1,0 +1,78 @@
+---
+title: Contribution Workflow
+description: Step-by-step guide to contributing code to paiOS
+---
+
+This guide covers the technical steps for contributing to the project.
+
+## 1. Preparation
+
+Before you start, make sure you have the repository ready:
+
+- **Contributors**: **Fork the repository** on GitHub ([pai-os](https://github.com/aurintex/pai-os)) and clone your fork locally.
+- **Maintainers**: Clone the main repository directly.
+
+## 2. Create a Branch
+
+Always create a new branch for your changes. Use a descriptive name like `feature/` or `bugfix/`.
+
+```bash frame="none"
+git checkout -b feature/your-feature-name
+```
+
+## 3. Make Your Changes
+
+Implement your changes following our [Development Standards](../standards/). Make sure to:
+- Test your changes locally.
+- Keep your commits logical (don't worry about perfection, as we squash anyway).
+
+## 4. Commit with Sign-off
+
+Every commit must include a DCO sign-off. The easiest way is to use the `-s` flag:
+
+```bash frame="none"
+git commit -s -m "your commit message"
+```
+
+### Conventional Commits (PR Titles)
+
+To keep our changelogs automated and clean, we use the **Conventional Commits** format. However, we take a **pragmatic approach**:
+
+- **Required for PR Titles**: The title of your Pull Request must follow the format (e.g., `feat: add HID support`). This is crucial because we **Squash & Merge**, and the PR title becomes the final commit message on the `main` branch.
+- **Optional for Local Commits**: While working on your branch, you don't need to strictly follow the format for every small commit. Use what makes you productive.
+
+**Common Types:**
+- **`feat:`**: A new feature.
+- **`fix:`**: A bug fix.
+- **`docs:`**: Documentation changes.
+- **`refactor:`**: Code changes that don't add features or fix bugs.
+- **`chore:`**: Maintenance tasks (dependencies, build scripts).
+
+See the [DCO Guide](../dco/) for more ways to sign your commits.
+
+## 5. AI-Assisted Development
+
+If you are using AI tools like Cursor or TaskMasterAI, please refer to our **[AI-Assisted Development Guide](../ai-workflow/)** for a recommended workflow that maximizes efficiency while maintaining quality.
+
+## 6. Push and Create a Pull Request
+
+Push your branch to GitHub:
+
+```bash frame="none"
+# Contributors push to their fork
+git push origin feature/your-feature-name
+
+# Maintainers push to the main repository
+git push origin feature/your-feature-name
+```
+
+After pushing, go to the GitHub repository and create a **Pull Request (PR)** targeting the `main` branch.
+
+## 6. Review and Merge
+
+1.  **CI/CD**: Wait for all automated checks to pass (Build, Lint, Tests, DCO).
+2.  **Approval**:
+    - **Contributors**: Wait for a maintainer to review and approve your PR.
+    - **Maintainers**: Request a review from another maintainer. **Self-merging without approval is discouraged** except for trivial fixes.
+3.  **Merge**: Once approved, the PR will be merged using **Squash and merge**.
+

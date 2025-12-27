@@ -1,0 +1,64 @@
+---
+title: Welcome to paiOS
+description: The open-source, local-first operating system for the PAI ecosystem
+---
+
+**paiOS** is the open-source, local-first operating system powering the **PAI (Personal AI)** ecosystem. It provides the software stack (Engine + OS) that enables PAI hardware products to process voice, vision, context, and intelligence directly on trusted hardware, giving you full control over your data. Visit [aurintex.com](https://www.aurintex.com) for more information on the PAI vision.
+
+## The Vision
+
+PAI creates a bridge between powerful local hardware and your daily digital life. Our mission is to democratize access to hardware-accelerated AI while guaranteeing data sovereignty.
+
+### 1. The PAI Accelerator (Current Focus)
+The project starts with a **USB AI Accelerator** based on the [Radxa Rock 5C](https://radxa.com/products/rock5/5c/) SBC. This device connects to your PC and acts as a dedicated AI server.
+*   **Local Inference:** Runs sLLMs, STT (Speech-to-Text), embeddings, and other specialized AI models entirely offline.
+*   **Universal Compatibility:** Acts as a Linux USB gadget, compatible with any host OS (Windows, macOS, Linux).
+*   **API-First:** Exposes OpenAI-compatible endpoints (similar to Ollama) for integration with tools like Obsidian, LibreOffice, or VS Code.
+*   **Intelligent Input & Control:** Acts as a virtual keyboard/mouse (HID) to "type" text or execute commands directly into your PC, enabling seamless AI-driven interaction.
+
+### 2. The PAI Wearable (Future)
+The long-term vision is to shrink this technology into a standalone **AI Wearable**. By building a robust OS and Engine today on the Accelerator, we lay the foundation for a future device that captures context and assists you throughout your day - completely privately.
+
+## Technology Stack
+
+paiOS is built for performance, security, and reproducibility.
+
+*   **Core Engine:** Built in [Rust](https://www.rust-lang.org/) for memory safety and low-latency hardware abstraction (HAL).
+*   **Operating System:** Minimal, embedded Linux (Debian-based) built with [Debos](https://github.com/go-debos/debos) for reproducibility.
+*   **Hardware:** Optimized for NPU-based SBCs (Single Board Computers), starting with the Radxa ecosystem.
+
+## Repository Structure
+
+This monorepo contains the entire **paiOS** software stack:
+
+| Directory | Description |
+| :--- | :--- |
+| **`engine/`** | The **paiOS Engine**. The Rust-based neural orchestrator, handling HAL, Security, and IPC. |
+| **`os/`** | **paiOS** build configurations. Reproducible embedded Linux images. |
+| **`apps/`** | Modular extensions and reference implementations for the PAI ecosystem. |
+| **`docs/`** | This documentation site (built with Starlight). |
+
+## Current Status
+
+🚧 **Phase 0: Foundation & Architecture**
+
+We are currently executing the **"Great Pivot"**: Transitioning from internal Proof-of-Concept to this clean, production-ready open-source architecture.
+
+*   **Architecture:** Clean Architecture (Rust) & Modular HAL
+*   **License:** Multi-license monorepo following "Open Engine, Proprietary Fuel" model:
+    *   **`os/`**: [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) (Debos recipes & RAUC configs)
+    *   **`engine/src/`**: [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) (Core engine - all Rust code)
+    *   **`engine/libs/`**: [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) (Hardware bindings - sys-crates)
+    *   **`engine/proto/`**: [MIT](https://opensource.org/licenses/MIT) (gRPC API definitions)
+    *   **`apps/`**: [MIT](https://opensource.org/licenses/MIT) (Open Source Core Apps - reference implementations)
+    *   **`hardware/`**: [CERN-OHL](https://ohwr.org/project/cernohl/wikis/Documents/CERN-OHL-version-2) (Open Hardware License - CAD & schematics)
+    *   **`docs/`**: [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) (This documentation site)
+*   **Focus:** Establishing the `pai-engine` and `paiOS` build pipeline.
+
+## Get Involved
+
+paiOS is an open-source project driven by the belief that AI should empower users with local-first intelligence and complete data sovereignty.
+
+*   **[Getting Started](/guides/getting-started/)**: Set up your development environment.
+*   **[Contributing](/guides/contributing/)**: Read about our DCO process and how to contribute.
+*   **[Architecture](/architecture/)**: Dive deep into the system design.

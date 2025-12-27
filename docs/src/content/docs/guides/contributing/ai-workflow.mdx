@@ -1,0 +1,82 @@
+---
+title: AI-Assisted Development
+description: How to effectively use AI tools and TaskMasterAI to contribute to paiOS
+---
+
+At paiOS, we embrace AI-assisted development. We use tools like **Cursor**, **Copilot**, and **[TaskMasterAI](https://www.task-master.dev/)** to stay productive and focus on high-value work.
+
+## Recommended MCP Servers
+
+For the best AI-assisted development experience, we recommend using these **MCP (Model Context Protocol) servers**:
+
+- **[Context7](https://context7.com/)** - Provides up-to-date documentation and code examples for libraries and frameworks. Essential for staying current with best practices and API changes.
+- **[TaskMasterAI](https://www.task-master.dev/)** - Manages task breakdown, progress tracking, and provides structured context for AI agents working on complex features.
+
+These MCP servers integrate directly with AI coding assistants (like Cursor) and provide rich, structured context without requiring manual file management.
+
+## The Hybrid Workflow
+
+To maximize efficiency with AI, we follow a three-layered workflow:
+
+1.  **GitHub Issues (Status)**: The single source of truth for task status. Every feature or bug fix starts here.
+2.  **Starlight Docs (Specs)**: The source of truth for architecture and technical specifications. Refer to these guides to provide context to your AI assistant.
+3.  **MCP Servers (Primary Context)**: Use MCP servers (Context7, TaskMasterAI) to provide structured, up-to-date context directly to your AI assistant. This is the preferred method.
+4.  **Local Context (Optional)**: For very specific, temporary execution details, you can still use git-ignored context files, though MCP servers often make this unnecessary.
+
+### Using TaskMasterAI
+
+For larger or more complex tasks, we strongly recommend using **[TaskMasterAI](https://www.task-master.dev/)**. It helps organize the work into manageable steps and provides a structured context for AI agents.
+
+#### How to use it:
+- **Initialize**: If you are working on a new feature, TaskMasterAI can help you break down a PRD into tasks.
+- **Context Management**: TaskMasterAI generates context files that can be directly referenced by AI coding assistants.
+- **Progress Tracking**: Use TaskMasterAI to log progress, findings, and decisions as you implement each subtask.
+
+Refer to the [TaskMasterAI Documentation](https://www.task-master.dev/) for more details on the CLI and MCP tools.
+
+## AI Coding Assistant Guidelines
+
+When working with AI assistants (like Cursor), follow these best practices to ensure high-quality contributions:
+
+### 1. Provide High-Quality Context
+AI tools are only as good as the context you provide. Before starting a task:
+- **Use MCP Servers**: Configure Context7 and TaskMasterAI MCP servers in your AI assistant (e.g., Cursor) to automatically provide structured context.
+- Reference the relevant **Starlight documentation** (Architecture, Guides).
+- Use **[TaskMasterAI](https://www.task-master.dev/)** to maintain a clear list of subtasks and provide task-specific context via MCP.
+- **Optional**: For very specific, temporary execution details, you can still use local spec files (e.g., `.cursor/active_task.md`), though MCP servers often make this unnecessary.
+
+### 2. Review and Refine
+NEVER blindly accept AI-generated code. Always:
+- Review the code for adherence to our **Development Standards** (KISS, SOLID).
+- Check for "hallucinated" APIs or unnecessary dependencies.
+- Ensure the code is readable and well-documented.
+
+### 3. Maintain the "Human in the Loop"
+The AI is your assistant, not the primary developer. You are responsible for the architectural integrity and long-term maintainability of the code.
+
+## Local Execution Context (Optional)
+
+With MCP servers (Context7, TaskMasterAI) configured, you typically don't need local context files. The MCP servers provide structured, up-to-date context directly to your AI assistant.
+
+However, for very specific, temporary execution details that aren't captured in GitHub Issues or TaskMasterAI, you can still create a temporary file:
+
+```markdown
+// .cursor/active_task.md (git-ignored)
+# Task: Implement VAD (Voice Activity Detection)
+- Issue: #123
+- Architecture: [Link to docs.aurintex.com/architecture/hal]
+- Goal: Capture audio and trigger transcript only when speech is detected.
+- Constraints: Must use `webrtc-vad` crate.
+```
+
+**Note**: This is rarely necessary when using MCP servers. Most context should come from:
+- GitHub Issues (via TaskMasterAI MCP)
+- Starlight documentation (via Context7 MCP for library docs)
+- TaskMasterAI task context (via TaskMasterAI MCP)
+
+Once the task is done and merged, delete any temporary files you created.
+
+---
+
+By following this workflow, you can leverage the power of AI while maintaining the high standards of the paiOS project. 🚀
+
