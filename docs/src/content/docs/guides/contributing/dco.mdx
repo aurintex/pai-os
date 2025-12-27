@@ -1,0 +1,45 @@
+---
+title: Developer Certificate of Origin (DCO)
+description: Why and how we use DCO for license compliance
+---
+
+paiOS uses the **Developer Certificate of Origin (DCO)** to ensure that all contributions are properly licensed.
+
+## Why DCO?
+
+Instead of a complex legal agreement (CLA), we use the DCO because:
+- **It is easy**: No legal review or paperwork is needed.
+- **It is a standard**: Used by major projects like the **Linux kernel** and **Git**.
+- **Transparency**: It maintains clear ownership while keeping the contribution process fast.
+
+## How to Sign Off
+
+Every commit must include a `Signed-off-by` line in the commit message. By adding this line, you certify that you have the right to submit the work under the project's license.
+
+### Format
+```text frame="none"
+Signed-off-by: Your Name <your.email@example.com>
+```
+
+### Methods
+
+#### 1. Auto-sign (Recommended)
+Configure Git to automatically add your sign-off for this repository:
+```bash frame="none"
+git config format.signoff true
+```
+
+#### 2. Using `git commit -s`
+The `-s` flag automatically adds the sign-off line:
+```bash frame="none"
+git commit -s -m "Your commit message"
+```
+
+#### 3. Manual Sign-off
+You can also manually add the line to your commit message (e.g., in a multi-line message).
+
+## DCO Enforcement
+
+- **DCO Bot**: Automatically checks all Pull Requests for DCO sign-off.
+- **No Exceptions**: All commits, including documentation-only changes, require a sign-off. If a PR has unsigned commits, they must be amended before it can be merged.
+

@@ -1,0 +1,371 @@
+/* Inter Font */
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Theme Variables - B2C Style */
+:root {
+  /* Global Constants (Nothing-style) */
+  --bg-page: #050505; /* Rich Black - CONSTANT */
+  --text-main: #a1a1aa; /* Zinc-400 - CONSTANT */
+  --text-heading: #ffffff; /* White - CONSTANT */
+  --border-main: rgba(255, 255, 255, 0.1);
+  --bg-elevated: rgba(255, 255, 255, 0.05);
+
+  /* Default Accent (B2C Style - from Landing Page CTA Button) */
+  --color-accent: #ee4646;
+  --accent-glow: rgba(238, 70, 70, 0.4);
+  --text-on-accent: #ffffff;
+}
+
+/* Theme Overrides - ONLY Change Accent */
+body.theme-deep-vibe {
+  --color-accent: #4f46e5;
+  --accent-glow: rgba(79, 70, 229, 0.4);
+  --text-on-accent: #ffffff;
+}
+body.theme-neon-noir {
+  --color-accent: #ef4444;
+  --accent-glow: rgba(239, 68, 68, 0.4);
+  --text-on-accent: #ffffff;
+}
+body.theme-aurora {
+  --color-accent: #38bdf8;
+  --accent-glow: rgba(56, 189, 248, 0.4);
+  --text-on-accent: #000000;
+}
+body.theme-obsidian {
+  --color-accent: #ffffff;
+  --accent-glow: rgba(255, 255, 255, 0.2);
+  --text-on-accent: #000000;
+}
+body.theme-terminal {
+  --color-accent: #22c55e;
+  --accent-glow: rgba(34, 197, 94, 0.4);
+  --text-on-accent: #000000;
+}
+body.theme-midnight {
+  --color-accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.4);
+  --text-on-accent: #ffffff;
+}
+body.theme-crimson {
+  --color-accent: #dc2626;
+  --accent-glow: rgba(220, 38, 38, 0.4);
+  --text-on-accent: #ffffff;
+}
+body.theme-forest {
+  --color-accent: #10b981;
+  --accent-glow: rgba(16, 185, 129, 0.4);
+  --text-on-accent: #ffffff;
+}
+body.theme-gold {
+  --color-accent: #fbbf24;
+  --accent-glow: rgba(251, 191, 36, 0.4);
+  --text-on-accent: #000000;
+}
+body.theme-cyber {
+  --color-accent: #22d3ee;
+  --accent-glow: rgba(34, 211, 238, 0.4);
+  --text-on-accent: #000000;
+}
+body.theme-paper {
+  --color-accent: #e4e4e7;
+  --accent-glow: rgba(228, 228, 231, 0.2);
+  --text-on-accent: #000000;
+} /* Zinc-200 */
+body.theme-rose {
+  --color-accent: #e11d48;
+  --accent-glow: rgba(225, 29, 72, 0.4);
+  --text-on-accent: #ffffff;
+}
+body.theme-ocean {
+  --color-accent: #0ea5e9;
+  --accent-glow: rgba(14, 165, 233, 0.4);
+  --text-on-accent: #000000;
+}
+body.theme-amber {
+  --color-accent: #f59e0b;
+  --accent-glow: rgba(245, 158, 11, 0.4);
+  --text-on-accent: #000000;
+}
+body.theme-coral {
+  --color-accent: #ff7f50;
+  --accent-glow: rgba(255, 127, 80, 0.4);
+  --text-on-accent: #000000;
+}
+
+/* Base Styles */
+html {
+  scroll-behavior: smooth;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  /* Safe area insets for iOS devices with notches */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  /* Prevent horizontal scrolling on mobile */
+  max-width: 100vw;
+  position: relative;
+  transition:
+    background-color 0.5s ease,
+    background-image 0.5s ease,
+    color 0.5s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Inter", sans-serif;
+  color: #ffffff; /* White */
+  letter-spacing: -0.02em; /* Tight tracking for Inter headings */
+}
+
+/* Premium Selection */
+::selection {
+  background-color: rgba(99, 102, 241, 0.3);
+  color: inherit;
+}
+
+/* Fade-in animation classes */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
+}
+
+.fade-in-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Starlight Theme Overrides */
+:root {
+  /* Override Starlight's default colors with our theme - Match Landing Page */
+  --sl-color-accent: #ee4646; /* B2C Accent from Landing Page CTA */
+  --sl-color-accent-high: #ee4646;
+  --sl-color-accent-low: rgba(238, 70, 70, 0.4);
+  
+  /* Background colors */
+  --sl-color-bg: var(--bg-page);
+  --sl-color-bg-nav: var(--bg-elevated);
+  --sl-color-bg-sidebar: var(--bg-elevated);
+  --sl-color-bg-inline-code: var(--bg-elevated);
+  --sl-color-bg-nav-hover: rgba(255, 255, 255, 0.08);
+  --sl-color-bg-sidebar-hover: rgba(255, 255, 255, 0.08);
+  
+  /* Text colors */
+  --sl-color-text: var(--text-main);
+  --sl-color-text-accent: var(--text-heading);
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: var(--text-main);
+  --sl-color-gray-2: var(--text-main);
+  --sl-color-gray-3: var(--text-main);
+  --sl-color-gray-4: var(--text-main);
+  --sl-color-gray-5: var(--text-main);
+  --sl-color-gray-6: var(--text-heading);
+  
+  /* Border and divider colors */
+  --sl-color-hairline: var(--border-main);
+  --sl-color-hairline-light: rgba(255, 255, 255, 0.15);
+  
+  /* Font */
+  --sl-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sl-font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  
+  /* Link colors - Match Landing Page */
+  --sl-color-link: #ee4646;
+  --sl-color-link-hover: #f05a5a; /* Lighter red on hover */
+}
+
+/* Dark mode is default (Starlight uses data-theme="dark") */
+html[data-theme="dark"],
+html:not([data-theme]) {
+  --sl-color-bg: var(--bg-page);
+  --sl-color-text: var(--text-main);
+  --sl-color-text-accent: var(--text-heading);
+  --sl-color-bg-nav: var(--bg-elevated);
+  --sl-color-bg-sidebar: var(--bg-elevated);
+  --sl-color-hairline: var(--border-main);
+}
+
+/* Ensure body uses our background */
+body {
+  background-color: var(--bg-page) !important;
+  color: var(--text-main) !important;
+}
+
+/* Override Starlight headings to use our white color */
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3,
+.sl-markdown-content h4,
+.sl-markdown-content h5,
+.sl-markdown-content h6 {
+  color: var(--text-heading) !important;
+}
+
+/* Code Block Styles - Maximum Contrast for Readability */
+:root {
+  /* Code block background - darker for better contrast */
+  --sl-color-bg-code: #0f0f0f; /* Even darker than before */
+  --sl-color-bg-inline-code: rgba(255, 255, 255, 0.15);
+  
+  /* Code text colors - very bright for maximum readability */
+  --sl-color-code-text: #ffffff; /* Pure white for maximum contrast */
+  --sl-color-code-comment: #888888; /* Medium gray for comments */
+  --sl-color-code-keyword: #ff6b6b; /* Bright red for keywords */
+  --sl-color-code-string: #51cf66; /* Bright green for strings */
+  --sl-color-code-function: #74c0fc; /* Bright blue for functions */
+  --sl-color-code-number: #ffd43b; /* Bright yellow for numbers */
+}
+
+/* Code blocks - maximum readability */
+pre,
+pre code {
+  background-color: #0f0f0f !important; /* Very dark background */
+  color: #ffffff !important; /* Pure white text */
+  border: 1px solid rgba(255, 255, 255, 0.25) !important; /* Stronger border */
+}
+
+/* Code block container - Starlight specific */
+.sl-markdown-content pre,
+article pre,
+main pre,
+pre[class*="language-"],
+pre[class*="astro-code"] {
+  background-color: #0f0f0f !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 0.5rem !important;
+  padding: 1.5rem !important; /* More padding */
+  overflow-x: auto !important;
+  margin: 1.5rem 0 !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important; /* Subtle shadow for depth */
+}
+
+/* Code block text - ensure maximum contrast */
+.sl-markdown-content pre code,
+article pre code,
+main pre code,
+pre code,
+pre[class*="language-"] code,
+pre[class*="astro-code"] code {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  color: #ffffff !important; /* Pure white */
+  font-size: 0.95em !important; /* Slightly larger */
+  line-height: 1.8 !important; /* More line spacing */
+  font-family: var(--sl-font-mono) !important;
+  font-weight: 400 !important;
+}
+
+/* Inline code - much better contrast */
+code:not(pre code),
+.sl-markdown-content code:not(pre code),
+article code:not(pre code),
+p code,
+li code,
+td code {
+  background-color: rgba(255, 255, 255, 0.15) !important; /* Brighter background */
+  color: #ffffff !important; /* Pure white text */
+  padding: 0.25em 0.5em !important;
+  border-radius: 0.3rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Stronger border */
+  font-size: 0.9em !important;
+  font-family: var(--sl-font-mono) !important;
+  font-weight: 500 !important; /* Slightly bolder */
+}
+
+/* Syntax highlighting improvements */
+.sl-markdown-content pre code .token.comment,
+.sl-markdown-content pre code .token.prolog,
+.sl-markdown-content pre code .token.doctype,
+.sl-markdown-content pre code .token.cdata {
+  color: var(--sl-color-code-comment) !important;
+}
+
+.sl-markdown-content pre code .token.keyword,
+.sl-markdown-content pre code .token.operator {
+  color: var(--sl-color-code-keyword) !important;
+}
+
+.sl-markdown-content pre code .token.string,
+.sl-markdown-content pre code .token.attr-value {
+  color: var(--sl-color-code-string) !important;
+}
+
+.sl-markdown-content pre code .token.function {
+  color: var(--sl-color-code-function) !important;
+}
+
+.sl-markdown-content pre code .token.number {
+  color: var(--sl-color-code-number) !important;
+}
+
+/* Active navigation item - Match Landing Page accent */
+.sidebar a[aria-current="page"],
+.sidebar a[aria-current="true"],
+.sl-sidebar a[aria-current="page"],
+.sl-sidebar a[aria-current="true"],
+nav a[aria-current="page"],
+nav a[aria-current="true"] {
+  background-color: rgba(238, 70, 70, 0.15) !important; /* B2C accent with transparency */
+  color: #ee4646 !important; /* B2C accent */
+  border-left-color: #ee4646 !important;
+}
+
+/* Hover states for navigation */
+.sidebar a:hover,
+.sl-sidebar a:hover,
+nav a:hover {
+  background-color: rgba(238, 70, 70, 0.1) !important;
+  color: #ee4646 !important;
+}
+
+/* Starlight specific navigation styles */
+.sl-sidebar-nav-item[aria-current="page"],
+.sl-sidebar-nav-item[aria-current="true"] {
+  background-color: rgba(238, 70, 70, 0.15) !important;
+  color: #ee4646 !important;
+}
+
+.sl-sidebar-nav-item:hover {
+  background-color: rgba(238, 70, 70, 0.1) !important;
+  color: #ee4646 !important;
+}
+

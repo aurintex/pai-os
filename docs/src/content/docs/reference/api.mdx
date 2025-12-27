@@ -1,0 +1,28 @@
+---
+title: gRPC API Reference
+description: Protocol Buffer definitions and gRPC service documentation
+---
+
+PAI uses **gRPC** over **Unix Domain Sockets (UDS)** for inter-process communication. This provides maximum performance, type safety via Protobuf, and access control via Linux file permissions.
+
+## Protocol Buffer Definitions
+
+The API definitions are located in `engine/proto/service.proto`.
+
+## Service Overview
+
+*API documentation will be generated from Protocol Buffer definitions. Coming soon.*
+
+## IPC Strategy
+
+- **Transport**: Unix Domain Sockets (UDS) - zero networking overhead
+- **Protocol**: gRPC with Protocol Buffers
+- **Access Control**: Linux file permissions (User/Group isolation)
+- **Default**: No network ports open
+
+## Future: High-Performance Extension
+
+For future video streams or raw sensor fusion, we plan to implement a hybrid model:
+- **Control Plane**: gRPC for control messages
+- **Data Plane**: Shared Memory Ring Buffer for bulk data
+
