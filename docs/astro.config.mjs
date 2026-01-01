@@ -14,6 +14,16 @@ export default defineConfig({
 			components: {
 				Search: './src/components/Search.astro',
 			},
+			head: [
+				{
+					tag: 'script',
+					attrs: { type: 'module' },
+					content: `import { inject, pageview, computeRoute } from "@vercel/analytics";
+inject({ framework: 'astro', disableAutoTrack: true });
+const path = window.location.pathname;
+pageview({ route: computeRoute(path, {}), path });`,
+				},
+			],
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/aurintex/pai-os' },
 			],
