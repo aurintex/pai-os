@@ -8,7 +8,12 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'paiOS Docs',
-			customCss: ['./src/styles/theme.css'],
+			customCss: [
+				'./src/styles/theme.css',
+			],
+			components: {
+				Search: './src/components/Search.astro',
+			},
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/aurintex/pai-os' },
 			],
