@@ -31,7 +31,7 @@ Signed-off-by: Your Name <your.email@example.com>
 2. Search for: `git.alwaysSignOff`
 3. Enable the checkbox
 
-This automatically adds the sign-off to all your commits. For more information, see the [official VS Code Git documentation](https://code.visualstudio.com/docs/sourcecontrol/overview#_commit-signing).
+This automatically adds the sign-off to all your commits. For more information, see the [official VS Code Git documentation](https://code.visualstudio.com/docs/sourcecontrol/overview).
 
 ### 2. CLI Method
 
@@ -41,11 +41,13 @@ For terminal users, use the `-s` flag when committing:
 git commit -s -m "Your commit message"
 ```
 
-Alternatively, configure Git to automatically add your sign-off for this repository:
+**Optional:** Create a Git alias to make this easier:
 
 ```bash frame="none"
-git config format.signoff true
+git config alias.cs 'commit -s'
 ```
+
+Then you can use `git cs` instead of `git commit -s` for signed commits.
 
 ## DCO Enforcement
 
