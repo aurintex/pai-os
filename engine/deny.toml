@@ -56,17 +56,12 @@ allow = [
     "Unicode-DFS-2016",
     "Unicode-3.0",
     # AGPL-3.0 itself (our project license)
+    # Note: cargo-deny uses bare GNU license IDs without -only/-or-later suffixes
     "AGPL-3.0",
-    "AGPL-3.0-only",
-    "AGPL-3.0-or-later",
     # GPL-3.0+ is compatible with AGPL-3.0
     "GPL-3.0",
-    "GPL-3.0-only",
-    "GPL-3.0-or-later",
     # LGPL-3.0+ is compatible
     "LGPL-3.0",
-    "LGPL-3.0-only",
-    "LGPL-3.0-or-later",
     # MPL-2.0 is compatible (weak copyleft)
     "MPL-2.0",
 ]

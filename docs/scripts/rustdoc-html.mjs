@@ -16,13 +16,36 @@ function ensureDir(dir) {
   }
 }
 
+function isCargoAvailable() {
+  try {
+    execSync('cargo --version', { stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function generate() {
+  // Check if cargo is available (it won't be in Vercel/CI environments)
+  if (!isCargoAvailable()) {
+    const isCI = process.env.CI || process.env.VERCEL || process.env.NETLIFY;
+    if (isCI) {
+      console.log('⚠️  Cargo not available in CI environment. Skipping rustdoc HTML generation.');
+      console.log('   Pre-generated docs should be committed to the repository.');
+      process.exit(0); // Exit successfully - this is expected in CI
+    } else {
+      console.error('❌ Cargo is not installed or not in PATH.');
+      console.error('   Please install Rust: https://rustup.rs/');
+      process.exit(1);
+    }
+  }
+
   console.log('📚 Generating standard rustdoc HTML...');
-  
+
   // Generate rustdoc HTML
-  execSync(`cargo doc --no-deps`, { 
-    stdio: 'inherit', 
-    cwd: path.resolve(__dirname, '../../engine') 
+  execSync(`cargo doc --no-deps`, {
+    stdio: 'inherit',
+    cwd: path.resolve(__dirname, '../../engine')
   });
 
   // Copy to public directory
@@ -35,8 +58,8 @@ function generate() {
   }
 
   // Find the actual engine documentation folder (could be 'engine', 'pai_engine', etc.)
-  const folders = fs.readdirSync(targetDocDir).filter(f => 
-    fs.statSync(path.join(targetDocDir, f)).isDirectory() && 
+  const folders = fs.readdirSync(targetDocDir).filter(f =>
+    fs.statSync(path.join(targetDocDir, f)).isDirectory() &&
     (f.includes('engine') || f === CRATE_NAME)
   );
 
@@ -46,7 +69,7 @@ function generate() {
   }
 
   console.log(`📦 Copying rustdoc HTML to ${targetDir}...`);
-  
+
   // Clean target directory
   if (fs.existsSync(targetDir)) {
     fs.rmSync(targetDir, { recursive: true });

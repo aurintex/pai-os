@@ -394,8 +394,31 @@ function formatType(type) {
   return '/* unknown type */';
 }
 
+function isCargoAvailable() {
+  try {
+    execSync('cargo --version', { stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function main() {
   try {
+    // Check if cargo is available (it won't be in Vercel/CI environments)
+    if (!isCargoAvailable()) {
+      const isCI = process.env.CI || process.env.VERCEL || process.env.NETLIFY;
+      if (isCI) {
+        console.log('⚠️  Cargo not available in CI environment. Skipping Rustdoc generation.');
+        console.log('   Pre-generated docs should be committed to the repository.');
+        process.exit(0); // Exit successfully - this is expected in CI
+      } else {
+        console.error('❌ Cargo is not installed or not in PATH.');
+        console.error('   Please install Rust: https://rustup.rs/');
+        process.exit(1);
+      }
+    }
+
     ensureDir(OUTPUT_DIR);
     const libJson = generateJson('lib');
     const binJson = generateJson('pai-engine');
