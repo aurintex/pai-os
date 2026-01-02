@@ -1,0 +1,7 @@
+# Git LFS attributes
+# Track .so files with Git LFS
+*.so filter=lfs diff=lfs merge=lfs -text
+
+# Track .jpg files with Git LFS (optional)
+*.jpg filter=lfs diff=lfs merge=lfs -text
+

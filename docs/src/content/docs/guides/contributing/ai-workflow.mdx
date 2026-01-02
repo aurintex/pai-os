@@ -34,6 +34,27 @@ For larger or more complex tasks, we strongly recommend using **[TaskMasterAI](h
 
 Refer to the [TaskMasterAI Documentation](https://www.task-master.dev/) for more details on the CLI and MCP tools.
 
+#### Configuration
+
+TaskMasterAI configuration is stored in `.taskmaster/config.json`. The file contains safe defaults and should be committed to version control.
+
+**Environment-Specific Values:**
+
+Some configuration values are environment-specific and should not be committed:
+
+- **`azureOpenaiBaseURL`**: If using Azure OpenAI, set this in `.taskmaster/config.json` to your Azure endpoint URL (e.g., `https://your-resource-name.openai.azure.com/`). The default is an empty string.
+- **`userId`**: Optional user ID for telemetry/analytics. Set this in `.taskmaster/config.json` if you want to enable user-specific tracking. The default is an empty string.
+
+**API Keys:**
+
+API keys for AI providers should be stored in environment variables, not in `config.json`:
+
+- Create a `.env` file in the project root (this file is git-ignored)
+- Add your API keys: `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `OPENAI_API_KEY`, `AZURE_OPENAI_API_KEY`, etc.
+- For MCP/Cursor integration, add these keys to the `env` section of `.cursor/mcp.json`
+
+**Note**: The `.taskmaster/config.json` file should only contain non-sensitive configuration. Never commit API keys or environment-specific endpoint URLs to version control.
+
 ## AI Coding Assistant Guidelines
 
 When working with AI assistants (like Cursor), follow these best practices to ensure high-quality contributions:

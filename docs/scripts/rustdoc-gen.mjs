@@ -339,7 +339,7 @@ function formatType(type) {
   
   // Reference types
   if (type.borrowed_ref) {
-    const lifetime = type.borrowed_ref.lifetime ? `'${type.borrowed_ref.lifetime}` : '';
+    const lifetime = type.borrowed_ref.lifetime ? `'${type.borrowed_ref.lifetime} ` : '';
     const mut = type.borrowed_ref.mutable ? 'mut ' : '';
     return `&${lifetime}${mut}${formatType(type.borrowed_ref.type)}`;
   }

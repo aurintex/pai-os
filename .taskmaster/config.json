@@ -33,8 +33,8 @@
     "enableProxy": false,
     "anonymousTelemetry": true,
     "defaultTag": "master",
-    "azureOpenaiBaseURL": "https://your-endpoint.openai.azure.com/",
-    "userId": "1234567890"
+    "azureOpenaiBaseURL": "",
+    "userId": ""
   },
   "claudeCode": {},
   "codexCli": {},

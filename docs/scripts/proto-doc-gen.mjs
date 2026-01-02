@@ -441,6 +441,14 @@ For future video streams or raw sensor fusion, we plan to implement a hybrid mod
     const protoFileName = path.basename(protoFile);
     console.log(`\n📖 Processing ${protoFileName}...`);
     
+    // Derive output filename from proto filename (replace .proto with .mdx)
+    // Special case: service.proto -> api.mdx for main API documentation
+    let outputBaseName = protoFileName.replace(/\.proto$/, '.mdx');
+    if (protoFileName === 'service.proto') {
+      outputBaseName = 'api.mdx';
+    }
+    const outputFile = path.join(OUTPUT_DIR, outputBaseName);
+    
     let protoData;
     let markdownContent = null;
     
@@ -456,9 +464,11 @@ For future video streams or raw sensor fusion, we plan to implement a hybrid mod
       // Convert protoc-gen-doc markdown to MDX format
       // Add frontmatter if not already present
       if (!markdownContent.includes('---\n')) {
+        const serviceName = protoFileName.replace(/\.proto$/, '');
+        const pageTitle = `${serviceName} API`;
         markdownContent = `---
-title: "gRPC API Reference"
-description: "Protocol Buffer definitions and gRPC service documentation"
+title: "${pageTitle}"
+description: "Protocol Buffer definitions and gRPC service documentation for ${serviceName}"
 sidebar:
   order: 1
 ---
@@ -468,8 +478,7 @@ ${markdownContent}
       }
     }
     
-    // Write MDX file
-    const outputFile = path.join(OUTPUT_DIR, 'api.mdx');
+    // Write MDX file with unique filename per proto
     fs.writeFileSync(outputFile, markdownContent);
     console.log(`✅ Generated documentation at ${outputFile}`);
   }

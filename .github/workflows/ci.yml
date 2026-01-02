@@ -18,12 +18,13 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: stable
           components: rustfmt, clippy
 
       - name: Install nightly Rust toolchain (for docs generation)
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: rust-docs-json
+        run: |
+          rustup toolchain install nightly --component rust-docs-json
+          rustup default stable
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -41,8 +42,7 @@ jobs:
       - name: Run cargo-deny (License Compliance)
         uses: EmbarkStudios/cargo-deny-action@v1
         with:
-          version: '1.x'
-          working-directory: engine
+          manifest-path: engine/Cargo.toml
 
       - name: Format check
         working-directory: engine
@@ -59,6 +59,11 @@ jobs:
       - name: Test
         working-directory: engine
         run: cargo test --verbose
+
+      - name: Verify cargo is available
+        run: |
+          cargo --version
+          cargo +nightly --version
 
       - name: Build documentation
         working-directory: docs

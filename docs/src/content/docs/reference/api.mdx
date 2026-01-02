@@ -1,29 +1,186 @@
 ---
-title: "gRPC API Reference"
-description: "Protocol Buffer definitions and gRPC service documentation"
+title: "EngineService Service"
+description: "gRPC API documentation for pai.engine.v1"
 sidebar:
   order: 1
 ---
 
-PAI uses **gRPC** over **Unix Domain Sockets (UDS)** for inter-process communication. This provides maximum performance, type safety via Protobuf, and access control via Linux file permissions.
+## Package
 
-## Protocol Buffer Definitions
+`pai.engine.v1`
 
-The API definitions will be located in `engine/proto/service.proto` once the proto files are created.
+**Syntax:** `proto3`
 
-## Service Overview
+## Services
 
-*API documentation will be automatically generated from Protocol Buffer definitions once proto files are available.*
+### `EngineService`
 
-## IPC Strategy
+EngineService provides control and monitoring capabilities for the PAI-OS Engine.
+This service handles engine lifecycle, configuration, and status queries.
 
-- **Transport**: Unix Domain Sockets (UDS) - zero networking overhead
-- **Protocol**: gRPC with Protocol Buffers
-- **Access Control**: Linux file permissions (User/Group isolation)
-- **Default**: No network ports open
+#### RPC Methods
 
-## Future: High-Performance Extension
+##### `StartEngine`
 
-For future video streams or raw sensor fusion, we plan to implement a hybrid model:
-- **Control Plane**: gRPC for control messages
-- **Data Plane**: Shared Memory Ring Buffer for bulk data
+StartEngine initializes and starts the PAI-OS Engine.
+Returns the engine status after startup.
+
+```protobuf
+rpc StartEngine(StartEngineRequest) returns (StartEngineResponse)
+```
+
+---
+
+##### `StopEngine`
+
+StopEngine gracefully shuts down the engine.
+Returns confirmation when shutdown is complete.
+
+```protobuf
+rpc StopEngine(StopEngineRequest) returns (StopEngineResponse)
+```
+
+---
+
+##### `GetStatus`
+
+GetStatus returns the current status of the engine.
+
+```protobuf
+rpc GetStatus(GetStatusRequest) returns (GetStatusResponse)
+```
+
+---
+
+##### `UpdateConfig`
+
+UpdateConfig updates the engine configuration at runtime.
+
+```protobuf
+rpc UpdateConfig(UpdateConfigRequest) returns (UpdateConfigResponse)
+```
+
+---
+
+## Messages
+
+### `StartEngineRequest`
+
+StartEngineRequest contains parameters for starting the engine.
+
+#### Fields
+
+| Field | Type | Number | Description |
+|-------|------|--------|-------------|
+| `config_path` | `string` | 1 | Optional path to configuration file. If not provided, default configuration is used. |
+| `debug` | `bool` | 2 | Enable debug logging. |
+
+---
+
+### `StartEngineResponse`
+
+StartEngineResponse contains the result of the start operation.
+
+#### Fields
+
+| Field | Type | Number | Description |
+|-------|------|--------|-------------|
+| `success` | `bool` | 1 | Indicates whether the engine started successfully. |
+| `message` | `string` | 2 | Human-readable message about the start result. |
+| `status` | `EngineStatus` | 3 | Engine status after startup. |
+
+---
+
+### `StopEngineRequest`
+
+StopEngineRequest contains parameters for stopping the engine.
+
+#### Fields
+
+| Field | Type | Number | Description |
+|-------|------|--------|-------------|
+| `force` | `bool` | 1 | Force immediate shutdown (default: false, graceful shutdown). |
+
+---
+
+### `StopEngineResponse`
+
+StopEngineResponse confirms the engine has stopped.
+
+#### Fields
+
+| Field | Type | Number | Description |
+|-------|------|--------|-------------|
+| `success` | `bool` | 1 | Indicates whether the engine stopped successfully. |
+| `message` | `string` | 2 | Human-readable message about the stop result. |
+
+---
+
+### `GetStatusRequest`
+
+GetStatusRequest is an empty message for status queries.
+
+---
+
+### `GetStatusResponse`
+
+GetStatusResponse contains the current engine status.
+
+#### Fields
+
+| Field | Type | Number | Description |
+|-------|------|--------|-------------|
+| `status` | `EngineStatus` | 1 | Current engine status. |
+
+---
+
+### `UpdateConfigRequest`
+
+UpdateConfigRequest contains new configuration values.
+
+---
+
+### `UpdateConfigResponse`
+
+UpdateConfigResponse confirms the configuration update.
+
+#### Fields
+
+| Field | Type | Number | Description |
+|-------|------|--------|-------------|
+| `success` | `bool` | 1 | Indicates whether the configuration was updated successfully. |
+| `message` | `string` | 2 | Human-readable message about the update result. |
+
+---
+
+### `EngineStatus`
+
+EngineStatus represents the current state of the engine.
+
+#### Fields
+
+| Field | Type | Number | Description |
+|-------|------|--------|-------------|
+| `state` | `EngineState` | 1 | Current engine state. |
+| `uptime_seconds` | `uint64` | 2 | Uptime in seconds since engine started. |
+| `version` | `string` | 3 | Version string of the running engine. |
+| `active_subsystems` | `repeated string` | 4 | Active subsystems. |
+
+---
+
+## Enums
+
+### `EngineState`
+
+EngineState represents the possible states of the engine.
+
+| Value | Number | Description |
+|-------|--------|-------------|
+| `ENGINE_STATE_UNSPECIFIED` | 0 | Engine is not running. |
+| `ENGINE_STATE_INITIALIZING` | 1 | Engine is initializing. |
+| `ENGINE_STATE_RUNNING` | 2 | Engine is running normally. |
+| `ENGINE_STATE_SHUTTING_DOWN` | 3 | Engine is shutting down. |
+| `ENGINE_STATE_ERROR` | 4 | Engine encountered an error. |
+
+---
+

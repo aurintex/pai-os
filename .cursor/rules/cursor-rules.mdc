@@ -13,7 +13,7 @@ The **official documentation** located in the `docs/` folder is the absolute **S
 To prevent redundancy and maintain consistency, follow these principles when creating or updating `.mdc` files:
 
 1.  **NO REDUNDANCY**: Never duplicate information that is already defined in `docs/`. 
-2.  **REFERRE NOT DEFINE**: Cursor rules should act as "technical enforcers" or "pointers" to the documentation. Instead of listing rules, provide links to the relevant `.mdx` files in `docs/`.
+2.  **REFER NOT DEFINE**: Cursor rules should act as "technical enforcers" or "pointers" to the documentation. Instead of listing rules, provide links to the relevant `.mdx` files in `docs/`.
 3.  **CHECK FIRST**: Before creating a new `.mdc` file, search the `docs/` folder to see if the topic is already covered. If it is, the rule should simply enforce those existing standards.
 4.  **REDUCE & CONSOLIDATE**: Prefer fewer, high-quality rules that point to comprehensive documentation over many small, fragmented rules.
 5.  **CROSS-REFERENCE**: Always include a `References` section at the end of a rule pointing to the SSoT in `docs/`.

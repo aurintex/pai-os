@@ -25,7 +25,3 @@ node_modules/
 # Task files
 # tasks.json
 # tasks/
-
-# Track .so files with Git LFS
-*.so filter=lfs diff=lfs merge=lfs -text 
-*.jpg
