@@ -1,53 +1,66 @@
 ---
-description: Guidelines for creating and maintaining Cursor rules to ensure consistency and effectiveness.
+description: Guidelines for creating and maintaining Cursor rules (.mdc files) to ensure consistency, effectiveness, and adherence to the Single Source of Truth (SSoT) in the docs/ folder.
 globs: .cursor/rules/*.mdc
 alwaysApply: true
 ---
 
-- **Required Rule Structure:**
-  ```markdown
-  ---
-  description: Clear, one-line description of what the rule enforces
-  globs: path/to/files/*.ext, other/path/**/*
-  alwaysApply: boolean
-  ---
+# Cursor Rules Management & SSoT Enforcement
 
-  - **Main Points in Bold**
-    - Sub-points with details
-    - Examples and explanations
-  ```
+## Single Source of Truth (SSoT)
+The **official documentation** located in the `docs/` folder is the absolute **Single Source of Truth** for this project. This includes coding standards, architecture, workflows, and the Definition of Done (DoD).
 
-- **File References:**
-  - Use `[filename](mdc:path/to/file)` ([filename](mdc:filename)) to reference files
-  - Example: [prisma.mdc](mdc:.cursor/rules/prisma.mdc) for rule references
-  - Example: [schema.prisma](mdc:prisma/schema.prisma) for code references
+## Principles for Rule Creation
+To prevent redundancy and maintain consistency, follow these principles when creating or updating `.mdc` files:
 
-- **Code Examples:**
-  - Use language-specific code blocks
-  ```typescript
-  // ✅ DO: Show good examples
-  const goodExample = true;
-  
-  // ❌ DON'T: Show anti-patterns
-  const badExample = false;
-  ```
+1.  **NO REDUNDANCY**: Never duplicate information that is already defined in `docs/`. 
+2.  **REFER NOT DEFINE**: Cursor rules should act as "technical enforcers" or "pointers" to the documentation. Instead of listing rules, provide links to the relevant `.mdx` files in `docs/`.
+3.  **CHECK FIRST**: Before creating a new `.mdc` file, search the `docs/` folder to see if the topic is already covered. If it is, the rule should simply enforce those existing standards.
+4.  **REDUCE & CONSOLIDATE**: Prefer fewer, high-quality rules that point to comprehensive documentation over many small, fragmented rules.
+5.  **CROSS-REFERENCE**: Always include a `References` section at the end of a rule pointing to the SSoT in `docs/`.
 
-- **Rule Content Guidelines:**
-  - Start with high-level overview
-  - Include specific, actionable requirements
-  - Show examples of correct implementation
-  - Reference existing code when possible
-  - Keep rules DRY by referencing other rules
+---
 
-- **Rule Maintenance:**
-  - Update rules when new patterns emerge
-  - Add examples from actual codebase
-  - Remove outdated patterns
-  - Cross-reference related rules
+## Required Rule Structure
+Every `.mdc` file must follow this structure:
 
-- **Best Practices:**
-  - Use bullet points for clarity
-  - Keep descriptions concise
-  - Include both DO and DON'T examples
-  - Reference actual code over theoretical examples
-  - Use consistent formatting across rules 
+```markdown
+---
+description: Clear, one-line description of what the rule enforces
+globs: path/to/files/*.ext, other/path/**/*
+alwaysApply: boolean
+---
+
+# Title of the Rule
+
+- **Main Points in Bold**
+  - Sub-points with details
+  - Examples and explanations
+```
+
+## Best Practices
+- **File References**: Use `[filename](mdc:path/to/file)` to reference files.
+- **Code Examples**: Use language-specific code blocks showing both ✅ DO and ❌ DON'T examples.
+- **Formatting**: Use bullet points for clarity and keep descriptions concise.
+- **Consistency**: Maintain consistent formatting and tone across all rules.
+
+## Rule Improvement Triggers
+- **New Code Pattern**: If a new technology/pattern is used in 3+ files.
+- **Repeated Feedback**: If code reviews or AI interactions repeatedly mention the same feedback.
+- **Common Bugs**: If a bug pattern could have been prevented by a rule.
+- **SSoT Updates**: Update rules immediately if the corresponding documentation in `docs/` changes.
+
+## Analysis Process
+- Compare new code with existing rules and documentation.
+- Identify patterns that should be standardized.
+- Monitor test patterns and error handling for consistency.
+
+## Content Specific Rules
+- **Starlight MDX Headers**: NEVER include a top-level `# ` header in Starlight MDX files. Starlight automatically renders the `title` from the frontmatter as the main `h1`. Use `## ` for the first section.
+- **Starlight Code Blocks**: ALWAYS use `frame="none"` for bash/terminal code blocks in Starlight MDX to avoid the "weird dots" (macOS-style window controls) in the terminal frame header, unless a specific `title` is required.
+- **Rust Doc Comments**: When writing documentation comments (`///` or `//!`) in Rust files that will be exported to Starlight, ensure terminal blocks use `bash frame="none"` where possible. Note: The `rustdoc-gen.mjs` script attempts to fix this automatically, but maintaining the standard in source is preferred.
+
+---
+**References:**
+- Definition of Done Enforcer: [definition-of-done.mdc](mdc:.cursor/rules/definition-of-done.mdc)
+- Project Standards: [standards.mdx](mdc:docs/src/content/docs/guides/contributing/standards.mdx)
+- Documentation Strategy: [docs-maintenance.mdc](mdc:.cursor/rules/docs-maintenance.mdc)

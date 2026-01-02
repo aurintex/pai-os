@@ -1,0 +1,24 @@
+---
+description: Technical enforcer for the project's Definition of Done (DoD). This rule ensures that the standards defined in the official documentation are followed before any task is completed.
+globs: **/*
+alwaysApply: true
+---
+
+# Definition of Done (DoD) Enforcer
+
+**Single Source of Truth:** All changes must comply with the Definition of Done (DoD) defined in [Development Standards (standards.mdx)](mdc:docs/src/content/docs/guides/contributing/standards.mdx).
+
+## Required Action
+Before declaring any task as "finished" or "done", you MUST:
+
+1.  **Read the DoD Section**: Open and review the "Definition of Done" section in `docs/src/content/docs/guides/contributing/standards.mdx`.
+2.  **Verify Every Point**: Go through each requirement (Functional, Quality, Documentation, Compliance) as defined there.
+3.  **Documentation Sync Check**: If the Rust API was touched, ensure `npm run build` was executed in the `docs/` directory.
+
+## Final Statement Requirement
+In your final response to the user, you MUST explicitly state:
+> "I have verified this task against the official **Definition of Done** in `standards.mdx`. Specifically, I checked: [List 2-3 key points relevant to this specific task, e.g., 'API Sync' or 'DCO Sign-off']."
+
+---
+**References:**
+- Documentation Strategy: [docs-maintenance.mdc](mdc:.cursor/rules/docs-maintenance.mdc)

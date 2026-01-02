@@ -1,0 +1,28 @@
+---
+description: Guidelines for creating and maintaining Cursor rules (.mdc files) to ensure the documentation in the docs/ folder remains the Single Source of Truth (SSoT) and avoid redundancy.
+globs: .cursor/rules/*.mdc
+alwaysApply: true
+---
+
+# Cursor Rules Management & SSoT Enforcement
+
+## Single Source of Truth (SSoT)
+The **official documentation** located in the `docs/` folder is the absolute **Single Source of Truth** for this project. This includes coding standards, architecture, workflows, and the Definition of Done (DoD).
+
+## Principles for Rule Creation
+To prevent redundancy and maintain consistency, follow these principles when creating or updating `.mdc` files:
+
+1.  **NO REDUNDANCY**: Never duplicate information that is already defined in `docs/`. 
+2.  **REFERRE NOT DEFINE**: Cursor rules should act as "technical enforcers" or "pointers" to the documentation. Instead of listing rules, provide links to the relevant `.mdx` files in `docs/`.
+3.  **CHECK FIRST**: Before creating a new `.mdc` file, search the `docs/` folder to see if the topic is already covered. If it is, the rule should simply enforce those existing standards.
+4.  **REDUCE & CONSOLIDATE**: Prefer fewer, high-quality rules that point to comprehensive documentation over many small, fragmented rules.
+5.  **CROSS-REFERENCE**: Always include a `References` section at the end of a rule pointing to the SSoT in `docs/`.
+
+## Rule Maintenance Triggers
+- **New Code Pattern**: If a new pattern emerges in 3+ files, document it in `docs/` first, then create/update a rule to enforce it.
+- **Outdated Rules**: If a rule contradicts the current documentation in `docs/`, update the rule immediately to point to the correct documentation.
+
+---
+**References:**
+- Definition of Done: [definition-of-done.mdc](mdc:.cursor/rules/definition-of-done.mdc)
+- Project Standards: [standards.mdx](mdc:docs/src/content/docs/guides/contributing/standards.mdx)

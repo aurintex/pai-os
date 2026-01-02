@@ -1,0 +1,29 @@
+---
+description: Technical enforcer for the documentation hybrid system. Ensures synchronization between Rust code, Protocol Buffer definitions, and the Starlight documentation site.
+globs: docs/src/content/docs/reference/**/*, docs/scripts/*.mjs, docs/astro.config.mjs, engine/**/*.rs, engine/**/*.proto
+alwaysApply: true
+---
+
+# Documentation Maintenance Enforcer
+
+**Single Source of Truth:** The maintenance procedures for the hybrid documentation system are defined in [Documentation Maintenance (docs-maintenance.mdx)](mdc:docs/src/content/docs/guides/contributing/docs-maintenance.mdx).
+
+## Required Action
+When modifying Rust code in the `engine` crate, Protocol Buffer files, or changing the documentation scripts:
+
+1.  **Reference the Guide**: Review [docs-maintenance.mdx](mdc:docs/src/content/docs/guides/contributing/docs-maintenance.mdx) to understand the hybrid MDX/HTML approach.
+2.  **Regenerate Docs**: Always run the sync commands after API changes:
+    - `npm run gen:rustdoc` (Rust MDX)
+    - `npm run gen:rustdoc:html` (Rust Standard HTML)
+    - `npm run gen:proto` (Protocol Buffer MDX)
+3.  **Validate Build**: Run `npm run build` in the `docs/` directory to ensure all paths and redirects are correctly generated.
+
+## Prevention of Regressions
+- Do not attempt to simplify the routing logic for `/reference/rustdoc/` without verifying the Astro redirects.
+- Ensure `public/reference/rustdoc/html/` remains the target for static rustdoc output.
+- When modifying `.proto` files, ensure `proto-doc-gen.mjs` can parse them correctly. The script supports both `protoc-gen-doc` (if available) and a built-in parser as fallback.
+
+---
+**References:**
+- Maintenance Guide: [docs-maintenance.mdx](mdc:docs/src/content/docs/guides/contributing/docs-maintenance.mdx)
+- Definition of Done: [definition-of-done.mdc](mdc:.cursor/rules/definition-of-done.mdc)

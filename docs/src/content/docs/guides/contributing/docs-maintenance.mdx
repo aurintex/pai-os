@@ -1,0 +1,101 @@
+---
+title: "Documentation Maintenance"
+description: "How the paiOS documentation system works and how to maintain it."
+sidebar:
+  order: 10
+---
+
+This guide explains how the paiOS documentation system is structured and how to maintain it. Understanding this is crucial for keeping our documentation synchronized with the code.
+
+## Architecture Overview
+
+We use a **Hybrid Documentation Strategy** for our codebase to provide the best developer experience:
+
+1.  **Native Starlight Integration**: Rustdoc JSON is converted to MDX files. This provides a consistent look and feel, native search, and integrated navigation.
+2.  **Standard rustdoc HTML**: The traditional `cargo doc` output is generated and hosted alongside Starlight. This provides the deep-dive technical details Rust developers are familiar with.
+3.  **Protocol Buffer Documentation**: Proto files are automatically parsed and converted to MDX, providing integrated gRPC API documentation with the same look and feel as the rest of the documentation.
+
+## Directory Structure
+
+- `docs/scripts/`: Contains the logic for generating documentation.
+    - `rustdoc-gen.mjs`: Converts Rustdoc JSON (unstable) to MDX.
+    - `rustdoc-html.mjs`: Generates and copies standard HTML docs.
+    - `proto-doc-gen.mjs`: Parses Protocol Buffer files and generates MDX documentation.
+- `docs/public/reference/rustdoc/html/`: Where the static rustdoc HTML files live.
+- `docs/src/content/docs/reference/rust/`: Where the generated Rust MDX files are stored.
+- `docs/src/content/docs/reference/api.mdx`: Where the generated Protocol Buffer documentation is stored.
+- `docs/src/pages/reference/rustdoc/`: Contains the Astro redirect logic.
+
+## Common Tasks
+
+### Generating Documentation
+
+Documentation generation is automatically part of the main build process:
+
+```bash frame="none"
+# From the docs directory
+npm run build
+```
+
+To run only the documentation generation:
+
+```bash frame="none"
+# Generate Rust documentation (both MDX and HTML)
+npm run gen:rustdoc && npm run gen:rustdoc:html
+
+# Generate Protocol Buffer documentation
+npm run gen:proto
+
+# Generate all documentation
+npm run gen:rustdoc && npm run gen:rustdoc:html && npm run gen:proto
+```
+
+### Updating the Generation Logic
+
+**For Rust Documentation:**
+
+If you add new Rust modules or change the crate structure:
+1.  Check `docs/scripts/rustdoc-gen.mjs` to ensure the module hierarchy is still handled correctly.
+2.  The script uses the `nightly` toolchain for JSON export. You need to set up your environment:
+
+```bash frame="none"
+# Install nightly toolchain
+rustup toolchain install nightly
+
+# Add the required JSON documentation component
+rustup component add rust-docs-json --toolchain nightly
+```
+
+Note: Documentation generation will automatically use the `+nightly` modifier when running through our scripts.
+
+**For Protocol Buffer Documentation:**
+
+If you add or modify `.proto` files:
+1.  Place your `.proto` files in `engine/proto/`.
+2.  The `proto-doc-gen.mjs` script will automatically detect and parse them.
+3.  The script supports two modes:
+    - **protoc-gen-doc** (if installed): Uses the external tool for better formatting
+    - **Built-in parser** (fallback): Parses proto files directly without external dependencies
+4.  Generated documentation is written to `docs/src/content/docs/reference/api.mdx`.
+
+To install `protoc-gen-doc` for enhanced formatting (optional):
+```bash frame="none"
+go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
+```
+
+## Routing and Redirects
+
+To provide clean URLs like `/reference/rustdoc/engine/index`, we use Astro's native redirect system in `astro.config.mjs`. 
+
+**Important**: 
+- Never place static files directly in `public/reference/rustdoc/engine/` as they will override the Astro redirect routes.
+- The actual files are stored in `public/reference/rustdoc/html/`.
+
+## Preventing Regressions (AI Agents)
+
+When working with AI agents like Cursor or TaskMaster:
+- Ensure they are aware of the `docs-maintenance` rule set.
+- If an agent modifies the documentation structure, verify that the `npm run build` still successfully generates all formats (Rust MDX, Rust HTML, and Proto MDX).
+- Check that the `dist/` output contains both the MDX pages and the `html/` subdirectory in the correct locations.
+- Verify that `api.mdx` is generated correctly when proto files are present.
+

@@ -1,0 +1,42 @@
+---
+title: Project Roadmap
+description: The detailed development roadmap for PAI OS.
+---
+
+## 🗺️ Roadmap
+
+> **⚠️ Temporary Roadmap:** This is currently a **minimalist, temporary roadmap**. A detailed roadmap is in development and will be created in parallel with the architecture documentation, where there will be overlapping content and cross-references.
+>
+> This roadmap is a living document and subject to change as the project evolves.
+
+## Phase 0: Foundation (Current)
+*Focus: Project Setup, High-Quality Groundwork, and Architecture Definitions.*
+
+- [x] **Monorepo Setup:** Establish structure for `engine`, `os`, and `apps`.
+- [x] **Architecture Definitions:** Define Clean Architecture layers and IPC (gRPC/UDS).
+- [x] **Infrastructure:** Set up CI/CD, License Compliance via `cargo-deny`, and DCO bots.
+- [x] **Documentation:** Launch Starlight documentation site.
+
+## Phase 1: The Accelerator (USB Form Factor)
+*Focus: Delivering the first tangible hardware product in two variants.*
+
+### Developer Edition (Community)
+- **Hardware:** Radxa Rock 5C Support.
+- **Software:** Basic `paiOS` image with standard NPU inference.
+- **Goal:** Enable the community to build and hack their own AI accelerators.
+
+### Professional Edition
+- **Hardware:** Custom Aluminum Case, Pre-flashed trusted firmware.
+- **Software:** Tuned "Pro" image, Out-of-the-box experience (Plug & Play).
+- **Features:**
+    - Real-time Whisper STT pipeline.
+    - Basic API integrations (HID injection).
+
+## Phase 2: The Companion (Wearable Form Factor)
+*Focus: Evolution into a standalone, context-aware wearable.*
+
+- [ ] **Hardware:** Custom PCB, Battery, Camera integration.
+- [ ] **Engine:** Multimodal Pipeline (Vision-Language-Action).
+- [ ] **Ecosystem:** Sync capabilities and "Memory" interface.
+- [ ] **Goal:** A standalone "Second Brain" that physically travels with you.
+
