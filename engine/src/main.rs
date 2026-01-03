@@ -1,12 +1,10 @@
-
-
 //! ## PAI-OS Engine Runtime
-//! 
+//!
 //! This is the main entry point for the PAI-OS Engine daemon.
 //! It handles CLI argument parsing, logging initialization, and boots the core engine library.
-//! 
+//!
 //! ## Usage
-//! 
+//!
 //! ```bash frame="none"
 //! ./pai-engine --config path/to/config.toml --debug
 //! ```
@@ -18,9 +16,9 @@ use tracing::{error, info};
 use tracing_subscriber::FmtSubscriber;
 
 /// The command line arguments for the PAI-OS Engine.
-/// 
+///
 /// # Fields
-/// 
+///
 /// - `config`: The path to the configuration file.
 /// - `debug`: Enable verbose logging.
 #[derive(Parser, Debug)]
@@ -36,9 +34,9 @@ struct Args {
 }
 
 /// The main function for the PAI-OS Engine.
-/// 
+///
 /// # Errors
-/// 
+///
 /// This function can return the following errors:
 /// - `Result<()>`: A result indicating success or failure.
 /// - `EngineError(String)`: An error with a message.
@@ -54,12 +52,9 @@ async fn main() -> Result<()> {
         tracing::Level::INFO
     };
 
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(log_level)
-        .finish();
+    let subscriber = FmtSubscriber::builder().with_max_level(log_level).finish();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("setting default subscriber failed");
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     // 3. Start the Engine
     info!("Booting PAI-OS Engine...");

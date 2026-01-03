@@ -1,5 +1,5 @@
 //! ## pai-engine Library
-//! 
+//!
 //! The core logic for the PAI-OS Engine. This library contains the main `PaiEngine` struct
 //! and the error handling logic. It is designed to be used by the main binary and potentially
 //! other integration tools.
@@ -8,9 +8,9 @@ use thiserror::Error;
 use tracing::{info, instrument};
 
 /// The error type for the engine.
-/// 
+///
 /// # Errors
-/// 
+///
 /// This enum can return the following errors:
 /// - `InitError(String)`: An initialization error with a message.
 /// - `Unknown`: An unknown error occurred.
@@ -23,13 +23,13 @@ pub enum EngineError {
 }
 
 /// The main engine for PAI-OS.
-/// 
+///
 /// # Fields
-/// 
+///
 /// - `config_path`: The path to the configuration file.
-/// 
+///
 /// # Methods
-/// 
+///
 /// - `new(config_path: Option<String>) -> Self`: Creates a new instance of the engine.
 /// - `start(&self) -> Result<(), EngineError>`: Starts the engine.
 pub struct PaiEngine {
@@ -42,9 +42,9 @@ impl PaiEngine {
     }
 
     /// Starts the engine.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function can return the following errors:
     /// - `EngineError(String)`: An error with a message.
     /// - `Unknown`: An unknown error occurred.
@@ -61,9 +61,9 @@ impl PaiEngine {
 
         // Simulation of startup processes
         info!("Initializing subsystems...");
-        
+
         // Placeholder for future NPU/Sensor initialization
-        
+
         info!("Engine successfully started and ready.");
         Ok(())
     }
