@@ -5,9 +5,13 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
+    "build": "npm run gen:rustdoc && npm run gen:rustdoc:html && npm run gen:proto && astro build && npm run test:docs",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "gen:rustdoc": "node scripts/rustdoc-gen.mjs",
+    "gen:rustdoc:html": "node scripts/rustdoc-html.mjs",
+    "gen:proto": "node scripts/proto-doc-gen.mjs",
+    "test:docs": "node scripts/test-docs.mjs"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.37.1",

@@ -1,0 +1,66 @@
+---
+title: "Rust API (Internal)"
+description: "Rust API documentation for the paiOS engine"
+sidebar:
+  order: 1
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Rust API Documentation
+
+This section provides technical documentation for the **paiOS engine** Rust implementation. The engine is a runtime daemon that provides AI inference capabilities via gRPC over Unix Domain Sockets.
+
+## Documentation Formats
+
+We provide two documentation formats to suit different needs:
+
+### 📖 Native Starlight Integration (Recommended)
+
+**Best for:** Understanding how Rust modules relate to the gRPC API and overall architecture.
+
+- ✅ Fully integrated with Starlight documentation
+- ✅ Consistent navigation and search
+- ✅ Cross-references with gRPC API docs
+- ✅ Contextual architecture information
+
+**Browse:** Continue reading below or use the sidebar navigation.
+
+### 📚 Standard rustdoc HTML
+
+**Best for:** Deep-dive into Rust types, traits, and implementations (familiar to Rust developers).
+
+- ✅ Standard rustdoc format (familiar to Rust developers)
+- ✅ Direct links to GitHub source code
+- ✅ Interactive type exploration
+- ✅ "Implementations" and "See also" links
+
+<a href="/reference/rustdoc/engine/index" target="_blank" class="action-button">Open Standard rustdoc</a>
+
+---
+
+## About the Engine
+
+The `engine` crate is the core runtime for paiOS. It implements:
+
+- **gRPC Service Layer** (`rpc/`): Handles gRPC/UDS communication
+- **Domain Logic** (`core/`): SystemController and business rules
+- **Inference Orchestration** (`orchestrator/`): NPU/GPU/CPU resource management
+- **Hardware Abstraction** (`hal/`): Audio, HID, LED, and hardware backends
+
+For the primary API documentation, see the [gRPC API Reference](/reference/api/).
+
+---
+
+## Crate Documentation
+
+<CardGrid>
+  <Card title="engine Library" icon="code">
+    Core logic, structs, and common error types.
+    [View Library](/reference/rust/crate)
+  </Card>
+  <Card title="Engine Runtime" icon="rocket">
+    CLI arguments, boot process, and daemon entry point.
+    [View Runtime](/reference/rust/runtime)
+  </Card>
+</CardGrid>

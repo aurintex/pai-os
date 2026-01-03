@@ -1,88 +1,50 @@
 ---
 title: Development Standards
 description: Core principles, code style, and the Definition of Done for paiOS
+sidebar:
+  order: 3
 ---
 
 To keep paiOS maintainable and high-quality, we follow a set of core principles and standards. Whether you are using AI tools or writing code manually, these rules apply.
 
 ## Core Principles
 
-We value code that is easy to read, test, and maintain. These principles serve as a **compass**, not a set of rigid laws. Use your common sense and prioritize what makes the most sense for the project's health and user value.
+We value code that is easy to read, test, and maintain. These principles serve as a **compass**, not a set of rigid laws.
 
--   **KISS (Keep It Simple, Stupid)**: Avoid over-engineering. Always choose the simplest solution that solves the problem. Simple code is easier to debug and more resilient.
--   **80/20 Rule (Pareto Principle)**: We focus on the 20% of effort that provides 80% of the value. Avoid spending too much time on minor details that don't impact the user experience or system stability.
--   **Pragmatic Utility**: Even the most perfect code is worthless if it provides no value to the user. Always ask yourself: "Does this change actually help the user?" We prioritize actual usefulness over code perfection.
--   **Critical Thinking**: Don't just follow a task list. Challenge assumptions and ask if a feature is necessary. The success of a project is rarely decided by the code itself, but by how useful it is to people.
--   **SOLID**: We apply SOLID principles to ensure our designs are flexible and robust.
--   **Clean Code**: Write code for humans first. Use descriptive names, small functions, and clear logic.
--   **Clean Architecture**: Maintain clear boundaries between different parts of the system. See our [Architecture Documentation](/architecture/) for details.
+-   **KISS (Keep It Simple, Stupid)**: Avoid over-engineering. Always choose the simplest solution.
+-   **80/20 Rule (Pareto Principle)**: We focus on the 20% of effort that provides 80% of the value.
+-   **Pragmatic Utility**: We prioritize actual usefulness over code perfection. Ask: "Does this actually help the user?"
+-   **SOLID**: Ensure designs are flexible and robust.
+-   **Clean Code**: Write code for humans first. Use descriptive names and small functions.
+-   **Clean Architecture**: Maintain clear boundaries between layers (Engine, HAL, RPC). See [Architecture Documentation](/architecture/).
 
 ## Code Style
 
-Consistency helps everyone understand the codebase faster.
-
 ### General Rules
-- Follow the rules defined in `.cursorrules`. These are designed to help both humans and AI assistants follow our project standards.
-- If you use **AI tools** (like Cursor or Copilot), always review the generated code to ensure it follows the principles above.
-- **DCO Sign-off**: Every commit MUST be signed off (`git commit -s`).
+- Follow the rules defined in `.cursorrules`.
+- Every commit MUST be signed off (`git commit -s`). See [DCO Guide](/guides/contributing/dco/).
 
 ### Rust Style
-- Use `rustfmt` for formatting.
-- Run `clippy` for linting. We aim for zero clippy warnings.
-- Documentation comments (`///`) are required for all public items.
+- Use `rustfmt` and `clippy` (zero warnings target).
+- Documentation comments (`///` or `//!`) are required for all public and significant internal items.
 
 ## Definition of Done (DoD)
 
 All changes must meet these requirements before they can be merged:
 
-### Compiles & Tests Pass
+### 1. Correctness & Quality
 - Code builds without errors (`cargo build`).
 - All tests pass (`cargo test`).
-- No warnings (unless there is a documented exception).
-- **CI/CD**: All GitHub Actions checks must pass.
+- No clippy warnings.
+- Solution follows KISS and Clean Architecture principles.
 
-### Quality & Review
-- At least one maintainer has approved the PR.
-- All review comments are addressed.
-- Code follows the core principles (KISS, SOLID, etc.).
+### 2. Documentation
+-   **User/Integration**: New features or API changes are documented in Starlight.
+-   **Internal**: Complex logic is explained via Rust doc comments.
+-   **Sync**: Documentation is regenerated and verified via `npm run build` in the `docs/` folder.
+- See the [Documentation Guide](/guides/contributing/documentation/) for details.
 
-### Documentation
--   **User-facing changes**: Update relevant Starlight guides in the `docs/` folder.
--   **Internal changes**: Ensure the code is self-documenting or include Rust doc comments (`///`).
--   **README**: Update if the high-level project description or quick-start changes.
-
-### Compliance
-- Every commit has a DCO sign-off.
-- All dependencies are compatible with AGPL-3.0 (checked via `cargo deny`).
-- No secret keys or sensitive data are committed.
-
----
-
-## Documentation Layers
-
-Documentation in paiOS follows the **C4 model** philosophy to ensure both high-level clarity and low-level precision.
-
-### High-Level (Starlight Docs)
-This documentation site (Starlight) is for **Context (System)** and **Container (Service)** levels.
-- **Goal**: Provide a "big picture" overview for users and developers.
-- **Content**: Architecture diagrams, guides, technical specifications, and the "why" behind decisions.
-- **Location**: All files in the `docs/` folder.
-
-### Low-Level (In-Code Documentation)
-Technical details at the **Component** and **Code** levels belong in the source code.
-- **Goal**: Document the implementation details, API usage, and internal logic for developers.
-- **Content**: Rust doc comments (`///`), module-level documentation, and clear code comments for complex logic.
-- **Location**: Directly inside `.rs` files. These are automatically extracted via `cargo doc`.
-
----
-
-## Documentation Updates
-
-Documentation is a first-class citizen in paiOS. Any change that affects how the system works, how it is built, or how users interact with it **must** include updates to the relevant documentation.
-
-- **Stay Relevant**: If you change a feature, update its corresponding guide or reference page.
-- **Explain "Why"**: Use the documentation to explain the reasoning behind architectural decisions.
-- **Code is not enough**: Even the cleanest code needs context. If a developer or user needs to know something to use your change, put it in the docs.
-
-Always check the `docs/` folder for existing pages that might be affected by your contribution. If you're adding a completely new feature, create a new page in the appropriate category (Architecture, Guides, or Reference).
-
+### 3. Compliance
+- DCO sign-off is present.
+- Dependencies are license-compliant (`cargo deny`).
+- No sensitive data committed.

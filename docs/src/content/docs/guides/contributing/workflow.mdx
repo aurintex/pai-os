@@ -1,6 +1,8 @@
 ---
 title: Contribution Workflow
 description: Step-by-step guide to contributing code to paiOS
+sidebar:
+  order: 2
 ---
 
 This guide covers the technical steps for contributing to the project.
@@ -25,6 +27,14 @@ git checkout -b feature/your-feature-name
 Implement your changes following our [Development Standards](../standards/). Make sure to:
 - Test your changes locally.
 - Keep your commits logical (don't worry about perfection, as we squash anyway).
+
+### Implementation Philosophy
+
+We follow a **pathfinder mindset**: leave the codebase better than you found it. This means:
+
+- **Don't die in perfection**: While clean code and good practices are important, don't let perfectionism block progress. It's better to make something good than to block something perfect.
+- **Incremental improvement**: Each contribution should improve the codebase, even if it's not perfect. Future iterations can refine it further.
+- **Balance quality and velocity**: Strive for quality, but recognize when "good enough" is sufficient to move forward. This aligns with clean code principles: readable, maintainable, and functional code is more valuable than theoretical perfection.
 
 ## 4. Commit with Sign-off
 
@@ -68,11 +78,22 @@ git push origin feature/your-feature-name
 
 After pushing, go to the GitHub repository and create a **Pull Request (PR)** targeting the `main` branch.
 
-## 6. Review and Merge
+## 7. Review and Merge
 
 1.  **CI/CD**: Wait for all automated checks to pass (Build, Lint, Tests, DCO).
 2.  **Approval**:
     - **Contributors**: Wait for a maintainer to review and approve your PR.
     - **Maintainers**: Request a review from another maintainer. **Self-merging without approval is discouraged** except for trivial fixes.
 3.  **Merge**: Once approved, the PR will be merged using **Squash and merge**.
+
+### Code Review Philosophy
+
+Our review process follows the **pathfinder mindset**: we prefer approving good contributions over blocking perfect ones.
+
+- **Focus on improvement**: The question isn't "Is this perfect?" but rather "Is the codebase better than before?" If the answer is yes, the PR should generally be approved.
+- **Avoid perfectionism blockers**: Don't block PRs because they're not perfect. If the code is functional, tested, and improves the project, it's ready to merge.
+- **Constructive feedback**: When suggesting improvements, frame them as enhancements rather than blockers. Minor issues can be addressed in follow-up PRs.
+- **Trust and iterate**: We trust contributors to make good decisions. If something needs refinement, we can iterate on it in future contributions.
+
+This approach ensures we maintain momentum while continuously improving code quality, aligning with clean code principles of maintainability and readability over theoretical perfection.
 

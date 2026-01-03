@@ -33,6 +33,10 @@ For GitHub Pages deployment, configure the repository settings to deploy from th
 
 - `src/content/docs/` - Documentation content (Markdown/MDX files)
 - `public/` - Static assets (images, favicons, etc.)
+- `scripts/` - Documentation generation scripts
+  - `rustdoc-gen.mjs` - Generates Rust API documentation (MDX)
+  - `rustdoc-html.mjs` - Generates standard rustdoc HTML
+  - `proto-doc-gen.mjs` - Generates Protocol Buffer API documentation (MDX)
 - `astro.config.mjs` - Starlight configuration
 
 ## Content Organization
@@ -40,3 +44,26 @@ For GitHub Pages deployment, configure the repository settings to deploy from th
 - `architecture/` - System design and architecture decisions
 - `guides/` - Step-by-step tutorials and guides
 - `reference/` - API documentation and technical reference
+  - `api.mdx` - gRPC API documentation (generated from `.proto` files)
+  - `rust/` - Rust API documentation (generated from Rust source)
+
+## Documentation Generation
+
+The documentation includes automatically generated content from source code:
+
+- **Rust API**: Generated from Rust doc comments using `cargo rustdoc --output-format json`
+- **Protocol Buffer API**: Generated from `.proto` files in `engine/proto/`
+
+To regenerate all documentation:
+
+```bash frame="none"
+npm run build
+```
+
+Or generate individual components:
+
+```bash frame="none"
+npm run gen:rustdoc      # Rust MDX documentation
+npm run gen:rustdoc:html # Rust HTML documentation
+npm run gen:proto        # Protocol Buffer MDX documentation
+```

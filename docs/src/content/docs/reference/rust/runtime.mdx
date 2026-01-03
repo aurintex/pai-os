@@ -1,0 +1,56 @@
+---
+title: "Engine Runtime (CLI)"
+description: "Rust API documentation for Engine Runtime"
+sidebar:
+  order: 2
+---
+
+## PAI-OS Engine Runtime
+ 
+This is the main entry point for the PAI-OS Engine daemon.
+It handles CLI argument parsing, logging initialization, and boots the core engine library.
+ 
+## Usage
+ 
+```bash frame="none"
+./pai-engine --config path/to/config.toml --debug
+```
+
+## Functions
+
+### `main`
+
+```rust
+fn main() -> anyhow::Result<()>
+```
+
+The main function for the PAI-OS Engine.
+ 
+#### Errors
+ 
+This function can return the following errors:
+- `Result<()>`: A result indicating success or failure.
+- `EngineError(String)`: An error with a message.
+
+---
+
+## Structs
+
+### `Args`
+
+The command line arguments for the PAI-OS Engine.
+ 
+#### Fields
+ 
+- `config`: The path to the configuration file.
+- `debug`: Enable verbose logging.
+
+```rust
+struct Args {
+  pub config: Option<String>,
+  pub debug: bool,
+}
+```
+
+---
+

@@ -1,0 +1,49 @@
+[package]
+name = "pai-engine"
+version = "0.1.0"
+edition = "2021"
+authors = ["Aurintex <contact@aurintex.com>"]
+description = "The core intelligence engine for PAI-OS."
+license = "AGPL-3.0-only"
+repository = "https://github.com/aurintex/pai-os"
+readme = "README.md"
+keywords = ["ai", "os", "agent", "automation"]
+categories = ["science::robotics", "os"]
+
+[lib]
+name = "pai_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pai-engine"
+path = "src/main.rs"
+
+[dependencies]
+# Async Runtime & System
+tokio = { version = "1.47.0", features = ["full"] }
+
+# Error Handling
+anyhow = "1.0.100"
+thiserror = "2.0.17"
+
+# Logging & Tracing
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Configuration Management
+config = "0.13"
+
+# CLI Argument Parsing
+clap = { version = "4.5.49", features = ["derive"] }
+
+# Serialization & Deserialization
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

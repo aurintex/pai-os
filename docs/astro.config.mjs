@@ -5,6 +5,10 @@ import starlight from '@astrojs/starlight';
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://docs.aurintex.com', // Base URL for documentation deployment
+	redirects: {
+		'/reference/rustdoc/engine/index': '/reference/rustdoc/html/engine/index.html',
+		'/reference/rustdoc/engine': '/reference/rustdoc/html/engine/index.html',
+	},
 	integrations: [
 		starlight({
 			title: 'paiOS Docs',
@@ -32,17 +36,20 @@ pageview({ route: computeRoute(path, {}), path });`,
 					label: 'Guides',
 					items: [
 						{ label: 'Getting Started', link: '/guides/getting-started/' },
-						{
-							label: 'Contributing',
-							items: [
-								{ label: 'Contributing to paiOS', link: '/guides/contributing/' },
-								{ label: 'AI-Assisted Development', link: '/guides/contributing/ai-workflow/' },
-								{ label: 'Contribution Workflow', link: '/guides/contributing/workflow/' },
-								{ label: 'Development Standards', link: '/guides/contributing/standards/' },
-								{ label: 'Project Roles & Maintainers', link: '/guides/contributing/maintainers/' },
-								{ label: 'Developer Certificate of Origin (DCO)', link: '/guides/contributing/dco/' },
-							],
-						},
+						{ label: 'Roadmap', link: '/roadmap/' },
+								{
+									label: 'Contributing',
+									items: [
+										{ label: 'Contributing to paiOS', link: '/guides/contributing/' },
+										{ label: 'Contribution Workflow', link: '/guides/contributing/workflow/' },
+										{ label: 'Development Standards', link: '/guides/contributing/standards/' },
+										{ label: 'Documentation Guide', link: '/guides/contributing/documentation/' },
+										{ label: 'Documentation Maintenance', link: '/guides/contributing/docs-maintenance/' },
+										{ label: 'AI-Assisted Development', link: '/guides/contributing/ai-workflow/' },
+										{ label: 'Project Roles & Maintainers', link: '/guides/contributing/maintainers/' },
+										{ label: 'Developer Certificate of Origin (DCO)', link: '/guides/contributing/dco/' },
+									],
+								},
 					],
 				},
 				{
@@ -51,7 +58,19 @@ pageview({ route: computeRoute(path, {}), path });`,
 				},
 				{
 					label: 'Reference',
-					autogenerate: { directory: 'reference' },
+					items: [
+						{ label: 'Overview', link: '/reference/' },
+						{ label: 'gRPC API', link: '/reference/api/' },
+						{
+							label: 'Rust API (Internal)',
+							autogenerate: { directory: 'reference/rust' },
+						},
+						{ 
+							label: 'Rust API (Standard rustdoc)', 
+							link: '/reference/rustdoc/engine/index',
+							attrs: { target: '_blank' }
+						},
+					],
 				},
 			],
 		}),

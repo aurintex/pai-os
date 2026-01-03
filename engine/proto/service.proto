@@ -1,0 +1,122 @@
+// NOTE: This is currently a DUMMY/EXAMPLE proto file for documentation and testing purposes.
+// The actual gRPC service definitions will be implemented in future phases.
+// This file serves as a placeholder to demonstrate the proto documentation generation workflow.
+
+syntax = "proto3";
+
+package pai.engine.v1;
+
+// EngineService provides control and monitoring capabilities for the PAI-OS Engine.
+// This service handles engine lifecycle, configuration, and status queries.
+service EngineService {
+  // StartEngine initializes and starts the PAI-OS Engine.
+  // Returns the engine status after startup.
+  rpc StartEngine(StartEngineRequest) returns (StartEngineResponse);
+
+  // StopEngine gracefully shuts down the engine.
+  // Returns confirmation when shutdown is complete.
+  rpc StopEngine(StopEngineRequest) returns (StopEngineResponse);
+
+  // GetStatus returns the current status of the engine.
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+  // UpdateConfig updates the engine configuration at runtime.
+  rpc UpdateConfig(UpdateConfigRequest) returns (UpdateConfigResponse);
+}
+
+// StartEngineRequest contains parameters for starting the engine.
+message StartEngineRequest {
+  // Optional path to configuration file.
+  // If not provided, default configuration is used.
+  string config_path = 1;
+
+  // Enable debug logging.
+  bool debug = 2;
+}
+
+// StartEngineResponse contains the result of the start operation.
+message StartEngineResponse {
+  // Indicates whether the engine started successfully.
+  bool success = 1;
+
+  // Human-readable message about the start result.
+  string message = 2;
+
+  // Engine status after startup.
+  EngineStatus status = 3;
+}
+
+// StopEngineRequest contains parameters for stopping the engine.
+message StopEngineRequest {
+  // Force immediate shutdown (default: false, graceful shutdown).
+  bool force = 1;
+}
+
+// StopEngineResponse confirms the engine has stopped.
+message StopEngineResponse {
+  // Indicates whether the engine stopped successfully.
+  bool success = 1;
+
+  // Human-readable message about the stop result.
+  string message = 2;
+}
+
+// GetStatusRequest is an empty message for status queries.
+message GetStatusRequest {
+  // No parameters needed for status query.
+}
+
+// GetStatusResponse contains the current engine status.
+message GetStatusResponse {
+  // Current engine status.
+  EngineStatus status = 1;
+}
+
+// UpdateConfigRequest contains new configuration values.
+message UpdateConfigRequest {
+  // Configuration key-value pairs.
+  map<string, string> config = 1;
+}
+
+// UpdateConfigResponse confirms the configuration update.
+message UpdateConfigResponse {
+  // Indicates whether the configuration was updated successfully.
+  bool success = 1;
+
+  // Human-readable message about the update result.
+  string message = 2;
+}
+
+// EngineStatus represents the current state of the engine.
+message EngineStatus {
+  // Current engine state.
+  EngineState state = 1;
+
+  // Uptime in seconds since engine started.
+  uint64 uptime_seconds = 2;
+
+  // Version string of the running engine.
+  string version = 3;
+
+  // Active subsystems.
+  repeated string active_subsystems = 4;
+}
+
+// EngineState represents the possible states of the engine.
+enum EngineState {
+  // Engine is not running.
+  ENGINE_STATE_UNSPECIFIED = 0;
+
+  // Engine is initializing.
+  ENGINE_STATE_INITIALIZING = 1;
+
+  // Engine is running normally.
+  ENGINE_STATE_RUNNING = 2;
+
+  // Engine is shutting down.
+  ENGINE_STATE_SHUTTING_DOWN = 3;
+
+  // Engine encountered an error.
+  ENGINE_STATE_ERROR = 4;
+}
+

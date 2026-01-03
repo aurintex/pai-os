@@ -1,0 +1,57 @@
+---
+title: Documentation Guide
+description: How we document paiOS across different layers.
+sidebar:
+  order: 4
+---
+
+In paiOS, documentation is a first-class citizen. We follow a layered approach to ensure clarity for different audiences, from end-users to core engine maintainers.
+
+## Documentation Layers
+
+We distinguish between three main layers of documentation:
+
+### 1. High-Level (Starlight Guides)
+**Audience**: End-users, contributors, and new developers.
+- **Location**: `docs/src/content/docs/guides/`
+- **Content**: Explain the "Big Picture", "Why" decisions were made, and "How-to" tutorials.
+- **Rule**: If you add a feature or change system behavior, it belongs here.
+
+### 2. Integration-Level (gRPC API Reference)
+**Audience**: App developers and system integrators.
+- **Location**: `docs/src/content/docs/reference/api.mdx` (generated from Protobuf files in `engine/proto/`).
+- **Content**: Service definitions, IPC protocols, and message formats.
+- **Rule**: If you modify `.proto` files, run `npm run gen:proto` in the `docs/` directory to regenerate the documentation.
+
+### 3. Low-Level (Internal Rust API)
+**Audience**: Engine contributors and maintainers.
+- **Location**: `engine/src/` (extracted to `docs/src/content/docs/reference/rust/`).
+- **Content**: Technical implementation details, module overviews, and internal logic.
+- **Rule**: Every module needs a `//!` header, and complex functions need `///` doc comments.
+
+## Writing Style
+
+### Explain the "Why"
+Code explains "How", but documentation must explain "Why". 
+- **Bad**: `/// This function adds two numbers.`
+- **Good**: `/// Adds the NPU buffer offset to the global memory map to ensure zero-copy inference.`
+
+### Stay Relevant
+If a feature changes, its documentation must change in the same PR. The [Definition of Done](/guides/contributing/standards/#definition-of-done-dod) requires all documentation to be synchronized.
+
+## Automated Synchronization
+
+We use automated systems to keep documentation synchronized with code:
+
+**For the Internal Rust API:**
+- Rust doc comments are automatically converted into Starlight pages.
+- Whenever you change internal logic, run `npm run build` in the `docs/` folder.
+- This ensures that both the MDX pages and the standard HTML rustdocs are up to date.
+
+**For the gRPC API:**
+- Protocol Buffer files are automatically parsed and converted to MDX documentation.
+- Whenever you modify `.proto` files, run `npm run gen:proto` in the `docs/` folder.
+- The generated documentation includes services, messages, enums, and RPC methods with their comments.
+
+For technical details on how these systems work, see the [Documentation Maintenance](/guides/contributing/docs-maintenance/) guide.
+
