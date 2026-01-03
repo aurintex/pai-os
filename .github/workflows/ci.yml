@@ -40,9 +40,11 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Run cargo-deny (License Compliance)
-        uses: EmbarkStudios/cargo-deny-action@v1
+        uses: EmbarkStudios/cargo-deny-action@v2
         with:
           manifest-path: engine/Cargo.toml
+          command: check
+          rust-version: stable
 
       - name: Format check
         working-directory: engine

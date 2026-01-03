@@ -16,8 +16,11 @@ all-features = true
 # The old keys (vulnerability, unmaintained, notice) are deprecated
 # cargo-deny v2 uses 'ignore' list instead; default behavior is to deny vulnerabilities
 yanked = "deny"
-# Ignore specific advisories by ID if needed (example format):
-# ignore = ["RUSTSEC-2020-0001"]
+# Ignore specific advisories by ID if needed:
+# yaml-rust is unmaintained but is a transitive dependency of the `config` crate
+# See: https://rustsec.org/advisories/RUSTSEC-2024-0320
+# TODO: Consider migrating from `config` to a different configuration library
+ignore = ["RUSTSEC-2024-0320"]
 
 [bans]
 # Prevent multiple versions of the same crate
@@ -56,13 +59,18 @@ allow = [
     "Zlib",
     "Unicode-DFS-2016",
     "Unicode-3.0",
-    # AGPL-3.0 itself (our project license)
-    # Note: cargo-deny uses bare GNU license IDs without -only/-or-later suffixes
+    # AGPL-3.0 itself (our project license) - both SPDX variants
     "AGPL-3.0",
-    # GPL-3.0+ is compatible with AGPL-3.0
+    "AGPL-3.0-only",
+    "AGPL-3.0-or-later",
+    # GPL-3.0+ is compatible with AGPL-3.0 - both SPDX variants
     "GPL-3.0",
-    # LGPL-3.0+ is compatible
+    "GPL-3.0-only",
+    "GPL-3.0-or-later",
+    # LGPL-3.0+ is compatible - both SPDX variants
     "LGPL-3.0",
+    "LGPL-3.0-only",
+    "LGPL-3.0-or-later",
     # MPL-2.0 is compatible (weak copyleft)
     "MPL-2.0",
 ]
@@ -70,4 +78,3 @@ allow = [
 # Exceptions for specific crates (if needed)
 # Format: { allow = ["LICENSE"], crate = "crate-name", version = "VERSION" }
 exceptions = []
-
