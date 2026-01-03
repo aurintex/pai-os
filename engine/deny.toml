@@ -13,10 +13,11 @@ all-features = true
 
 [advisories]
 # Check for security advisories
-unmaintained = "warn"
+# The old keys (vulnerability, unmaintained, notice) are deprecated
+# cargo-deny v2 uses 'ignore' list instead; default behavior is to deny vulnerabilities
 yanked = "deny"
-vulnerability = "deny"
-notice = "warn"
+# Ignore specific advisories by ID if needed (example format):
+# ignore = ["RUSTSEC-2020-0001"]
 
 [bans]
 # Prevent multiple versions of the same crate
