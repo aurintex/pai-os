@@ -441,12 +441,9 @@ For future video streams or raw sensor fusion, we plan to implement a hybrid mod
     const protoFileName = path.basename(protoFile);
     console.log(`\n📖 Processing ${protoFileName}...`);
     
-    // Derive output filename from proto filename (replace .proto with .mdx)
-    // Special case: service.proto -> api.mdx for main API documentation
-    let outputBaseName = protoFileName.replace(/\.proto$/, '.mdx');
-    if (protoFileName === 'service.proto') {
-      outputBaseName = 'api.mdx';
-    }
+    // Use consistent 'api.mdx' filename for gRPC API documentation
+    // This ensures compatibility with Starlight routing and test expectations
+    const outputBaseName = 'api.mdx';
     const outputFile = path.join(OUTPUT_DIR, outputBaseName);
     
     let protoData;
@@ -487,4 +484,3 @@ ${markdownContent}
 }
 
 main();
-

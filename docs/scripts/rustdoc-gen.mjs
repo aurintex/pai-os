@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,18 +20,34 @@ function ensureDir(dir) {
 
 function generateJson(target) {
   console.log(`🏗️ Generating INTERNAL Rustdoc JSON for ${target}...`);
-  const flag = target === 'lib' ? '--lib' : `--bin ${target}`;
-  // Added --document-private-items for full internal documentation
-  execSync(`cargo +nightly rustdoc ${flag} -- --output-format json -Z unstable-options --document-private-items`, { 
+  const args = ['+nightly', 'rustdoc'];
+  
+  if (target === 'lib') {
+    args.push('--lib');
+  } else {
+    args.push('--bin', target);
+  }
+
+  // Use a unique target directory per run to avoid filename collisions in HTML output
+  // which causes Cargo to emit loud warnings even when we only care about JSON.
+  const tempTargetDir = path.join(ENGINE_PATH, `target/doc_temp_${target.replace(/-/g, '_')}`);
+  
+  args.push('-q', '--target-dir', tempTargetDir, '--', '--output-format', 'json', '-Z', 'unstable-options', '--document-private-items');
+
+  const result = spawnSync('cargo', args, { 
     stdio: 'inherit', 
     cwd: ENGINE_PATH 
   });
-  
-  // Cargo converts hyphens to underscores in JSON filenames
-  // So 'pai-engine' becomes 'pai_engine.json' in the output
+
+  if (result.status !== 0) {
+    console.error(`❌ Error during documentation generation for ${target}`);
+    process.exit(1);
+  }
+
+  // The JSON file is always in target/doc/ (relative to the target-dir)
   const normalizedTarget = target.replace(/-/g, '_');
   const expectedJsonName = target === 'lib' ? JSON_NAME : normalizedTarget;
-  const src = path.join(ENGINE_PATH, `target/doc/${expectedJsonName}.json`);
+  const src = path.join(tempTargetDir, `doc/${expectedJsonName}.json`);
   
   // Verify the file exists before renaming
   if (!fs.existsSync(src)) {
@@ -46,8 +62,17 @@ function generateJson(target) {
     process.exit(1);
   }
   
-  const dest = path.join(ENGINE_PATH, `target/doc/${JSON_NAME}_${target.replace(/-/g, '_')}.json`);
+  const dest = path.join(ENGINE_PATH, `target/doc/rustdoc_${target.replace(/-/g, '_')}.json`);
+  if (fs.existsSync(dest)) {
+    fs.unlinkSync(dest);
+  }
   fs.renameSync(src, dest);
+
+  // Cleanup temp target directory
+  if (fs.existsSync(tempTargetDir)) {
+    fs.rmSync(tempTargetDir, { recursive: true, force: true });
+  }
+
   return dest;
 }
 
@@ -396,7 +421,7 @@ function formatType(type) {
 
 function isCargoAvailable() {
   try {
-    execSync('cargo --version', { stdio: 'pipe' });
+    spawnSync('cargo', ['--version'], { stdio: 'pipe' });
     return true;
   } catch {
     return false;

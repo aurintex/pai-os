@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "npm run gen:rustdoc && npm run gen:rustdoc:html && npm run gen:proto && astro build && npm run test:docs",
+    "build": "npm run gen:rustdoc && npm run gen:proto && astro build && npm run test:docs",
     "preview": "astro preview",
     "astro": "astro",
     "gen:rustdoc": "node scripts/rustdoc-gen.mjs",
@@ -17,6 +17,7 @@
     "@astrojs/starlight": "^0.37.1",
     "@vercel/analytics": "^1.6.1",
     "astro": "^5.6.1",
+    "mermaid": "^11.12.2",
     "sharp": "^0.34.2"
   }
 }

@@ -1,11 +1,11 @@
-//! ## PAI-OS Engine Runtime
+//! ## paiOS Engine Runtime
 //!
-//! This is the main entry point for the PAI-OS Engine daemon.
+//! This is the main entry point for the paiOS Engine daemon.
 //! It handles CLI argument parsing, logging initialization, and boots the core engine library.
 //!
 //! ## Usage
 //!
-//! ```bash frame="none"
+//! ```bash
 //! ./pai-engine --config path/to/config.toml --debug
 //! ```
 
@@ -15,7 +15,7 @@ use pai_engine::PaiEngine;
 use tracing::{error, info};
 use tracing_subscriber::FmtSubscriber;
 
-/// The command line arguments for the PAI-OS Engine.
+/// The command line arguments for the paiOS Engine.
 ///
 /// # Fields
 ///
@@ -33,7 +33,7 @@ struct Args {
     debug: bool,
 }
 
-/// The main function for the PAI-OS Engine.
+/// The main function for the paiOS Engine.
 ///
 /// # Errors
 ///
@@ -57,7 +57,7 @@ async fn main() -> Result<()> {
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     // 3. Start the Engine
-    info!("Booting PAI-OS Engine...");
+    info!("Booting paiOS Engine...");
 
     let engine = PaiEngine::new(args.config);
 

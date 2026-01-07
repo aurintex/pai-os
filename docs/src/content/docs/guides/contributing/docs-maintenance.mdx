@@ -12,19 +12,17 @@ This guide explains how the paiOS documentation system is structured and how to 
 We use a **Hybrid Documentation Strategy** for our codebase to provide the best developer experience:
 
 1.  **Native Starlight Integration**: Rustdoc JSON is converted to MDX files. This provides a consistent look and feel, native search, and integrated navigation.
-2.  **Standard rustdoc HTML**: The traditional `cargo doc` output is generated and hosted alongside Starlight. This provides the deep-dive technical details Rust developers are familiar with.
+2.  **Standard rustdoc HTML (GitHub Pages)**: The traditional `cargo doc` output is generated via GitHub Actions and hosted on GitHub Pages at `aurintex.github.io/pai-os/rustdoc/`. This provides the deep-dive technical details Rust developers are familiar with, including private/internal items.
 3.  **Protocol Buffer Documentation**: Proto files are automatically parsed and converted to MDX, providing integrated gRPC API documentation with the same look and feel as the rest of the documentation.
 
 ## Directory Structure
 
 - `docs/scripts/`: Contains the logic for generating documentation.
     - `rustdoc-gen.mjs`: Converts Rustdoc JSON (unstable) to MDX.
-    - `rustdoc-html.mjs`: Generates and copies standard HTML docs.
     - `proto-doc-gen.mjs`: Parses Protocol Buffer files and generates MDX documentation.
-- `docs/public/reference/rustdoc/html/`: Where the static rustdoc HTML files live.
+- `.github/workflows/rustdoc.yml`: GitHub Actions workflow that generates standard rustdoc HTML and deploys to GitHub Pages.
 - `docs/src/content/docs/reference/rust/`: Where the generated Rust MDX files are stored.
 - `docs/src/content/docs/reference/api.mdx`: Where the generated Protocol Buffer documentation is stored.
-- `docs/src/pages/reference/rustdoc/`: Contains the Astro redirect logic.
 
 ## Common Tasks
 
@@ -40,15 +38,17 @@ npm run build
 To run only the documentation generation:
 
 ```bash frame="none"
-# Generate Rust documentation (both MDX and HTML)
-npm run gen:rustdoc && npm run gen:rustdoc:html
+# Generate Rust MDX documentation (for Starlight integration)
+npm run gen:rustdoc
 
 # Generate Protocol Buffer documentation
 npm run gen:proto
 
-# Generate all documentation
-npm run gen:rustdoc && npm run gen:rustdoc:html && npm run gen:proto
+# Generate all local documentation
+npm run gen:rustdoc && npm run gen:proto
 ```
+
+> **Note**: Standard rustdoc HTML (with private items) is generated automatically via GitHub Actions on push to `main` and deployed to GitHub Pages. See `.github/workflows/rustdoc.yml`.
 
 ### Updating the Generation Logic
 
@@ -85,11 +85,11 @@ go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
 
 ## Routing and Redirects
 
-To provide clean URLs like `/reference/rustdoc/engine/index`, we use Astro's native redirect system in `astro.config.mjs`. 
+To provide clean URLs like `/reference/rustdoc/engine/index`, we use Astro's native redirect system in `astro.config.mjs`. These redirects point to the external GitHub Pages site where the standard rustdoc HTML is hosted.
 
 **Important**: 
-- Never place static files directly in `public/reference/rustdoc/engine/` as they will override the Astro redirect routes.
-- The actual files are stored in `public/reference/rustdoc/html/`.
+- Standard rustdoc HTML is generated via GitHub Actions and deployed to `aurintex.github.io/pai-os/rustdoc/`.
+- The redirects in `astro.config.mjs` point to this external URL.
 
 ## Preventing Regressions (AI Agents)
 

@@ -7,7 +7,7 @@
 **The Open Source OS for Personal Intelligence.**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](apps/LICENSE-MIT)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/aurintex/pai-os/ci.yml?label=build)](https://github.com/aurintex/pai-os/actions)
 [![Docs](https://img.shields.io/badge/docs-starlight-orange.svg)](https://docs.aurintex.com/)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289da?logo=discord&logoColor=white)](https://discord.gg/7uSGGpRgK)
@@ -21,7 +21,7 @@
 
 ## 🔮 The Vision
 
-**PAI** is more than just an operating system; it is the foundation for a new category of **Personal AI Hardware**.
+**paiOS** is more than just an operating system; it is the foundation for a new category of **Personal AI Hardware**.
 
 Our mission is to build a privacy-first "Second Brain" that lives with you, understands your context, and operates independently of the cloud. We believe your intelligence should belong to you-running on trusted hardware, physically under your control.
 
@@ -29,14 +29,14 @@ To achieve this, we are building a unified, modular OS that powers multiple form
 
 ## ⚡️ Form Factors
 
-PAI OS is designed to run on diverse hardware, bringing local intelligence to where you need it most.
+paiOS is designed to run on diverse hardware, bringing local intelligence to where you need it most.
 
 ### 1. PAI Accelerator (Your Local AI Server)
 *Currently in Development*
 
 A powerful USB device (based on the **Radxa Rock 5C**) that acts as a **private AI backend** for your existing tools.
 
-**The Idea:** Plug it in, and any app that supports [Ollama](https://ollama.com) (or a compatible API) can use PAI for inference. Your data stays on the device – no cloud required.
+**The Idea:** Plug it in, and any app that supports [Ollama](https://ollama.com) (or a compatible API) can use paiOS for inference. Your data stays on the device – no cloud required.
 
 **Compatible Apps (Examples):**
 *   **Coding:** VS Code (Continue, CodeGPT), Zed, Neovim
@@ -63,9 +63,9 @@ Equipped with a camera and microphone array, it passively captures context to an
 
 ---
 
-## 🆚 Why PAI?
+## 🆚 Why paiOS?
 
-| Feature | ☁️ Cloud AI (SaaS) | 🔐 PAI (Local) |
+| Feature | ☁️ Cloud AI (SaaS) | 🔐 paiOS (Local) |
 | :--- | :--- | :--- |
 | **Privacy** | Your data trains their models. | Your data never leaves the device. |
 | **Ownership** | Renting intelligence (Subscription). | Owning the intelligence (One-off). |
@@ -87,9 +87,9 @@ We are currently in **Phase 0 (Foundation)**.
 
 ---
 
-## �️ Architecture & Tech Stack
+## 🏗️ Architecture & Tech Stack
 
-PAI OS is built on a **Clean Architecture** principle to ensure that the core logic ("The Brain") is completely decoupled from the specific hardware it runs on. This allows `paiOS` to run on a USB Stick today and a Wearable tomorrow.
+paiOS is built on a **Clean Architecture** principle to ensure that the core logic ("The Brain") is completely decoupled from the specific hardware it runs on. This allows `paiOS` to run on a USB Stick today and a Wearable tomorrow.
 
 ### The Stack
 
@@ -146,4 +146,4 @@ We are building the user-centric, privacy-first alternative to Big Tech AI.
 ## 📜 License
 
 *   **Engine & OS:** [GNU AGPL v3](LICENSE) (Viral Open Source)
-*   **Apps & SDK:** [MIT](LICENSE-MIT) (Ecosystem Friendly)
+*   **Apps & SDK:** [MIT](apps/LICENSE-MIT) (Ecosystem Friendly)

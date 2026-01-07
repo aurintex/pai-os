@@ -5,6 +5,21 @@ description: System architecture and design patterns for paiOS
 
 This section covers the system architecture, design patterns, and architectural decisions for **paiOS**.
 
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="C4 Architecture" icon="diagram">
+    System Context (Level 1) and Container (Level 2) diagrams showing PAI's external relationships and internal structure.
+    
+    [View C4 Diagrams →](/architecture/c4-architecture/)
+  </Card>
+  <Card title="Layer Architecture" icon="layers">
+    Android-style layer view from Hardware to Apps, including technology stack and form factor evolution.
+    
+    [View Layer Diagrams →](/architecture/layer-architecture/)
+  </Card>
+</CardGrid>
+
 ## Clean Architecture
 
 paiOS follows **Clean Architecture** principles, ensuring testability, maintainability, and clear separation of concerns.

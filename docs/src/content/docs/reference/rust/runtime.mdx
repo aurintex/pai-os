@@ -5,13 +5,13 @@ sidebar:
   order: 2
 ---
 
-## PAI-OS Engine Runtime
- 
-This is the main entry point for the PAI-OS Engine daemon.
+## paiOS Engine Runtime
+
+This is the main entry point for the paiOS Engine daemon.
 It handles CLI argument parsing, logging initialization, and boots the core engine library.
- 
+
 ## Usage
- 
+
 ```bash frame="none"
 ./pai-engine --config path/to/config.toml --debug
 ```
@@ -24,10 +24,10 @@ It handles CLI argument parsing, logging initialization, and boots the core engi
 fn main() -> anyhow::Result<()>
 ```
 
-The main function for the PAI-OS Engine.
- 
+The main function for the paiOS Engine.
+
 #### Errors
- 
+
 This function can return the following errors:
 - `Result<()>`: A result indicating success or failure.
 - `EngineError(String)`: An error with a message.
@@ -38,10 +38,10 @@ This function can return the following errors:
 
 ### `Args`
 
-The command line arguments for the PAI-OS Engine.
- 
+The command line arguments for the paiOS Engine.
+
 #### Fields
- 
+
 - `config`: The path to the configuration file.
 - `debug`: Enable verbose logging.
 

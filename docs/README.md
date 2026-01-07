@@ -1,6 +1,6 @@
-# PAI Documentation
+# paiOS Documentation
 
-This directory contains the source for the PAI documentation site, built with [Starlight](https://starlight.astro.build/).
+This directory contains the source for the paiOS documentation site, built with [Starlight](https://starlight.astro.build/).
 
 ## Development
 

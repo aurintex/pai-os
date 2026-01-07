@@ -1,6 +1,6 @@
 //! ## pai-engine Library
 //!
-//! The core logic for the PAI-OS Engine. This library contains the main `PaiEngine` struct
+//! The core logic for the paiOS Engine. This library contains the main `PaiEngine` struct
 //! and the error handling logic. It is designed to be used by the main binary and potentially
 //! other integration tools.
 
@@ -22,7 +22,7 @@ pub enum EngineError {
     Unknown,
 }
 
-/// The main engine for PAI-OS.
+/// The main engine for paiOS.
 ///
 /// # Fields
 ///
@@ -50,7 +50,7 @@ impl PaiEngine {
     /// - `Unknown`: An unknown error occurred.
     #[instrument(skip(self))]
     pub async fn start(&self) -> Result<(), EngineError> {
-        info!("PAI-OS Engine starting...");
+        info!("paiOS Engine starting...");
 
         if let Some(path) = &self.config_path {
             info!("Loading configuration from: {}", path);
