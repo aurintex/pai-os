@@ -91,11 +91,21 @@ To provide clean URLs like `/reference/rustdoc/engine/index`, we use Astro's nat
 - Standard rustdoc HTML is generated via GitHub Actions and deployed to `aurintex.github.io/pai-os/rustdoc/`.
 - The redirects in `astro.config.mjs` point to this external URL.
 
+## CI/CD Behavior
+
+The documentation build is designed to work in different environments:
+
+- **Local Development**: Requires Rust nightly toolchain. Run `npm run gen:rustdoc` to generate MDX from rustdoc JSON.
+- **Vercel/CI**: Rustdoc generation is automatically skipped when Cargo is not available. The pre-generated MDX files in `docs/src/content/docs/reference/rust/` are used instead.
+- **GitHub Actions**: Standard rustdoc HTML is generated on push to `main` and deployed to GitHub Pages.
+
+> **For Contributors**: You only need Rust installed if you're modifying the engine crate and want to regenerate the Rust API documentation. Otherwise, the existing MDX files will be used.
+
 ## Preventing Regressions (AI Agents)
 
 When working with AI agents like Cursor or TaskMaster:
 - Ensure they are aware of the `docs-maintenance` rule set.
-- If an agent modifies the documentation structure, verify that the `npm run build` still successfully generates all formats (Rust MDX, Rust HTML, and Proto MDX).
-- Check that the `dist/` output contains both the MDX pages and the `html/` subdirectory in the correct locations.
+- If an agent modifies the documentation structure, verify that `npm run build` completes successfully.
 - Verify that `api.mdx` is generated correctly when proto files are present.
+- Standard rustdoc HTML is generated separately via GitHub Actions, not during the main build.
 

@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PACKAGE_NAME = 'pai-engine';
-const CRATE_NAME = 'engine'; 
+const CRATE_NAME = 'engine';
 const JSON_NAME = 'pai_engine';
 const OUTPUT_DIR = path.resolve(__dirname, '../src/content/docs/reference/rust');
 const ENGINE_PATH = path.resolve(__dirname, '../../engine');
@@ -21,7 +21,7 @@ function ensureDir(dir) {
 function generateJson(target) {
   console.log(`🏗️ Generating INTERNAL Rustdoc JSON for ${target}...`);
   const args = ['+nightly', 'rustdoc'];
-  
+
   if (target === 'lib') {
     args.push('--lib');
   } else {
@@ -31,12 +31,12 @@ function generateJson(target) {
   // Use a unique target directory per run to avoid filename collisions in HTML output
   // which causes Cargo to emit loud warnings even when we only care about JSON.
   const tempTargetDir = path.join(ENGINE_PATH, `target/doc_temp_${target.replace(/-/g, '_')}`);
-  
+
   args.push('-q', '--target-dir', tempTargetDir, '--', '--output-format', 'json', '-Z', 'unstable-options', '--document-private-items');
 
-  const result = spawnSync('cargo', args, { 
-    stdio: 'inherit', 
-    cwd: ENGINE_PATH 
+  const result = spawnSync('cargo', args, {
+    stdio: 'inherit',
+    cwd: ENGINE_PATH
   });
 
   if (result.status !== 0) {
@@ -48,7 +48,7 @@ function generateJson(target) {
   const normalizedTarget = target.replace(/-/g, '_');
   const expectedJsonName = target === 'lib' ? JSON_NAME : normalizedTarget;
   const src = path.join(tempTargetDir, `doc/${expectedJsonName}.json`);
-  
+
   // Verify the file exists before renaming
   if (!fs.existsSync(src)) {
     console.error(`❌ Error: Expected JSON file not found at ${src}`);
@@ -61,7 +61,7 @@ function generateJson(target) {
     }
     process.exit(1);
   }
-  
+
   const dest = path.join(ENGINE_PATH, `target/doc/rustdoc_${target.replace(/-/g, '_')}.json`);
   if (fs.existsSync(dest)) {
     fs.unlinkSync(dest);
@@ -87,7 +87,7 @@ function processJson(jsonPath, isRuntime = false) {
   const rootId = data.root;
 
   const processed = new Set();
-  
+
   function processModule(id, parentPath = []) {
     if (processed.has(id)) return;
     processed.add(id);
@@ -252,18 +252,18 @@ function formatType(type) {
   if (!type || typeof type !== 'object') {
     return '()';
   }
-  
+
   // Handle wrapped types (e.g., function output types, nested type wrappers)
   // Recursively unwrap until we find the actual type structure
   if (type.type && typeof type.type === 'object') {
     return formatType(type.type);
   }
-  
+
   // Primitive types (i32, u64, bool, etc.)
   if (type.primitive) {
     return type.primitive;
   }
-  
+
   // resolved_path is the most common way generic types are stored
   // e.g., Result<()> is stored as resolved_path with name "Result" and args
   if (type.resolved_path) {
@@ -309,7 +309,7 @@ function formatType(type) {
     }
     return name;
   }
-  
+
   // Qualified paths (e.g., std::result::Result)
   if (type.qualified_path) {
     const qpath = type.qualified_path;
@@ -347,7 +347,7 @@ function formatType(type) {
     }
     return name;
   }
-  
+
   // Function pointer types
   if (type.fn_pointer) {
     const fnPtr = type.fn_pointer;
@@ -355,41 +355,41 @@ function formatType(type) {
     const output = fnPtr.output ? ` -> ${formatType(fnPtr.output)}` : '';
     return `fn(${inputs})${output}`;
   }
-  
+
   // Raw pointer types
   if (type.raw_pointer) {
     const mut = type.raw_pointer.mutable ? 'mut' : 'const';
     return `*${mut} ${formatType(type.raw_pointer.type)}`;
   }
-  
+
   // Reference types
   if (type.borrowed_ref) {
     const lifetime = type.borrowed_ref.lifetime ? `'${type.borrowed_ref.lifetime} ` : '';
     const mut = type.borrowed_ref.mutable ? 'mut ' : '';
     return `&${lifetime}${mut}${formatType(type.borrowed_ref.type)}`;
   }
-  
+
   // Tuple types
   if (type.tuple) {
     if (Array.isArray(type.tuple) && type.tuple.length === 0) {
       return '()';
     }
-    const types = Array.isArray(type.tuple) 
+    const types = Array.isArray(type.tuple)
       ? type.tuple.map(formatType).join(', ')
       : formatType(type.tuple);
     return `(${types})`;
   }
-  
+
   // Slice types
   if (type.slice) {
     return `[${formatType(type.slice)}]`;
   }
-  
+
   // Array types
   if (type.array) {
     return `[${formatType(type.array.type)}; ${type.array.len || '?'}]`;
   }
-  
+
   // Generic types - these might be unresolved or need special handling
   if (type.generic) {
     // If it's an object with resolved_path, recurse
@@ -405,12 +405,12 @@ function formatType(type) {
       return type.generic.name;
     }
   }
-  
+
   // Never return undefined - always return a fallback string
   // Only warn for types that aren't common wrappers or empty objects
-  const hasContent = Object.keys(type).length > 0 && 
+  const hasContent = Object.keys(type).length > 0 &&
     !type.type && // Not just a wrapper
-    !type.resolved_path && 
+    !type.resolved_path &&
     !type.qualified_path &&
     !type.primitive;
   if (hasContent) {
@@ -420,12 +420,9 @@ function formatType(type) {
 }
 
 function isCargoAvailable() {
-  try {
-    spawnSync('cargo', ['--version'], { stdio: 'pipe' });
-    return true;
-  } catch {
-    return false;
-  }
+  const result = spawnSync('cargo', ['--version'], { stdio: 'pipe' });
+  // spawnSync doesn't throw when command is not found - it returns an object with error property
+  return !result.error && result.status === 0;
 }
 
 function main() {
@@ -447,7 +444,7 @@ function main() {
     ensureDir(OUTPUT_DIR);
     const libJson = generateJson('lib');
     const binJson = generateJson('pai-engine');
-    
+
     console.log('📖 Parsing JSON files...');
     processJson(libJson, false);
     processJson(binJson, true);
