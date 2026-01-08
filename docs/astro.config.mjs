@@ -6,8 +6,9 @@ import starlight from '@astrojs/starlight';
 export default defineConfig({
 	site: 'https://docs.aurintex.com', // Base URL for documentation deployment
 	redirects: {
-		'/reference/rustdoc/engine/index': '/reference/rustdoc/html/engine/index.html',
-		'/reference/rustdoc/engine': '/reference/rustdoc/html/engine/index.html',
+		// Rustdoc is now hosted on GitHub Pages (generated via .github/workflows/rustdoc.yml)
+		'/reference/rustdoc/engine/index': 'https://aurintex.github.io/pai-os/rustdoc/engine/index.html',
+		'/reference/rustdoc/engine': 'https://aurintex.github.io/pai-os/rustdoc/engine/index.html',
 	},
 	integrations: [
 		starlight({
@@ -37,19 +38,19 @@ pageview({ route: computeRoute(path, {}), path });`,
 					items: [
 						{ label: 'Getting Started', link: '/guides/getting-started/' },
 						{ label: 'Roadmap', link: '/roadmap/' },
-								{
-									label: 'Contributing',
-									items: [
-										{ label: 'Contributing to paiOS', link: '/guides/contributing/' },
-										{ label: 'Contribution Workflow', link: '/guides/contributing/workflow/' },
-										{ label: 'Development Standards', link: '/guides/contributing/standards/' },
-										{ label: 'Documentation Guide', link: '/guides/contributing/documentation/' },
-										{ label: 'Documentation Maintenance', link: '/guides/contributing/docs-maintenance/' },
-										{ label: 'AI-Assisted Development', link: '/guides/contributing/ai-workflow/' },
-										{ label: 'Project Roles & Maintainers', link: '/guides/contributing/maintainers/' },
-										{ label: 'Developer Certificate of Origin (DCO)', link: '/guides/contributing/dco/' },
-									],
-								},
+						{
+							label: 'Contributing',
+							items: [
+								{ label: 'Contributing to paiOS', link: '/guides/contributing/' },
+								{ label: 'Contribution Workflow', link: '/guides/contributing/workflow/' },
+								{ label: 'Development Standards', link: '/guides/contributing/standards/' },
+								{ label: 'Documentation Guide', link: '/guides/contributing/documentation/' },
+								{ label: 'Documentation Maintenance', link: '/guides/contributing/docs-maintenance/' },
+								{ label: 'AI-Assisted Development', link: '/guides/contributing/ai-workflow/' },
+								{ label: 'Project Roles & Maintainers', link: '/guides/contributing/maintainers/' },
+								{ label: 'Developer Certificate of Origin (DCO)', link: '/guides/contributing/dco/' },
+							],
+						},
 					],
 				},
 				{
@@ -65,10 +66,10 @@ pageview({ route: computeRoute(path, {}), path });`,
 							label: 'Rust API (Internal)',
 							autogenerate: { directory: 'reference/rust' },
 						},
-						{ 
-							label: 'Rust API (Standard rustdoc)', 
-							link: '/reference/rustdoc/engine/index',
-							attrs: { target: '_blank' }
+						{
+							label: 'Rust API (Standard rustdoc)',
+							link: 'https://aurintex.github.io/pai-os/rustdoc/engine/index.html',
+							attrs: { target: '_blank', rel: 'noopener' }
 						},
 					],
 				},

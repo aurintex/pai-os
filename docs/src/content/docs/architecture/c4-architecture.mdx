@@ -1,0 +1,324 @@
+---
+title: C4 Architecture Model
+description: System Context and Container diagrams for paiOS using the C4 model
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+This page documents the **paiOS architecture** using the [C4 model](https://c4model.com/) – a hierarchical approach to software architecture visualization.
+
+## Level 1 – System Context Diagram
+
+The highest level of abstraction shows **PAI** and its external actors.
+
+<Mermaid code={`graph TB
+    subgraph External_Actors["External Actors"]
+        User["👤 User"]
+        Developer["👩‍💻 Developer"]
+    end
+
+    subgraph External_Systems["External Systems"]
+        HostPC["💻 Host PC/Mac"]
+        OllamaApps["🔌 Ollama Apps"]
+        Store["🏪 First Party Store"]
+        CICD["⚙️ CI/CD Pipeline"]
+    end
+
+    subgraph PAI["🧠 PAI Device"]
+        PAI_SYS["paiOS"]
+    end
+
+    User -->|"Voice, HID, USB"| PAI_SYS
+    Developer -->|"pai-builder SDK"| PAI_SYS
+    PAI_SYS -->|"HID Keyboard"| HostPC
+    OllamaApps -->|"Ollama API"| PAI_SYS
+    Store -->|"Downloads"| PAI_SYS
+    CICD -->|"OS Images"| PAI_SYS`} />
+
+### Key Relationships
+
+| Actor/System | Relationship | Description |
+|--------------|--------------|-------------|
+| **User** | Voice, HID, USB | Primary interaction via speech and USB connection |
+| **Developer** | pai-builder SDK | Develops apps using the Dockerized toolchain |
+| **Host PC** | HID Keyboard | Receives transcribed text as keyboard input |
+| **Ollama Apps** | API Requests | Compatible apps send inference requests |
+| **Store** | Downloads | Distributes apps and Intelligence Packs |
+| **CI/CD** | OS Images | Builds reproducible OS images via Debos |
+
+---
+
+## Level 2 – Container Diagram
+
+Shows the main containers (deployable units) within the **PAI Device**.
+
+<Mermaid code={`graph TB
+    subgraph External["External"]
+        Host["💻 Host PC"]
+        Store["🏪 Store"]
+    end
+
+    subgraph Device["🧠 PAI Device"]
+        subgraph OS["paiOS"]
+            Systemd["systemd"]
+            RAUC["RAUC"]
+            USB["USB Gadget"]
+        end
+
+        subgraph Engine["pai-engine"]
+            Core["core/"]
+            Orchestrator["orchestrator/"]
+            RPC["rpc/"]
+        end
+
+        subgraph HAL["HAL Layer"]
+            NPU["NPU"]
+            GPU["GPU"]
+            Audio["Audio"]
+            HID["HID"]
+            Camera["Camera"]
+        end
+
+        subgraph Apps["Apps Container"]
+            RefApp["Reference App"]
+            Packs["Intelligence Packs"]
+        end
+    end
+
+    Host <-->|"USB"| USB
+    USB --> Engine
+    Systemd --> Engine
+    Apps <-->|"gRPC/UDS"| RPC
+    RPC --> Core
+    Core --> Orchestrator
+    Orchestrator --> HAL
+    Store -->|"HTTPS"| Apps`} />
+
+### Container Responsibilities
+
+| Container | Technology | Responsibility |
+|-----------|------------|----------------|
+| **paiOS** | Debian + Debos | Custom Linux OS with RAUC A/B updates |
+| **pai-engine** | Rust Daemon | Core brain: Audio, Inference, HID, SystemController |
+| **gRPC Server** | Tonic + UDS | IPC interface for Apps |
+| **HAL** | Rust + C Bindings | Hardware abstraction: NPU, GPU, Audio, Camera, LED |
+| **Apps Container** | Rust/Python | First/Third party Apps & Intelligence Packs |
+
+---
+
+## Level 3 – Component Diagram (pai-engine)
+
+Zooms into the **pai-engine** container to show its internal components following [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html).
+
+<Mermaid code={`graph TB
+    subgraph rpc_layer["rpc/ - Interface Adapter"]
+        gRPCServer["gRPC Server"]
+        ProtoConvert["Protobuf Converter"]
+        ConnMgr["Connection Manager"]
+    end
+
+    subgraph core_layer["core/ - Domain Layer"]
+        SystemCtrl["SystemController"]
+        StateMachine["State Machine"]
+        Events["Event Bus"]
+        DomainTypes["Domain Types"]
+    end
+
+    subgraph orchestrator_layer["orchestrator/ - Application Logic"]
+        InferOrch["InferenceOrchestrator"]
+        ModelLoader["Model Loader"]
+        BackendSelector["Backend Selector"]
+        Scheduler["Inference Scheduler"]
+    end
+
+    subgraph hal_layer["hal/ - Infrastructure"]
+        AudioHAL["Audio HAL"]
+        NPUHAL["NPU HAL"]
+        GPUHAL["GPU HAL"]
+        HIDHAL["HID HAL"]
+        CameraHAL["Camera HAL"]
+    end
+
+    subgraph libs_layer["libs/ - Sys-Crates"]
+        rknn_sys["rknn-sys"]
+        usb_gadget["usb-gadget"]
+    end
+
+    %% Dependency Direction: Outside-In
+    gRPCServer --> ProtoConvert
+    ProtoConvert --> SystemCtrl
+    ConnMgr --> gRPCServer
+
+    SystemCtrl --> StateMachine
+    SystemCtrl --> Events
+    StateMachine --> DomainTypes
+
+    InferOrch --> BackendSelector
+    InferOrch --> ModelLoader
+    BackendSelector --> Scheduler
+    
+    %% Orchestrator uses Core
+    InferOrch --> SystemCtrl
+    Scheduler --> Events
+
+    %% HAL implements traits from Core/Orchestrator
+    AudioHAL -.-> SystemCtrl
+    NPUHAL -.-> InferOrch
+    GPUHAL -.-> InferOrch
+    HIDHAL -.-> SystemCtrl
+    CameraHAL -.-> SystemCtrl
+
+    %% Sys-crates used by HAL
+    NPUHAL --> rknn_sys
+    HIDHAL --> usb_gadget`} />
+
+### Component Responsibilities (Clean Architecture)
+
+| Layer | Component | Responsibility |
+|-------|-----------|----------------|
+| **rpc/** | `gRPC Server` | Listens on Unix Domain Socket, handles connections |
+| **rpc/** | `Protobuf Converter` | Transforms Protobuf ↔ Domain Types |
+| **core/** | `SystemController` | Central state machine, orchestrates all subsystems |
+| **core/** | `Event Bus` | Publishes domain events (e.g., "SpeechEnd", "TranscriptReady") |
+| **core/** | `Domain Types` | Pure Rust structs, no external dependencies |
+| **orchestrator/** | `InferenceOrchestrator` | Decides NPU/GPU/CPU routing based on availability |
+| **orchestrator/** | `Backend Selector` | Probes hardware, selects optimal inference backend |
+| **orchestrator/** | `Model Loader` | Loads/converts models (ONNX → RKNN) |
+| **hal/** | `Audio HAL` | Captures audio via `cpal`, runs VAD |
+| **hal/** | `NPU HAL` | Wraps `rknn-sys`, runs Whisper on NPU |
+| **hal/** | `HID HAL` | Emulates USB keyboard via `usb-gadget` |
+| **libs/** | `rknn-sys` | Unsafe Rust bindings to Rockchip RKNN SDK |
+
+### Dependency Direction
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  External (Apps, gRPC Clients)                              │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  rpc/  (Interface Adapter)                                  │
+│  - Converts external requests to domain commands            │
+└─────────────────────────────────────────────────────────────┘
+                          │ depends on
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  core/  (Domain Layer) ◄──── THE HEART ────►               │
+│  - Pure business logic, NO external dependencies            │
+│  - SystemController, State Machine, Domain Events           │
+└─────────────────────────────────────────────────────────────┘
+                          ▲
+                          │ depends on
+┌─────────────────────────────────────────────────────────────┐
+│  orchestrator/  (Application Logic)                         │
+│  - InferenceOrchestrator, Backend Selection                 │
+│  - Uses HAL via trait interfaces                            │
+└─────────────────────────────────────────────────────────────┘
+                          │ uses traits from
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  hal/  (Infrastructure)                                     │
+│  - Implements traits defined in core/orchestrator           │
+│  - Hardware-specific code (Audio, NPU, HID, Camera)         │
+└─────────────────────────────────────────────────────────────┘
+                          │ wraps
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  libs/  (Sys-Crates)                                        │
+│  - Unsafe Rust bindings (rknn-sys, usb-gadget)              │
+│  - All `unsafe` code isolated here                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+<Aside type="note">
+**Key Insight:** The `core/` module has **zero dependencies** on other modules. This means you can test all business logic without any hardware. The `hal/` implementations are injected at runtime via trait objects.
+</Aside>
+
+---
+
+## Data Flow – Speech-to-Text Pipeline
+
+The primary use case: Voice-to-Text via USB HID.
+
+<Mermaid code={`sequenceDiagram
+    participant User as 👤 User
+    participant Mic as 🎤 Mic
+    participant HAL as HAL
+    participant Core as Core
+    participant Orch as Orchestrator
+    participant NPU as NPU
+    participant HID as HID
+    participant Host as 💻 Host
+
+    User->>Mic: Speaks
+    Mic->>HAL: Audio Stream
+    HAL->>Core: Audio Chunks
+    Core->>Core: VAD Detection
+    Core->>Orch: Audio Buffer
+    Orch->>NPU: Whisper Inference
+    NPU->>Orch: Transcription
+    Orch->>Core: Transcript
+    Core->>HID: Keystrokes
+    HID->>Host: USB HID Report
+    Host->>Host: Text appears`} />
+
+---
+
+## Inference Orchestrator – Backend Selection
+
+The `InferenceOrchestrator` dynamically routes inference to NPU, GPU, or CPU.
+
+<Mermaid code={`flowchart TD
+    Start["Inference Request"] --> CheckNPU{"NPU Available?"}
+    
+    CheckNPU -->|Yes| NPUModel{"RKNN Format?"}
+    NPUModel -->|Yes| UseNPU["🚀 Run on NPU"]
+    NPUModel -->|No| ConvertRKNN["Convert ONNX → RKNN"]
+    ConvertRKNN --> UseNPU
+    
+    CheckNPU -->|No| CheckGPU{"GPU Available?"}
+    CheckGPU -->|Yes| UseGPU["⚡ Run on GPU"]
+    CheckGPU -->|No| UseCPU["🐢 Run on CPU"]
+    
+    UseNPU --> Metrics["📊 Log Metrics"]
+    UseGPU --> Metrics
+    UseCPU --> Metrics`} />
+
+<Aside type="tip">
+The NPU is always preferred for Whisper inference due to lowest power consumption and highest throughput (6 TOPS on RK3588S2).
+</Aside>
+
+---
+
+## Security Model – Hardware Ownership
+
+The `pai-daemon` service owns all hardware resources.
+
+<Mermaid code={`graph TB
+    subgraph Privileged["pai-daemon - privileged"]
+        Daemon["pai-daemon"]
+        HW["/dev/rknpu, /dev/video0"]
+    end
+
+    subgraph Sandboxed["Apps - sandboxed"]
+        App1["App 1"]
+        App2["App 2"]
+    end
+
+    App1 -->|"gRPC/UDS"| Daemon
+    App2 -->|"gRPC/UDS"| Daemon
+    Daemon -->|"udev MODE=0600"| HW`} />
+
+<Aside type="caution">
+Apps cannot bypass the core service or access hardware directly. All hardware access goes through the Engine, ensuring only the user decides what gets recorded.
+</Aside>
+
+---
+
+## Related Documentation
+
+- [Layer Architecture](/architecture/layer-architecture/) – Android-style layer view
+- [Clean Architecture](/architecture/#clean-architecture) – Dependency direction and module roles
+- [Architecture Decision Records](/architecture/adr/) – Key architectural decisions

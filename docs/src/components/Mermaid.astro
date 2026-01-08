@@ -1,0 +1,74 @@
+---
+/**
+ * Mermaid Diagram Component
+ * 
+ * Renders Mermaid diagrams on the client side.
+ * Usage: <Mermaid code={`graph TD; A-->B`} />
+ */
+interface Props {
+  code: string;
+  id?: string;
+}
+
+const { code, id = `mermaid-${Math.random().toString(36).substr(2, 9)}` } = Astro.props;
+---
+
+<div class="mermaid-container" id={id}>
+  <pre class="mermaid">{code}</pre>
+</div>
+
+<style>
+  .mermaid-container {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+  
+  .mermaid {
+    display: flex;
+    justify-content: center;
+    background: transparent !important;
+  }
+  
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+  }
+</style>
+
+<script>
+  import mermaid from 'mermaid';
+  
+  // Initialize mermaid with dark theme support
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#00d4ff',
+      primaryTextColor: '#fff',
+      primaryBorderColor: '#00d4ff',
+      lineColor: '#00d4ff',
+      secondaryColor: '#1a1a2e',
+      tertiaryColor: '#16213e',
+      background: '#0a0a1a',
+      mainBkg: '#1a1a2e',
+      nodeBorder: '#00d4ff',
+      clusterBkg: '#16213e',
+      clusterBorder: '#00d4ff',
+      titleColor: '#fff',
+      edgeLabelBackground: 'transparent',
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'basis',
+    },
+    sequence: {
+      diagramMarginX: 10,
+      diagramMarginY: 10,
+    },
+  });
+  
+  // Re-render on page load (for Astro's view transitions)
+  document.addEventListener('astro:page-load', () => {
+    mermaid.run();
+  });
+</script>
