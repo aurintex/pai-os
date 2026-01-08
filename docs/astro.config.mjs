@@ -68,8 +68,8 @@ pageview({ route: computeRoute(path, {}), path });`,
 						},
 						{
 							label: 'Rust API (Standard rustdoc)',
-							link: '/reference/rustdoc/engine/index',
-							attrs: { target: '_blank' }
+							link: 'https://aurintex.github.io/pai-os/rustdoc/engine/index.html',
+							attrs: { target: '_blank', rel: 'noopener' }
 						},
 					],
 				},
