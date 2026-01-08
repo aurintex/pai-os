@@ -427,18 +427,21 @@ function isCargoAvailable() {
 
 function main() {
   try {
-    // Check if cargo is available (it won't be in Vercel/CI environments)
+    // In CI environments, skip rustdoc generation entirely.
+    // Pre-generated MDX files are committed to the repository.
+    // Standard rustdoc HTML is generated separately via GitHub Actions.
+    const isCI = process.env.CI || process.env.VERCEL || process.env.NETLIFY;
+    if (isCI) {
+      console.log('⚠️  CI environment detected. Skipping Rustdoc generation.');
+      console.log('   Using pre-generated MDX files from the repository.');
+      process.exit(0);
+    }
+
+    // For local development, check if cargo is available
     if (!isCargoAvailable()) {
-      const isCI = process.env.CI || process.env.VERCEL || process.env.NETLIFY;
-      if (isCI) {
-        console.log('⚠️  Cargo not available in CI environment. Skipping Rustdoc generation.');
-        console.log('   Pre-generated docs should be committed to the repository.');
-        process.exit(0); // Exit successfully - this is expected in CI
-      } else {
-        console.error('❌ Cargo is not installed or not in PATH.');
-        console.error('   Please install Rust: https://rustup.rs/');
-        process.exit(1);
-      }
+      console.error('❌ Cargo is not installed or not in PATH.');
+      console.error('   Please install Rust: https://rustup.rs/');
+      process.exit(1);
     }
 
     ensureDir(OUTPUT_DIR);
