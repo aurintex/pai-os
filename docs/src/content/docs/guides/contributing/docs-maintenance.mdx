@@ -24,6 +24,24 @@ We use a **Hybrid Documentation Strategy** for our codebase to provide the best 
 - `docs/src/content/docs/reference/rust/`: Where the generated Rust MDX files are stored.
 - `docs/src/content/docs/reference/api.mdx`: Where the generated Protocol Buffer documentation is stored.
 
+## Local Development
+
+To work on the documentation site locally:
+
+```bash frame="none"
+# Install dependencies
+npm install
+
+# Start development server (available at http://localhost:4321)
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
 ## Common Tasks
 
 ### Generating Documentation
@@ -90,6 +108,13 @@ To provide clean URLs like `/reference/rustdoc/engine/index`, we use Astro's nat
 **Important**: 
 - Standard rustdoc HTML is generated via GitHub Actions and deployed to `aurintex.github.io/pai-os/rustdoc/`.
 - The redirects in `astro.config.mjs` point to this external URL.
+
+## Deployment
+
+The documentation can be deployed to:
+
+- **GitHub Pages**: Recommended for separate hosting from the main website. Configure the repository settings to deploy from the `docs/` directory.
+- **Vercel/Netlify**: Can be integrated with the main website (aurintex.com).
 
 ## CI/CD Behavior
 

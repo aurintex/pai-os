@@ -1,21 +1,21 @@
 {
   "models": {
     "main": {
-      "provider": "anthropic",
-      "modelId": "claude-3-7-sonnet-20250219",
-      "maxTokens": 120000,
+      "provider": "google",
+      "modelId": "gemini-3-flash-preview",
+      "maxTokens": 1048576,
       "temperature": 0.2
     },
     "research": {
       "provider": "perplexity",
       "modelId": "sonar-pro",
-      "maxTokens": 8700,
+      "maxTokens": 65536,
       "temperature": 0.1
     },
     "fallback": {
-      "provider": "anthropic",
-      "modelId": "claude-3-7-sonnet-20250219",
-      "maxTokens": 120000,
+      "provider": "google",
+      "modelId": "gemini-3-flash-preview",
+      "maxTokens": 1048576,
       "temperature": 0.2
     }
   },
@@ -25,7 +25,7 @@
     "defaultNumTasks": 10,
     "defaultSubtasks": 5,
     "defaultPriority": "medium",
-    "projectName": "Taskmaster",
+    "projectName": "pai-os",
     "ollamaBaseURL": "http://localhost:11434/api",
     "bedrockBaseURL": "https://bedrock.us-east-1.amazonaws.com",
     "responseLanguage": "English",
@@ -33,8 +33,8 @@
     "enableProxy": false,
     "anonymousTelemetry": true,
     "defaultTag": "master",
-    "azureOpenaiBaseURL": "",
-    "userId": ""
+    "azureOpenaiBaseURL": "https://your-endpoint.openai.azure.com/",
+    "userId": "YOUR_USER_ID_HERE"
   },
   "claudeCode": {},
   "codexCli": {},
