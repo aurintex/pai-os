@@ -19,7 +19,7 @@ We distinguish between three main layers of documentation:
 
 ### 2. Integration-Level (gRPC API Reference)
 **Audience**: App developers and system integrators.
-- **Location**: `docs/src/content/docs/reference/api.mdx` (generated from Protobuf files in `engine/proto/`).
+- **Location**: `docs/src/content/docs/reference/api.mdx` (generated from Protobuf files in `api/grpc/`).
 - **Content**: Service definitions, IPC protocols, and message formats.
 - **Rule**: If you modify `.proto` files, run `npm run gen:proto` in the `docs/` directory to regenerate the documentation.
 
@@ -55,3 +55,45 @@ We use automated systems to keep documentation synchronized with code:
 
 For technical details on how these systems work, see the [Documentation Maintenance](/guides/contributing/docs-maintenance/) guide.
 
+## Diagram Guidelines
+
+We use two types of diagrams depending on the context:
+
+### Mermaid (Code-Based)
+
+Use Mermaid for diagrams that:
+- Are embedded in **MDX/Markdown** files
+- Represent **technical flows**, sequences, or relationships
+- Need to be **version-controlled** as text
+- Are likely to be **generated or updated by AI tools**
+
+**Usage:** Simply use a fenced code block with `mermaid` as the language:
+
+~~~markdown
+```mermaid
+flowchart LR
+    A[Component A] --> B[Component B]
+```
+~~~
+
+### Excalidraw (Visual)
+
+Use Excalidraw for diagrams that:
+- Are **high-level architecture overviews**
+- Need a **hand-drawn, friendly aesthetic**
+- Are used for **presentations** or marketing
+- Require **complex layouts** that Mermaid cannot express
+
+Store Excalidraw source files (`.excalidraw`) alongside exported PNGs in `docs/public/images/`.
+
+### Decision Guide
+
+| Use Case | Tool |
+|----------|------|
+| ADRs, technical documentation | Mermaid |
+| Architecture overviews | Excalidraw |
+| Sequence diagrams | Mermaid |
+| User-facing guides | Excalidraw (friendlier) |
+| AI-generated diagrams | Mermaid |
+
+**Rule:** The author chooses the tool – use what fits the context best. Both are acceptable as long as the source is version-controlled.

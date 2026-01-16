@@ -1,0 +1,32 @@
+paiOS - Personal AI Operating System
+Copyright (c) 2026 Aurintex
+
+This product includes software developed by Aurintex.
+
+---
+
+Licensing
+
+This project uses a "Default AGPL, with Permissive Exceptions" model:
+
+  - Default: AGPL-3.0 (see root LICENSE file)
+  - Exception: Subdirectories with their own LICENSE file (Apache-2.0)
+    - api/       → Apache-2.0 (API definitions)
+    - apps/      → Apache-2.0 (Extensions)
+
+For full licensing details, see: https://docs.aurintex.com/guides/licensing/
+
+---
+
+Trademarks
+
+"paiOS", "PAI", the paiOS logo, and the Aurintex logo are trademarks™
+of Aurintex. These trademarks are not licensed under the open-source
+licenses that apply to the code.
+
+You may not use these marks without prior written permission, except
+as required to describe the origin of the software (e.g., "Built with paiOS").
+
+---
+
+For licensing inquiries, contact: info@aurintex.com

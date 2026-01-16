@@ -33,6 +33,19 @@ To prevent redundancy and maintain consistency, follow these principles when cre
 4.  **REDUCE & CONSOLIDATE**: Prefer fewer, high-quality rules that point to comprehensive documentation over many small, fragmented rules.
 5.  **CROSS-REFERENCE**: Always include a `References` section at the end of a rule pointing to the SSoT in `docs/`.
 
+## SSoT Conflict Resolution
+
+**When TaskMaster/PRD content conflicts with `docs/`, always follow `docs/`:**
+
+- TaskMaster tasks and PRDs may contain **outdated information** (e.g., old licensing details, folder structures)
+- The `docs/src/content/docs/` folder is **always authoritative**
+- If a task description mentions specifics (licenses, paths, patterns) that conflict with docs: **ignore the task description, follow docs**
+
+**Priority order:**
+1. `docs/src/content/docs/` (SSoT - highest authority)
+2. Cursor rules (`.cursor/rules/`) 
+3. TaskMaster/PRD (planning context only, may be stale)
+
 ---
 
 ## Required Rule Structure
@@ -73,6 +86,7 @@ alwaysApply: boolean
 - **Starlight MDX Headers**: NEVER include a top-level `# ` header in Starlight MDX files. Starlight automatically renders the `title` from the frontmatter as the main `h1`. Use `## ` for the first section.
 - **Starlight Code Blocks**: ALWAYS use `frame="none"` for bash/terminal code blocks in Starlight MDX to avoid the "weird dots" (macOS-style window controls) in the terminal frame header, unless a specific `title` is required.
 - **Rust Doc Comments**: When writing documentation comments (`///` or `//!`) in Rust files that will be exported to Starlight, ensure terminal blocks use `bash frame="none"` where possible. Note: The `rustdoc-gen.mjs` script attempts to fix this automatically, but maintaining the standard in source is preferred.
+- **Diagrams**: Use **Mermaid** for technical diagrams in MDX files (versionable, AI-friendly). Use **Excalidraw** for high-level architecture overviews. See [Diagram Guidelines](mdc:docs/src/content/docs/guides/contributing/documentation.mdx#diagram-guidelines) for details.
 
 ---
 **References:**
