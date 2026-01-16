@@ -7,16 +7,44 @@ alwaysApply: true
 # Cursor Rules Management & SSoT Enforcement
 
 ## Single Source of Truth (SSoT)
-The **official documentation** located in the `docs/` folder is the absolute **Single Source of Truth** for this project. This includes coding standards, architecture, workflows, and the Definition of Done (DoD).
+The **official documentation** located in the `docs/src/content/docs/` folder is the absolute **Single Source of Truth** for this project. This includes coding standards, architecture, workflows, and the Definition of Done (DoD).
+
+## Mandatory Pre-Work: Documentation Review
+
+**Before starting any task, you MUST:**
+
+1. **Familiarize yourself with relevant documentation**: Search and read the official documentation in `docs/src/content/docs/` to understand existing patterns, standards, and decisions.
+2. **Check for existing documentation**: Before creating any new documentation file, verify if the topic is already covered in `docs/src/content/docs/`.
+3. **Respect the SSoT**: Never create documentation files outside `docs/src/content/docs/` except for:
+   - `README.md` files (project root, module directories)
+   - `SECURITY.md` (root only - required by GitHub, must link to official docs)
+   - Other GitHub-integrated files (e.g., `CONTRIBUTING.md` in root - must link to official docs)
+
+**If you find yourself about to create documentation outside `docs/src/`, STOP and:**
+- Check if it should be in `docs/src/content/docs/` instead
+- If it must exist outside (e.g., GitHub integration), make it a minimal pointer that links to the official documentation
 
 ## Principles for Rule Creation
 To prevent redundancy and maintain consistency, follow these principles when creating or updating `.mdc` files:
 
-1.  **NO REDUNDANCY**: Never duplicate information that is already defined in `docs/`. 
-2.  **REFER NOT DEFINE**: Cursor rules should act as "technical enforcers" or "pointers" to the documentation. Instead of listing rules, provide links to the relevant `.mdx` files in `docs/`.
-3.  **CHECK FIRST**: Before creating a new `.mdc` file, search the `docs/` folder to see if the topic is already covered. If it is, the rule should simply enforce those existing standards.
+1.  **NO REDUNDANCY**: Never duplicate information that is already defined in `docs/src/content/docs/`. 
+2.  **REFER NOT DEFINE**: Cursor rules should act as "technical enforcers" or "pointers" to the documentation. Instead of listing rules, provide links to the relevant `.mdx` files in `docs/src/content/docs/`.
+3.  **CHECK FIRST**: Before creating a new `.mdc` file or any documentation, search the `docs/src/content/docs/` folder to see if the topic is already covered. If it is, the rule should simply enforce those existing standards.
 4.  **REDUCE & CONSOLIDATE**: Prefer fewer, high-quality rules that point to comprehensive documentation over many small, fragmented rules.
 5.  **CROSS-REFERENCE**: Always include a `References` section at the end of a rule pointing to the SSoT in `docs/`.
+
+## SSoT Conflict Resolution
+
+**When TaskMaster/PRD content conflicts with `docs/`, always follow `docs/`:**
+
+- TaskMaster tasks and PRDs may contain **outdated information** (e.g., old licensing details, folder structures)
+- The `docs/src/content/docs/` folder is **always authoritative**
+- If a task description mentions specifics (licenses, paths, patterns) that conflict with docs: **ignore the task description, follow docs**
+
+**Priority order:**
+1. `docs/src/content/docs/` (SSoT - highest authority)
+2. Cursor rules (`.cursor/rules/`) 
+3. TaskMaster/PRD (planning context only, may be stale)
 
 ---
 
@@ -58,9 +86,11 @@ alwaysApply: boolean
 - **Starlight MDX Headers**: NEVER include a top-level `# ` header in Starlight MDX files. Starlight automatically renders the `title` from the frontmatter as the main `h1`. Use `## ` for the first section.
 - **Starlight Code Blocks**: ALWAYS use `frame="none"` for bash/terminal code blocks in Starlight MDX to avoid the "weird dots" (macOS-style window controls) in the terminal frame header, unless a specific `title` is required.
 - **Rust Doc Comments**: When writing documentation comments (`///` or `//!`) in Rust files that will be exported to Starlight, ensure terminal blocks use `bash frame="none"` where possible. Note: The `rustdoc-gen.mjs` script attempts to fix this automatically, but maintaining the standard in source is preferred.
+- **Diagrams**: Use **Mermaid** for technical diagrams in MDX files (versionable, AI-friendly). Use **Excalidraw** for high-level architecture overviews. See [Diagram Guidelines](mdc:docs/src/content/docs/guides/contributing/documentation.mdx#diagram-guidelines) for details.
 
 ---
 **References:**
 - Definition of Done Enforcer: [definition-of-done.mdc](mdc:.cursor/rules/definition-of-done.mdc)
 - Project Standards: [standards.mdx](mdc:docs/src/content/docs/guides/contributing/standards.mdx)
 - Documentation Strategy: [docs-maintenance.mdc](mdc:.cursor/rules/docs-maintenance.mdc)
+- Documentation Guide: [documentation.mdx](mdc:docs/src/content/docs/guides/contributing/documentation.mdx)

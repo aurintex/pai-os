@@ -34,8 +34,9 @@ This monorepo contains the entire **paiOS** software stack:
 | Directory | Description |
 | :--- | :--- |
 | **`engine/`** | The **paiOS Engine**. The Rust-based neural orchestrator, handling HAL, Security, and IPC. |
-| **`os/`** | **paiOS** build configurations. Reproducible embedded Linux images. |
+| **`api/`** | Public API definitions (gRPC, OpenAI-compat, Ollama-compat). |
 | **`apps/`** | Modular extensions and reference implementations for the PAI ecosystem. |
+| **`os/`** | **paiOS** build configurations. Reproducible embedded Linux images. |
 | **`docs/`** | This documentation site (built with Starlight). |
 
 ## Current Status
@@ -45,14 +46,7 @@ This monorepo contains the entire **paiOS** software stack:
 We are currently executing the **"Great Pivot"**: Transitioning from internal Proof-of-Concept to this clean, production-ready open-source architecture.
 
 *   **Architecture:** Clean Architecture (Rust) & Modular HAL
-*   **License:** Multi-license monorepo following "Open Engine, Proprietary Fuel" model:
-    *   **`os/`**: [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) (Debos recipes & RAUC configs)
-    *   **`engine/src/`**: [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) (Core engine - all Rust code)
-    *   **`engine/libs/`**: [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) (Hardware bindings - sys-crates)
-    *   **`engine/proto/`**: [MIT](https://opensource.org/licenses/MIT) (gRPC API definitions)
-    *   **`apps/`**: [MIT](https://opensource.org/licenses/MIT) (Open Source Core Apps - reference implementations)
-    *   **`hardware/`**: [CERN-OHL](https://ohwr.org/project/cernohl/wikis/Documents/CERN-OHL-version-2) (Open Hardware License - CAD & schematics)
-    *   **`docs/`**: [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) (This documentation site)
+*   **License:** See our [Licensing Guide](/guides/licensing/) for details.
 *   **Focus:** Establishing the `pai-engine` and `paiOS` build pipeline.
 
 ## Get Involved

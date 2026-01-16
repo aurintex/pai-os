@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import mermaid from 'astro-mermaid';
 
 // https://astro.build/config
 export default defineConfig({
@@ -11,6 +12,7 @@ export default defineConfig({
 		'/reference/rustdoc/engine': 'https://aurintex.github.io/pai-os/rustdoc/engine/index.html',
 	},
 	integrations: [
+		mermaid(),
 		starlight({
 			title: 'paiOS Docs',
 			customCss: [
@@ -37,6 +39,7 @@ pageview({ route: computeRoute(path, {}), path });`,
 					label: 'Guides',
 					items: [
 						{ label: 'Getting Started', link: '/guides/getting-started/' },
+						{ label: 'Licensing', link: '/guides/licensing/' },
 						{ label: 'Roadmap', link: '/roadmap/' },
 						{
 							label: 'Contributing',

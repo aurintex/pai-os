@@ -192,12 +192,12 @@ h6 {
   --sl-color-text: var(--text-main);
   --sl-color-text-accent: var(--text-heading);
   --sl-color-white: #ffffff;
-  --sl-color-gray-1: var(--text-main);
-  --sl-color-gray-2: var(--text-main);
-  --sl-color-gray-3: var(--text-main);
-  --sl-color-gray-4: var(--text-main);
-  --sl-color-gray-5: var(--text-main);
-  --sl-color-gray-6: var(--text-heading);
+  --sl-color-gray-1: #eceef2;
+  --sl-color-gray-2: #c0c2c7;
+  --sl-color-gray-3: #888b96;
+  --sl-color-gray-4: #545861;
+  --sl-color-gray-5: #252830;
+  --sl-color-gray-6: #15171c;
   
   /* Border and divider colors */
   --sl-color-hairline: var(--border-main);
@@ -226,7 +226,7 @@ html:not([data-theme]) {
 /* Ensure body uses our background */
 body {
   background-color: var(--bg-page) !important;
-  color: var(--text-main) !important;
+  color: var(--text-main);
 }
 
 /* Override Starlight headings to use our white color */
@@ -367,5 +367,28 @@ nav a:hover {
 .sl-sidebar-nav-item:hover {
   background-color: rgba(238, 70, 70, 0.1) !important;
   color: #ee4646 !important;
+}
+
+/* Fix LinkCard Hover - Ensure text is readable */
+.sl-link-card:hover {
+  background-color: var(--sl-color-gray-6) !important;
+  border-color: var(--sl-color-accent) !important;
+}
+
+.sl-link-card:hover .sl-link-card-title {
+  color: var(--sl-color-white) !important;
+}
+
+.sl-link-card:hover .sl-link-card-description {
+  color: var(--sl-color-gray-2) !important;
+}
+
+/* Fix Aside Text Colors */
+.starlight-aside {
+  color: var(--sl-color-white) !important;
+}
+
+.starlight-aside p {
+  color: inherit !important;
 }
 

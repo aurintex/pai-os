@@ -23,3 +23,11 @@ node_modules/
 
 # OS specific
 .DS_Store
+
+# Taskmaster (Local/Temporary Workflow)
+.taskmaster/tasks/
+.taskmaster/state.json
+.taskmaster/reports/
+.taskmaster/docs/
+.taskmaster/config.json
+tasks/
