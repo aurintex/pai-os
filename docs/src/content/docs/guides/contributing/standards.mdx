@@ -11,18 +11,33 @@ To keep paiOS maintainable and high-quality, we follow a set of core principles 
 
 We value code that is easy to read, test, and maintain. These principles serve as a **compass**, not a set of rigid laws.
 
+### The Pragmatic Mindset
+
 -   **KISS (Keep It Simple, Stupid)**: Avoid over-engineering. Always choose the simplest solution.
--   **80/20 Rule (Pareto Principle)**: We focus on the 20% of effort that provides 80% of the value.
--   **Pragmatic Utility**: We prioritize actual usefulness over code perfection. Ask: "Does this actually help the user?"
+-   **80/20 Rule (Pareto Principle)**: Focus on the 20% of effort that provides 80% of the value.
+-   **Pragmatic Utility**: Prioritize actual usefulness over code perfection. Ask: "Does this actually help the user?"
+-   **Low Hanging Fruits First**: Start with quick wins that deliver immediate value.
+-   **Don't Reinvent the Wheel**: Use existing, proven solutions. Only build custom when necessary.
+-   **Flexibility & Agility**: Stay adaptable. Avoid locking into rigid patterns too early.
+
+### Quality Through Early Detection
+
+-   **Shift Left**: Find and fix issues as early as possible in the development cycle.
+-   **Rule of 10**: A bug found in development costs 1x, in testing 10x, in production 100x. Invest early.
+-   **CI is the Safety Net**: Automated checks (fmt, clippy, tests) catch issues before they reach humans.
+
+### Code Quality
+
 -   **SOLID**: Ensure designs are flexible and robust.
 -   **Clean Code**: Write code for humans first. Use descriptive names and small functions.
 -   **Clean Architecture**: Maintain clear boundaries between layers (Engine, HAL, RPC). See [Architecture Documentation](/architecture/).
+
 
 ## Code Style
 
 ### General Rules
 - Follow the rules defined in `.cursorrules`.
-- Every commit MUST be signed off (`git commit -s`). See [DCO Guide](/guides/contributing/dco/).
+- Contributors must sign our CLA (one-time). See [CLA Guide](/guides/contributing/cla/).
 
 ### Rust Style
 - Use `rustfmt` and `clippy` (zero warnings target).
@@ -45,6 +60,6 @@ All changes must meet these requirements before they can be merged:
 - See the [Documentation Guide](/guides/contributing/documentation/) for details.
 
 ### 3. Compliance
-- DCO sign-off is present.
+- CLA has been signed (first-time contributors).
 - Dependencies are license-compliant (`cargo deny`).
 - No sensitive data committed.

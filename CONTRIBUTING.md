@@ -1,10 +1,10 @@
-# Contributing to PAI
+# Contributing to paiOS
 
-Thank you for your interest in contributing to **PAI (Personal AI)**!
+Thank you for your interest in contributing to **paiOS**!
 
-For complete contribution guidelines, including development setup, code style, DCO sign-off process, workflow, and more, please visit our **[Contributing Guide](https://docs.aurintex.com/guides/contributing/)**.
+For complete contribution guidelines, including development setup, code style, CLA signing process, workflow, and more, please visit our **[Contributing Guide](https://docs.aurintex.com/guides/contributing/)**.
 
-**Quick note:** All contributions require a DCO sign-off. Use `git commit -s` to automatically add it.
+**Quick note:** First-time contributors need to sign our CLA (Contributor License Agreement). The CLAassistant bot will guide you through the process on your first Pull Request.
 
 ## Getting Help
 
