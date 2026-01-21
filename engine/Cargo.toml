@@ -31,7 +31,7 @@ tracing = "0.1.44"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Configuration Management
-config = "0.13"
+config = "0.15"
 
 # CLI Argument Parsing
 clap = { version = "4.5.49", features = ["derive"] }
