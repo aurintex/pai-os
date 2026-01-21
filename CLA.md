@@ -1,6 +1,6 @@
 # aurintex Contributor License Agreement (CLA)
 
-### The "Human Readable" Summary
+## The "Human Readable" Summary
 
 *This summary is for convenience only.*
 
@@ -11,7 +11,7 @@
 
 ---
 
-### The Legal Agreement
+## The Legal Agreement
 
 Thank you for your interest in contributing to **paiOS** and other projects by **aurintex**. This agreement protects both you and the project, ensuring we can distribute your contributions legally while you retain ownership.
 

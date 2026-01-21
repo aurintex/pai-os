@@ -8,8 +8,6 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 10
-    reviewers:
-      - "aurintex"
     labels:
       - "dependencies"
       - "rust"
@@ -25,8 +23,6 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 5
-    reviewers:
-      - "aurintex"
     labels:
       - "dependencies"
       - "github-actions"
@@ -42,8 +38,6 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 5
-    reviewers:
-      - "aurintex"
     labels:
       - "dependencies"
       - "docs"
