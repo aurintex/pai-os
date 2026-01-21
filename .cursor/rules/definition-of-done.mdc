@@ -17,7 +17,7 @@ Before declaring any task as "finished" or "done", you MUST:
 
 ## Final Statement Requirement
 In your final response to the user, you MUST explicitly state:
-> "I have verified this task against the official **Definition of Done** in `standards.mdx`. Specifically, I checked: [List 2-3 key points relevant to this specific task, e.g., 'API Sync' or 'DCO Sign-off']."
+> "I have verified this task against the official **Definition of Done** in `standards.mdx`. Specifically, I checked: [List 2-3 key points relevant to this specific task, e.g., 'API Sync' or 'CLA Signed']."
 
 ---
 **References:**

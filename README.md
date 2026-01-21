@@ -2,9 +2,9 @@
 
 ![PAI Hero Banner](docs/src/assets/pai_hero_banner.png)
 
-# PAI (Personal AI)
+# paiOS (Personal AI Operating System)
 
-**The Open Source OS for Personal Intelligence.**
+**The Open Source Operating System for Personal Intelligence.**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](apps/LICENSE-MIT)
@@ -25,13 +25,13 @@
 
 Our mission is to build a privacy-first "Second Brain" that lives with you, understands your context, and operates independently of the cloud. We believe your intelligence should belong to you-running on trusted hardware, physically under your control.
 
-To achieve this, we are building a unified, modular OS that powers multiple form factors, starting with a USB Accelerator and evolving into a standalone Wearable.
+To achieve this, we are building a unified, modular OS that powers multiple form factors, starting with **paiLink** (USB AI Accelerator) and evolving into **paiGo** (standalone AI Wearable).
 
 ## ⚡️ Form Factors
 
 paiOS is designed to run on diverse hardware, bringing local intelligence to where you need it most.
 
-### 1. PAI Accelerator (Your Local AI Server)
+### 1. paiLink (Your Local AI Server)
 *Currently in Development*
 
 A powerful USB device (based on the **Radxa Rock 5C**) that acts as a **private AI backend** for your existing tools.
@@ -48,14 +48,14 @@ A powerful USB device (based on the **Radxa Rock 5C**) that acts as a **private 
 *   🔒 **Air-Gapped Privacy:** Inference happens on the USB device, never in the cloud.
 *   ⚡ **Hardware Acceleration:** NPU/GPU powered for real-time responses.
 
-### 2. PAI Companion (The Wearable)
+### 2. paiGo (The AI Wearable)
 *The North Star*
 
-The evolution of the Accelerator into a standalone, battery-powered AI wearable. It includes **all capabilities of the Accelerator** (local AI server, Ollama-compatible API) *plus* integrated sensors for contextual awareness.
+The evolution of paiLink into a standalone, battery-powered AI wearable. It includes **all capabilities of paiLink** (local AI server, Ollama-compatible API) *plus* integrated sensors for contextual awareness.
 
 Equipped with a camera and microphone array, it passively captures context to answer questions like *"Where did I leave my keys?"* or *"What was the action item from that meeting?"*.
 
-**Everything the Accelerator can do, plus:**
+**Everything paiLink can do, plus:**
 *   📷 **Vision:** Onboard camera for multimodal AI (Vision-Language models).
 *   🎙️ **Always-On Audio:** Continuous, private voice capture.
 *   🔋 **Standalone:** No phone or PC required – works independently.
@@ -80,8 +80,8 @@ Equipped with a camera and microphone array, it passively captures context to an
 We are currently in **Phase 0 (Foundation)**.
 
 *   **Phase 0: Foundation:** Groundwork, Architecture Definitions, CI/CD, and Documentation infrastructure.
-*   **Phase 1: The Accelerator:** Launching the USB Hardware in **Developer** (Radxa Rock 5C) and **Professional** (Aluminum Case) editions.
-*   **Phase 2: The Companion:** Evolution into a standalone, multimodal AI Wearable.
+*   **Phase 1: paiLink:** Launching the USB AI Accelerator in **Developer** (Radxa Rock 5C) and **Professional** (Aluminum Case) editions.
+*   **Phase 2: paiGo:** Evolution into a standalone, multimodal AI Wearable.
 
 👉 [**View Detailed Roadmap**](https://docs.aurintex.com/roadmap/)
 
@@ -89,7 +89,7 @@ We are currently in **Phase 0 (Foundation)**.
 
 ## 🏗️ Architecture & Tech Stack
 
-paiOS is built on a **Clean Architecture** principle to ensure that the core logic ("The Brain") is completely decoupled from the specific hardware it runs on. This allows `paiOS` to run on a USB Stick today and a Wearable tomorrow.
+paiOS is built on a **Clean Architecture** principle to ensure that the core logic ("The Brain") is completely decoupled from the specific hardware it runs on. This allows `paiOS` to run on paiLink today and paiGo tomorrow.
 
 ### The Stack
 
@@ -129,7 +129,7 @@ cargo test
 *Requires Linux (Debian/Ubuntu recommended)*
 ```bash
 cd os
-# Build the image (defaults to Accelerator profile)
+# Build the image (defaults to paiLink profile)
 sudo debos image.yaml
 ```
 
@@ -141,7 +141,7 @@ We are building the user-centric, privacy-first alternative to Big Tech AI.
 
 1.  Check the [Contributing Guide](CONTRIBUTING.md).
 2.  Pick an issue from [GitHub Issues](https://github.com/aurintex/pai-os/issues).
-3.  **Sign your commits** (`git commit -s`) - we use DCO.
+3.  **Sign our CLA** (one-time) - the CLAassistant bot will guide you.
 
 ## 📜 License
 

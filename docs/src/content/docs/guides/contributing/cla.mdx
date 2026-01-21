@@ -1,0 +1,57 @@
+---
+title: Contributor License Agreement (CLA)
+description: Why and how we use CLA for contributions
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+paiOS requires contributors to sign a **Contributor License Agreement (CLA)** before their first contribution can be merged.
+
+## Why CLA?
+
+We use a CLA instead of a simple sign-off (DCO) because:
+
+- **Long-term sustainability** – Grants aurintex the flexibility for future business models
+- **Legal clarity** – Clear ownership rights while you retain copyright
+- **One-time process** – Sign once, contribute forever
+
+<Aside type="tip">
+The CLA is managed via **CLAassistant** – a simple GitHub integration. You only need to sign once, and it takes less than a minute.
+</Aside>
+
+## What You Agree To
+
+By signing the CLA, you grant aurintex the right to:
+
+1. **Use your contribution** under the project's license (AGPL v3 for Engine/OS and MIT for Apps/SDK)
+2. **Relicense** the contribution if needed for project sustainability
+3. **Defend** the project's trademarks
+
+**You retain full copyright** to your contributions. The CLA is not a copyright transfer.
+
+## How to Sign
+
+1. **Create a Pull Request** – The CLAassistant bot will automatically comment
+2. **Click the link** – You'll be redirected to sign via GitHub OAuth
+3. **Sign once** – All future PRs are automatically approved
+
+```text frame="none"
+Example bot comment:
+"Thank you for your contribution! Please sign our CLA at [link]"
+```
+
+<Aside type="note">
+If you're contributing on behalf of your employer, make sure you have permission to sign the CLA on their behalf, or have them sign the Corporate CLA.
+</Aside>
+
+## For Corporate Contributors
+
+If you're contributing as part of your job, your employer may need to sign a **Corporate CLA**. Contact [info@aurintex.com](mailto:info@aurintex.com) for the corporate agreement.
+
+## Technical Background
+
+<LinkCard
+  title="ADR-001: Licensing Strategy"
+  description="Full rationale behind our CLA and dual-license approach"
+  href="/architecture/adr/001-licensing-strategy"
+/>

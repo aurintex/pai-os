@@ -36,12 +36,12 @@ We follow a **pathfinder mindset**: leave the codebase better than you found it.
 - **Incremental improvement**: Each contribution should improve the codebase, even if it's not perfect. Future iterations can refine it further.
 - **Balance quality and velocity**: Strive for quality, but recognize when "good enough" is sufficient to move forward. This aligns with clean code principles: readable, maintainable, and functional code is more valuable than theoretical perfection.
 
-## 4. Commit with Sign-off
+## 4. Commit Your Changes
 
-Every commit must include a DCO sign-off. The easiest way is to use the `-s` flag:
+Make regular commits as you work:
 
 ```bash frame="none"
-git commit -s -m "your commit message"
+git commit -m "your commit message"
 ```
 
 ### Conventional Commits (PR Titles)
@@ -58,7 +58,7 @@ To keep our changelogs automated and clean, we use the **Conventional Commits** 
 - **`refactor:`**: Code changes that don't add features or fix bugs.
 - **`chore:`**: Maintenance tasks (dependencies, build scripts).
 
-See the [DCO Guide](../dco/) for more ways to sign your commits.
+See the [CLA Guide](../cla/) for information about our Contributor License Agreement.
 
 ## 5. AI-Assisted Development
 
@@ -80,7 +80,7 @@ After pushing, go to the GitHub repository and create a **Pull Request (PR)** ta
 
 ## 7. Review and Merge
 
-1.  **CI/CD**: Wait for all automated checks to pass (Build, Lint, Tests, DCO).
+1.  **CI/CD**: Wait for all automated checks to pass (Build, Lint, Tests, CLA).
 2.  **Approval**:
     - **Contributors**: Wait for a maintainer to review and approve your PR.
     - **Maintainers**: Request a review from another maintainer. **Self-merging without approval is discouraged** except for trivial fixes.
@@ -93,4 +93,6 @@ Our review process follows the **pathfinder mindset**: we prefer approving good 
 - **Focus on improvement**: The question isn't "Is this perfect?" but rather "Is the codebase better than before?" If the answer is yes, the PR should generally be approved.
 - **Avoid perfectionism blockers**: Don't block PRs because they're not perfect. If the code is functional, tested, and improves the project, it's ready to merge.
 - **Constructive feedback**: When suggesting improvements, frame them as enhancements rather than blockers. Minor issues can be addressed in follow-up PRs.
-- **Trust and iterate**: We trust contributors to make good decisions. If something needs refinement, we can iterate on it in future contributions.This approach ensures we maintain momentum while continuously improving code quality, aligning with clean code principles of maintainability and readability over theoretical perfection.
+- **Trust and iterate**: We trust contributors to make good decisions. If something needs refinement, we can iterate on it in future contributions.
+
+This approach ensures we maintain momentum while continuously improving code quality, aligning with clean code principles of maintainability and readability over theoretical perfection.

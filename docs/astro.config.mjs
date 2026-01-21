@@ -10,6 +10,10 @@ export default defineConfig({
 		// Rustdoc is now hosted on GitHub Pages (generated via .github/workflows/rustdoc.yml)
 		'/reference/rustdoc/engine/index': 'https://aurintex.github.io/pai-os/rustdoc/engine/index.html',
 		'/reference/rustdoc/engine': 'https://aurintex.github.io/pai-os/rustdoc/engine/index.html',
+
+		// SEO: DCO to CLA migration - 301 redirect for old URLs
+		'/guides/contributing/dco': '/guides/contributing/cla/',
+		'/guides/contributing/dco/': '/guides/contributing/cla/',
 	},
 	integrations: [
 		mermaid(),
@@ -51,7 +55,7 @@ pageview({ route: computeRoute(path, {}), path });`,
 								{ label: 'Documentation Maintenance', link: '/guides/contributing/docs-maintenance/' },
 								{ label: 'AI-Assisted Development', link: '/guides/contributing/ai-workflow/' },
 								{ label: 'Project Roles & Maintainers', link: '/guides/contributing/maintainers/' },
-								{ label: 'Developer Certificate of Origin (DCO)', link: '/guides/contributing/dco/' },
+								{ label: 'Contributor License Agreement (CLA)', link: '/guides/contributing/cla/' },
 							],
 						},
 					],
