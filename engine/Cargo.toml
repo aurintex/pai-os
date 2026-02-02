@@ -34,7 +34,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 config = "0.13"
 
 # CLI Argument Parsing
-clap = { version = "4.5.49", features = ["derive"] }
+clap = { version = "4.5.56", features = ["derive"] }
 
 # Serialization & Deserialization
 serde = { version = "1.0.228", features = ["derive"] }
