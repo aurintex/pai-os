@@ -1,0 +1,15 @@
+---
+description: When creating GitHub issues or naming branches, follow the conventions defined in the Contribution Workflow.
+globs: "**/*"
+alwaysApply: true
+---
+
+# GitHub Issues and Branch Naming
+
+- **Before creating a GitHub issue** (via MCP, CLI, or when drafting content for the user): Use **Conventional Commits** format for the issue title. Read the "Conventional Commits (Issue and PR Titles)" and "Create a Branch" sections in the Workflow doc for the exact format, types (`feat`, `fix`, `docs`, etc.), and branch naming (including optional issue number).
+- **Do not duplicate** the convention here; the SSoT is the Workflow doc.
+
+---
+**References:**
+- [Contribution Workflow – Issue/PR titles and branch naming](mdc:docs/src/content/docs/guides/contributing/workflow.mdx)
+- [AGENTS.md](mdc:AGENTS.md) – Tool Usage Rules → GitHub issues

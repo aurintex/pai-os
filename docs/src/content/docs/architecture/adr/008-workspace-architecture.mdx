@@ -1,0 +1,317 @@
+---
+title: "ADR-008: Workspace Layout for Hexagonal Engine"
+description: "Cargo workspace structure choice for paiEngine: single crate vs micro-crates vs coarse-grained domain crates, and how ports, adapters, and features map onto that structure."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Status
+
+**Accepted** (2025-03-01)
+
+## Context
+
+This ADR describes **how we implement the architecture from ADR-004 in Rust** (workspace structure, domain crates, and feature flags). ADR-004 describes the paiEngine as a **Modular Monolith** using **Hexagonal Architecture** (Ports and Adapters). The current implementation and docs already assume a **Cargo workspace under `engine/`** with:
+
+- `crates/common`, `crates/core`, `crates/vision`, `crates/audio`, `crates/inference`, `crates/api`, `crates/peripherals`
+- `libs/*-sys` for unsafe FFI bindings
+- `pai-engine/` as the executable **Composition Root**
+
+Each domain crate follows a flat module layout to implement the Hexagonal Architecture. For the exact directory structure and what lives in each module (e.g., `domain/`, `ports/`, `adapters/`), see the [Engine Domains Overview](/architecture/modules/).
+
+This ADR makes the workspace layout choice explicit and compares it with the main alternatives:
+
+1. **Single crate** with only modules (no workspace)
+2. **Workspace with many micro-crates** (crate per port/adapter)
+3. **Workspace with a small number of coarse-grained domain crates** (the current direction)
+
+The decision should:
+
+- Keep the architecture **easy to understand** for contributors
+- Avoid both a **giant ball-of-mud** crate and a **micro-crate explosion**
+- Preserve the flexibility to evolve the structure as the engine grows
+
+## Decision
+
+We keep and formalize the **coarse-grained workspace** layout:
+
+- The Rust workspace root remains **`engine/`**
+- We use a **small number of domain-level crates**:
+  - `common`: shared types, logging, configuration ports/adapters
+  - `core`: orchestrator, session manager, flows, core ports
+  - `vision`: vision domain, ports, and adapters
+  - `audio`: audio domain, ports, and adapters
+  - `inference`: inference domain, ports, and adapters
+  - `api`: API gateway, driving adapters
+  - `peripherals`: hardware peripherals (buttons, LEDs, GPIO, etc.)
+- `libs/*-sys` is reserved for **unsafe FFI-only sys-crates**
+- `pai-engine/` is the **only executable** and the only place for dependency injection
+
+Within each domain crate, we model Hexagonal Architecture using **modules**, not more crates:
+
+- **Ports** are traits in `src/ports/`
+- **Domain logic** lives in `src/domain/`
+- **Adapters** are structs and modules in `src/adapters/` that implement ports
+- **Cargo features** are used to compile adapters in or out, but **never to remove domain or port code**
+
+We explicitly **do not**:
+
+- Collapse everything into a **single crate** for the engine
+- Split every port/adapter into its own **micro-crate**
+
+### Sys-crate placement: why centralized `libs/`
+
+Rust and Cargo do **not** prescribe where *-sys crates live in a workspace; placement is a project choice. We keep *-sys crates in **`libs/`** so that: (1) all FFI and unsafe code has one designated place, (2) auditing and discovery are simple, and (3) a single *-sys crate can be reused by multiple domain crates without moving it later.
+
+**Alternative considered:** Putting the sys-crate next to the consumer (e.g. `crates/rknn-sys` as a sibling of `inference`) is valid and used elsewhere (e.g. git2-rs-style sibling layout). We prefer centralized `libs/` for a consistent rule and to avoid refactors if reuse appears later.
+
+For the current layout tree and mechanics, see [Workspace and Build](/architecture/workspace-and-build/).
+
+## Alternatives
+
+### Option A: Single crate with internal modules only
+
+**Description**
+
+- One `engine` crate (no workspace) with modules like:
+  - `engine::domain`, `engine::ports`, `engine::adapters`, `engine::api`, `engine::peripherals`, `engine::inference`, etc.
+- All code lives under a single `Cargo.toml`.
+
+**Pros**
+
+- Very simple surface: one crate, one build target.
+- No crate-level dependency graph to manage.
+- Refactors that move items between modules require no `Cargo.toml` changes.
+
+**Cons**
+
+- Easy to drift into a **ball of mud**: compiler cannot stop a “quick import” from an adapter module directly into core domain logic.
+- Harder to see which parts of the engine depend on which external libraries; all dependencies are global.
+- For a medium–large codebase, navigation and mental model degrade: “Where should this live?” becomes fuzzy.
+- All tests and builds are tied to a single crate; you lose natural per-subsystem test boundaries.
+
+**Fit for paiOS**
+
+- Violates our desire for **clear module boundaries** and **bounded contexts** between domains (`vision`, `audio`, `inference`, etc.).
+- Relies purely on social discipline and code review to keep domain and adapters separated.
+- Does not match the already-documented workspace layout in `/architecture/workspace-and-build/`.
+
+### Option B: Workspace with many micro-crates (crate per port/adapter)
+
+**Description**
+
+- The workspace root is `engine/`, but we split into many small crates, for example:
+  - `engine-core`, `engine-vision-domain`, `engine-vision-v4l2-adapter`, `engine-vision-mock-adapter`, `engine-audio-domain`, `engine-audio-alsa-adapter`, `engine-api-grpc`, `engine-api-http`, etc.
+- Each port or technology-specific adapter may become its own crate.
+
+**Pros**
+
+- Very strong, compiler-enforced boundaries: each crate has its own dependencies and visibility.
+- It is easy to see precisely which part of the system uses which external dependency.
+- Potentially useful if we wanted to **publish many reusable crates** on crates.io.
+
+**Cons**
+
+- High cognitive load: contributors must understand dozens of crates to make changes.
+- Cross-cutting refactors are noisy (many `Cargo.toml` edits, many crate versions to keep aligned).
+- In practice, many micro-crates end up tightly coupled anyway, so changes in core crates still rebuild most of the tree.
+- Overhead in tooling, CI configuration, and navigation.
+
+**Fit for paiOS**
+
+- We expect the engine to be **medium–large**, but we do **not** currently aim to publish each module as a standalone library.
+- This structure would introduce more ceremony than we need and slow down development.
+- It conflicts with our philosophy of **“working software over perfect code”** and avoiding over-engineering early.
+
+### Option C: Coarse-grained workspace with domain crates (chosen)
+
+**Description**
+
+- The workspace root is `engine/`.
+- A **small number of crates** correspond to major engine domains and cross-cutting concerns.
+- Within each crate we use `domain/`, `ports/`, and `adapters/` modules to implement Hexagonal Architecture.
+
+**Pros**
+
+- Good balance between structure and simplicity:
+  - Contributors quickly know where to look (`vision` for camera topics, `inference` for NPU/LLM topics, etc.).
+  - We retain compiler-enforced boundaries between domains and sys-crates.
+- Crates act as natural **compilation and testing units**:
+  - We can run `cargo test -p vision`, `cargo test -p audio`, etc.
+  - Many local changes are contained within a single crate.
+- Aligns with the existing documentation and diagrams, keeping the **Single Source of Truth** consistent.
+
+**Cons**
+
+- We must still guard against a “god” crate (e.g. `core`) becoming a dumping ground; its scope needs to remain clearly defined.
+- Some cross-cutting types (errors, configuration, protocol messages) require conscious decisions about which crate they live in.
+
+**Fit for paiOS**
+
+- Matches the current layout in `[Workspace and Build](/architecture/workspace-and-build/)`.
+- Provides clear **bounded contexts** per module, while still being easy to navigate.
+- Leaves room to extract additional crates later *if* a subsystem becomes clearly reusable or independently versioned.
+
+## Ports, Adapters, and Features in This Layout
+
+### What is a Port and an Adapter?
+
+In this model, Hexagonal Architecture is expressed within each domain crate. For the exact definition of what constitutes a Port and an Adapter, and how they map to the internal `src/` directory structure, see the [Engine Domains Overview](/architecture/modules/).
+
+In brief:
+- **Domain + Ports**: always compiled, no hardware dependencies.
+- **Adapters**: compiled conditionally and never define new ports for core domain logic.
+
+### Feature Flag Strategy: Capabilities and Profiles
+
+:::note
+The code blocks and configuration examples in this document are conceptual references to better show the idea. The real code and structure might differ.
+:::
+
+Cargo features flow **from the top-level executable crate down into domain crates**, and then into adapter modules. We distinguish two layers:
+
+- **Capability features**: fine-grained, technology-specific flags defined in **domain crates** (e.g. `vision_v4l2`, `vision_image`, `vision_mock`, `audio_cpal`, `infer_rknn`, `api_grpc_uds`, `periph_gpio`).
+- **Profile (meta) features**: high-level presets defined in **`pai-engine`** that enable a *set* of capabilities for a given environment (e.g. `desktop` for any developer machine, `target` for a Rockchip device).
+
+1. **Domain crate declares its own capability features** for technology-specific adapters.
+   - Example in `crates/vision/Cargo.toml`:
+     ```toml
+     [features]
+     vision_v4l2 = []
+     vision_image = []
+     vision_mock = []
+     ```
+2. **The executable crate re-exports and groups those features** into higher-level profiles.
+   - Example in `pai-engine/Cargo.toml`:
+     ```toml
+     [dependencies]
+     vision = { path = "../crates/vision", optional = true }
+
+     [features]
+     # Profile: Desktop development (the default)
+     desktop = [
+       "vision_mock",
+       # other capabilities for host development...
+     ]
+
+     # Profile: Rockchip-based target
+     target = [
+       "vision_v4l2",
+       "vision_rga",
+       # other capabilities for deployment...
+     ]
+
+     # Capability re-exports
+     vision_v4l2 = ["vision/vision_v4l2"]
+     vision_image = ["vision/vision_image"]
+     vision_mock = ["vision/vision_mock"]
+     ```
+3. **Adapter modules use `#[cfg(feature = "...")]`** to include or exclude code:
+   ```rust
+   // crates/vision/src/adapters/v4l2.rs
+   #[cfg(feature = "vision_v4l2")]
+   pub mod v4l2 {
+       use crate::ports::CameraPort;
+
+       pub struct V4L2CameraAdapter { /* ... */ }
+
+       impl CameraPort for V4L2CameraAdapter {
+           // ...
+       }
+   }
+   ```
+
+Key rules:
+
+- **Ports and domain logic are never behind features.** Features only control which adapters are built.
+- We prefer **capability-based features** (e.g. `vision_v4l2`, `infer_rknn`) over `target_arch` flags.
+- Capability features are defined **only in the crates that own the adapters**; profile features live **only in `pai-engine`**.
+- Profiles like `desktop` and `target` are treated as **build presets**: they *only* turn on sets of capabilities; they do not introduce new behavior by themselves.
+
+This pattern keeps the feature wiring explicit and flexible:
+
+- The **top-level build command** selects a profile (e.g. `cargo build` for `desktop`, or `cargo build --features target` for deployment).
+- The **`pai-engine` crate** translates that into concrete domain capabilities.
+- The **domain crates** use those capabilities to compile the right adapters while keeping the ports and domain logic always available.
+
+For CI and tests we follow the same pattern conceptually with a `test` profile (in `pai-engine`) that enables the `*_mock` capabilities across domain crates, so adapter mocks can be used consistently without inventing separate per-crate test profiles.
+
+### Composition Root: Why Here and Why Not Alternatives
+
+We keep the **Composition Root** (the single place that wires adapters into the domain) in the **`pai-engine`** binary crate, as close as possible to the entry point (`main.rs` or a `composition` module that `main` calls). This subsection records why we chose this and which alternatives we rejected.
+
+**Why a single composition root in the binary crate?**
+
+- **Core stays pure:** The [Core](/architecture/modules/core/) (Orchestrator) defines ports (traits) and receives injected implementations; it does not check features, open device nodes, or know concrete adapter types.
+- **All "dirty" init in one place:** Config loading, feature-gated adapter construction, and wiring live only in the composition root. The rest of the application receives ready-made interfaces and runs.
+- **Testability and clarity:** You can reason about "what runs in this build" by reading one place; tests or alternate binaries can use a different composition root without touching domain code.
+
+**Alternatives considered:**
+
+| Approach | Why we do not use it (for now) |
+|----------|--------------------------------|
+| **Separate composition crate** (e.g. `pai-engine-composition`) | YAGNI: we have one binary. Introduce only when multiple entry points (e.g. test binary, CLI) need shared wiring. |
+| **Builder / factory-based** | Acceptable as a refinement: the root can build a few high-level builders; builders own sub-graphs. We may adopt this if the root grows. |
+| **Service locator at entry** (container at startup, resolve once) | Extra dependency and less ideal for embedded; constructor injection in one place is sufficient. |
+| **Plugin / registry** (e.g. `inventory`, adapters self-register) | Runtime init and linker quirks; we prefer explicit `#[cfg(feature)]` and one place that lists adapters for embedded control. |
+
+**If the composition root grows:** Keep a single *logical* root in the same crate. Either move wiring into a **composition module** (e.g. `main` parses args/config, then calls `composition::run(config)`) or use **factories** for complex sub-graphs. Add a separate composition crate only when multiple executables need shared wiring (e.g. main engine + dedicated CLI). The "how" is described in [Composition Root (main.rs)](/architecture/composition-root/).
+
+## Rationale
+
+We choose the coarse-grained workspace with domain crates (Option C) for paiEngine because it best balances:
+
+- **Simplicity and DX**
+  - Contributors only need to understand a small, stable set of crates.
+  - Newcomers can quickly navigate by concern: vision, audio, inference, API, peripherals, core.
+- **Architectural enforcement**
+  - Domain crates cannot accidentally depend on each other in arbitrary ways; cross-domain coordination goes through `core`.
+  - Adapters are co-located with their domains, but kept behind features and separate modules.
+- **Flexibility to evolve**
+  - If a subsystem becomes reusable (e.g. a generic inference crate), we can split it into a separate crate later without redesigning the whole workspace.
+  - If a crate stays tiny and coupled to another, we can choose to merge them back.
+- **Alignment with existing docs**
+  - This ADR formalizes what `[Workspace and Build](/architecture/workspace-and-build/)` already describes, avoiding divergence between implementation and documentation.
+
+Alternatives were rejected because:
+
+- A **single crate** cannot provide enough structural guidance or compiler-enforced boundaries for a medium–large engine with many adapters.
+- A **micro-crate workspace** would overfit for reuse and strict isolation while slowing down day-to-day progress and raising the cognitive load for contributors.
+
+## Consequences
+
+### Positive
+
+- Clear, documented workspace structure that matches the implemented code and existing docs.
+- Contributors can reason about the system at two levels:
+  - Crate level (which domain am I in?)
+  - Module level (am I in domain, ports, or adapters?)
+- Cargo features have a well-defined flow from `pai-engine` → domain crates → adapter modules, aligning with capability-based configuration and Hexagonal Architecture.
+
+### Negative
+
+- Some cross-cutting refactors (e.g. moving a type from `vision` to `core`) will require crate boundary changes and careful dependency management.
+- We must actively maintain the responsibility boundaries of crates like `core` to keep them from absorbing unrelated concerns.
+
+### Follow-ups
+
+- Keep `[Workspace and Build](/architecture/workspace-and-build/)` as the **“how”** reference and link back to this ADR as the **“why”** for the chosen layout.
+- Revisit this ADR if:
+  - The engine’s scale or team size changes significantly (e.g. multiple teams owning different modules).
+  - We decide to publish parts of the engine as independent, reusable crates on crates.io.
+
+### Rust & Workspace Improvement Checklist
+
+Items identified during the architecture review. Not all are required for MVP; they are tracked here for contributors and future iterations.
+
+| Area | Recommendation | Priority |
+|------|---------------|----------|
+| **Error types** | Define a per-crate error enum (e.g. `VisionError`, `InferenceError`) using `thiserror`. Core defines a top-level `EngineError` that wraps domain errors. Adapters convert SDK/FFI errors into domain errors at the port boundary. | High |
+| **`#![forbid(unsafe_code)]`** | Add to all domain crates. Only sys-crates in `libs/` and adapter modules that call FFI should allow `unsafe`. | High |
+| **Panic policy** | Library crates must not panic in production paths. Use `Result` everywhere. Reserve `unwrap`/`expect` for test code or provably infallible cases (with a comment). | High |
+| **Startup/Shutdown** | Handle `SIGTERM`/`SIGINT` in `main.rs`. On signal: stop API → finish inference → release hardware → flush state → exit. Use `tokio_util::sync::CancellationToken` or channel-based notification. | High |
+| **Doc coverage** | Add `#![warn(missing_docs)]` to all domain crates. Public ports and domain types must have doc comments. | Medium |
+| **Integration tests** | Place in `tests/` per domain crate using `*_mock` features. Add one top-level integration test in `pai-engine` that wires all mocks and runs a basic flow. | Medium |
+| **Benchmarks** | Add `benches/` (using `criterion`) to `inference`, `vision`, `audio` when baselines exist. | Low |
+| **Orchestrator generics** | If generic parameter count exceeds 7–8, consider a type-family pattern or `Box<dyn Trait>` for orchestration-level ports. | Low |
+

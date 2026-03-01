@@ -31,3 +31,8 @@ node_modules/
 .taskmaster/docs/
 .taskmaster/config.json
 tasks/
+
+# Cursor hooks state (e.g. continual-learning index; machine-specific, not for repo)
+.cursor/hooks/state/
+
+tmp/

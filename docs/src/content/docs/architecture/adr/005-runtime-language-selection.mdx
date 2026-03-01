@@ -1,0 +1,73 @@
+---
+title: "ADR-005: Runtime Language Selection (Rust)"
+description: Adoption of Rust as the primary language for the paiOS Engine
+---
+
+## Status
+
+**Accepted** (2025-03-01)
+
+## Context
+
+The core component of paiOS is the **pai-engine**, a system-level daemon responsible for:
+1.  **Hardware Abstraction**: Managing access to NPU, GPU, Camera, and Microphone.
+2.  **Inference Orchestration**: Scheduling AI models on limited embedded resources (Rockchip RK3588).
+3.  **Security**: Enforcing permission boundaries between applications and hardware.
+4.  **Inter-Process Communication**: Serving requests via gRPC to extensions.
+
+We evaluated several languages for this critical component, including C++, Go, Python, and Rust. The chosen language must support:
+-   **Zero-cost abstractions** (for the HAL).
+-   **Memory safety** (to prevent segfaults in a privileged process).
+-   **High performance** (essential for maximizing inference throughput on embedded hardware).
+-   **Compile-time error detection** (catching as many bugs as possible before execution).
+-   **Rich Ecosystem** (access to existing AI, networking, and utility libraries).
+-   **High concurrency** (to handle multiple model pipelines simultaneously).
+-   **FFI capabilities** (to interface with C-based vendor SDKs like `rknn-api`).
+
+## Decision
+
+**Rust** was selected as the primary language for the paiOS Engine and core system components.
+
+This decision applies to:
+-   The core `pai-engine` daemon.
+-   [HAL](/glossary/#h) implementations.
+-   System-level CLI tools.
+
+It does *not* strictly apply to:
+-   **Extensions/Apps**: Can be written in any language (Python, Node.js, etc.) that speaks gRPC.
+-   **Scripts**: Build scripts and tooling may use Bash or Python where appropriate.
+
+## Rationale
+
+### 1. Memory Safety without Garbage Collection
+Unlike Go or Python, Rust provides memory safety without a garbage collector. This is crucial for real-time AI inference where GC pauses could cause stuttering in audio processing or latency spikes in model generation. The ownership model ensures that resources (like NPU contexts or camera buffers) are deterministically released when they go out of scope.
+
+### 2. "Fearless" Concurrency
+The `pai-engine` uses a "Mono-Daemon" architecture with dedicated threads for inference and an async runtime (Tokio) for I/O (see [ADR-004](./004-system-architecture)). Rust's `Send` and `Sync` traits ensure at compile-time that data races are impossible. This allows us to safely share immutable model weights across threads while keeping mutable state isolated.
+
+### 3. FFI and Systems Programming
+To use the Rockchip NPU, we must bind to the C-based `rknn-api` and `rga` (Raster Graphic Acceleration) libraries. Rust's `bindgen` tool makes generating these bindings automated and safe(r). The "Sys-Crate" pattern allows us to isolate all `unsafe` FFI calls in specific crates (`rknn-sys`), keeping the business logic pure and verifiable.
+
+### 4. Zero-Cost Abstractions for HAL
+We use Hexagonal Architecture with a trait-based Hardware Abstraction Layer. Rust's traits allow us to define interfaces (e.g., `InferenceEngine`) that are compiled down to static dispatch, incurring no runtime overhead compared to equivalent C++ virtual functions, while being significantly safer to refactor.
+
+### 5. Growing AI Ecosystem
+The Rust AI ecosystem is maturing rapidly with crates like:
+-   **[Candle](https://github.com/huggingface/candle) / [Burn](https://github.com/tracel-ai/burn)**: For running smaller models on GPU/CPU.
+-   **[Utoipa](https://github.com/juhaku/utoipa) / [Tonic](https://github.com/hyperium/tonic)**: For generating OpenAPI/gRPC interfaces code-first.
+-   **[Polars](https://github.com/pola-rs/polars)**: For efficient data processing if needed.
+
+## Consequences
+
+### Positive
+-   **Stability**: The compiler catches most memory and concurrency bugs before the code runs.
+-   **Performance**: Comparable to C++, essential for getting the most out of the Rockchip RK3588.
+-   **Maintainability**: Strong type system and cargo tooling make refactoring large codebases safer.
+
+### Negative
+-   **Learning Curve**: Rust is harder to learn than Python or Go, which may limit the initial pool of contributors.
+-   **Compile Times**: Rust compilation is slower, potentially affecting the "edit-compile-test" loop.
+-   **Maturity of AI Crates**: While growing, Rust's AI libraries are not yet as feature-rich or battle-tested as PyTorch/Python ecosystem (mitigated by using `llama.cpp` bindings for heavy lifting).
+
+## Related
+-   [ADR-004: Engine Architecture](./004-system-architecture): Describes the usage of Rust in the Mono-Daemon architecture.

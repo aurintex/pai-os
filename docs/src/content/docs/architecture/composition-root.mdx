@@ -1,0 +1,112 @@
+---
+title: Composition Root (main.rs)
+description: "The only place that knows which adapters exist: bootstrap, feature checks, and dependency injection for pai-engine."
+---
+
+In Hexagonal Architecture, the **Composition Root** is the single place that wires the application together. In paiOS this is **`pai-engine/src/main.rs`**. It is the **only** code that knows which adapters exist and how they are selected; the Core (Orchestrator) and all domain crates stay unaware of concrete adapter types and feature flags.
+
+## Why a dedicated Composition Root
+
+The *why* (placement in the binary crate, rejected alternatives) is in **[ADR-008: Workspace Layout](/architecture/adr/008-workspace-architecture/#composition-root-why-here-and-why-not-alternatives)**. This page covers the *what* and *how*.
+
+## Responsibility of main.rs
+
+The flow in `main.rs` is intentionally strict:
+
+1. **Load configuration**: e.g. `hardware.toml`, CLI args. No domain logic, only bootstrap.
+2. **Initialize adapters**: The only place that knows about feature flags and concrete types. Use `#[cfg(feature = "...")]` so the compiler selects the right adapter per build; avoid runtime `if/else` over adapter choice when possible.
+3. **Build the Orchestrator and inject dependencies**: Pass the adapter instances (or trait objects) into the [Orchestrator](/architecture/modules/core/#dependency-injection). Core receives only the interfaces; it never sees `V4L2CameraAdapter` or `MockCameraAdapter` by name.
+4. **Run**: Call `orchestrator.run()` (or equivalent). From here on, only domain and port code execute; no more adapter construction.
+
+So: *main.rs does init and wiring only.* It does not contain business logic or orchestration rules; those live in [Core](/architecture/modules/core/) and the domain crates.
+
+## Where main.rs lives
+
+The Composition Root is not a separate domain crate. It is the **executable** that composes the domain crates:
+
+| Location | Role |
+|----------|------|
+| **`engine/pai-engine/`** | The crate that builds the final binary. |
+| **`engine/pai-engine/src/main.rs`** | The Composition Root: entry point, config, adapter init, injection, then run. |
+
+Feature aggregation and which crates are pulled in are defined in [Workspace and Build](/architecture/workspace-and-build/) (`pai-engine/Cargo.toml`, feature flags). The **runtime** wiring (which adapter instance goes into which port) is defined in `main.rs`.
+
+### Does feature handling "reach" into domain crates?
+
+Yes, but via **Cargo**, not via main.rs. When you build `pai-engine` with a feature (e.g. `vision_v4l2`), the root `Cargo.toml` re-exports it as `vision_v4l2 = ["vision/vision_v4l2"]`. Cargo then builds the `vision` dependency with that feature enabled, so `#[cfg(feature = "vision_v4l2")]` inside the domain crate (e.g. in `adapters/mod.rs` or `adapters/v4l2.rs`) sees the feature and compiles the adapter code. Main does not need "access" into domain crates; the same feature set is applied when Cargo builds each crate. So: the **composition root** (build profile + `main.rs`) decides *which* adapters exist for a given build; each **domain crate** gates its adapter modules with `#[cfg(feature = "...")]` so only the requested adapter code is compiled. Both stay in sync because the dependency is built with the features the root enabled. See [Cargo: Dependency features](https://doc.rust-lang.org/cargo/reference/features.html#dependency-features) and [Workspace and Build](/architecture/workspace-and-build/) for the re-export pattern.
+
+## If the composition root grows
+
+Keeping a single **logical** composition root (one crate, one place that knows all adapters) does not require all code to live in one file. If `main.rs` becomes too long:
+
+- **Composition module:** Have `main.rs` only parse args, load config, and set up logging; then call `composition::run(config)` (or `compose_and_run(config)`). Move adapter construction and injection into a `composition` module in the same crate (e.g. `composition/mod.rs`, or split by domain: `composition/vision.rs`, `composition/audio.rs`). The composition root remains a single place: not literally inside `main.rs`.
+- **Factories:** For complex sub-graphs (e.g. the full vision or inference stack), the root can construct **factory** or builder types and inject those; the factory owns building its sub-graph. The root stays small and only wires a few high-level pieces.
+
+A separate composition crate only makes sense when **multiple executables** need to share the same wiring (e.g. the main engine and a dedicated CLI). Until then, keep a single composition root in `pai-engine`.
+
+## Configuration and adapter roles
+
+:::note
+The code blocks and configuration examples in this document are conceptual references to better show the idea. The real code and structure might differ.
+:::
+
+Feature flags (compile-time) determine **which adapter code exists** in the binary. Runtime configuration (`hardware.toml`) determines **which of the compiled adapters are instantiated and how they are wired**. This two-level design handles the "mute button = hardware GPIO, but feedback = desktop notification" scenario:
+
+```toml
+# hardware.toml (example: hybrid desktop + GPIO board)
+[peripherals]
+input = "gpio"              # Use GpioInputAdapter for the mute button
+feedback = "desktop_notify"  # Use DesktopNotifyAdapter for user feedback
+
+[vision.camera]
+device_path = "/dev/video0"
+format = "MJPEG"
+```
+
+The composition root reads this config and instantiates the matching adapters:
+
+```rust
+// Simplified: main.rs reads config, picks the right adapter per role
+let input_adapter = match config.peripherals.input.as_str() {
+    #[cfg(feature = "periph_gpio")]
+    "gpio" => Box::new(GpioInputAdapter::new(config.gpio_pin)?) as Box<dyn UserInteractionPort>,
+    #[cfg(feature = "periph_desktop")]
+    "desktop" => Box::new(DesktopHotkeyAdapter::new()?) as Box<dyn UserInteractionPort>,
+    other => return Err(anyhow!("unknown input adapter: {other}")),
+};
+```
+
+**Key principle:** Feature flags control what is **compiled**; config controls what is **used**. If both `periph_gpio` and `periph_desktop` are compiled (e.g. in a development build), the config selects which one to activate. In production builds, typically only one is compiled (via the profile), so the config applies only to parameters (pin numbers, device paths, thresholds).
+
+## Code sketch (pattern)
+
+Adapter selection is driven by **compile-time** features where possible, so the compiler only builds the adapters needed for the current target (e.g. desktop vs. embedded):
+
+```rust
+// engine/pai-engine/src/main.rs (conceptual)
+fn main() -> Result<()> {
+    let config = ConfigProvider::load("hardware.toml")?;
+
+    // 1. Adapters: only main knows about features and concrete types
+    #[cfg(feature = "vision_v4l2")]
+    let vision = pai_vision::adapters::v4l2::V4L2CameraAdapter::new(...)?;
+    #[cfg(feature = "vision_mock")]
+    let vision = pai_vision::adapters::mock::MockCameraAdapter::new();
+    // ... audio, inference, api, peripherals the same way
+
+    // 2. Inject into Core; Orchestrator never sees feature flags or adapter type names
+    let orchestrator = Orchestrator::new(vision, audio, inference, api, peripherals);
+
+    // 3. Run: from here only domain logic and ports
+    orchestrator.run()
+}
+```
+
+The Orchestrator (Core) receives only the trait interfaces; it does not know which concrete adapter is behind each one.
+
+## Relation to other docs
+
+- **[ADR-008: Workspace Layout](/architecture/adr/008-workspace-architecture/#composition-root-why-here-and-why-not-alternatives)**: **Why** a single composition root lives in the binary crate and why alternatives were rejected (separate composition crate, service locator, plugin/registry). Single source for the composition root rationale.
+- **[Core](/architecture/modules/core/)**: Defines the Orchestrator and the ports (traits) that main.rs injects into.
+- **[Workspace and Build](/architecture/workspace-and-build/)**: Where `pai-engine` is defined, how features are aggregated, and how the composition root crate fits in the workspace.
+- **[ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/)**: Hexagonal Architecture and the role of the Composition Root.

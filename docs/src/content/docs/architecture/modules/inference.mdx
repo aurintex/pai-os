@@ -1,0 +1,330 @@
+---
+title: "Inference Module (inference)"
+description: AI model execution, resource management, hardware acceleration, and MCP client integration for paiOS.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+The `inference` crate acts as the **"Brain"** (Driven Adapter) of the system, handling all machine learning tasks. It implements the `InferenceInterface` defined by the Core, providing a unified abstraction for heterogeneous AI backends while maintaining strict separation between "thinking" (inference) and "acting" (tool execution).
+
+## Ports & Adapters (Feature Flags)
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Adapter</th>
+      <th scope="col">Implements Port(s)</th>
+      <th scope="col">Capability Feature</th>
+      <th scope="col">Technology / Supported Models</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>VisionModelAdapter</code></td>
+      <td><a href="#inference-ports-capability-traits"><code>ObjectDetector</code></a>, <a href="#inference-ports-capability-traits"><code>VisualQA</code></a>, <a href="#inference-ports-capability-traits"><code>ImageCaptioner</code></a></td>
+      <td><code>infer_rknn</code></td>
+      <td>RKNN SDK → Rockchip NPU Vision/CNN models</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><code>LanguageModelAdapter</code></td>
+      <td><a href="#inference-ports-capability-traits"><code>LLM</code></a></td>
+      <td><code>infer_rkllm</code></td>
+      <td>RKLLM SDK → Rockchip NPU Language models (Llama, Qwen)</td>
+    </tr>
+    <tr>
+      <td><a href="#inference-ports-capability-traits"><code>LLM</code></a>, <a href="#inference-ports-capability-traits"><code>EmbeddingModel</code></a></td>
+      <td><code>infer_llamacpp_cpu</code></td>
+      <td>llama-cpp-2 → CPU-based fallback (ARM NEON)</td>
+    </tr>
+    <tr>
+      <td><a href="#inference-ports-capability-traits"><code>LLM</code></a>, <a href="#inference-ports-capability-traits"><code>EmbeddingModel</code></a></td>
+      <td><code>infer_llamacpp_vulkan</code></td>
+      <td>llama-cpp-2 → GPU-accelerated (Vulkan/CUDA)</td>
+    </tr>
+    <tr>
+      <td><code>AudioMLAdapter</code></td>
+      <td><a href="#inference-ports-capability-traits"><code>WakeWordDetector</code></a>, <a href="#inference-ports-capability-traits"><code>SpeechToText</code></a>, <a href="#inference-ports-capability-traits"><code>TextToSpeech</code></a>, <a href="#inference-ports-capability-traits"><code>VoiceActivityDetector</code></a></td>
+      <td><code>infer_sherpa</code></td>
+      <td>Sherpa-ONNX → CPU-optimized Audio ML</td>
+    </tr>
+    <tr>
+      <td><code>ToolAdapter</code></td>
+      <td><a href="#inference-ports-capability-traits"><code>ToolExecution</code></a></td>
+      <td><code>infer_mcp_client</code></td>
+      <td>mcp-rs → External action routing via JSON-RPC</td>
+    </tr>
+    <tr>
+      <td><code>MockAdapter</code></td>
+      <td><em>All Ports (Mock)</em></td>
+      <td><code>infer_mock</code></td>
+      <td>Simulated ML backend for CI/testing</td>
+    </tr>
+  </tbody>
+</table>
+
+<Aside type="note">
+The `Capability Feature` column lists features defined on the `inference` crate. Profiles in `pai-engine` (such as `desktop`, `target`, and `test`) decide which inference backends are compiled in for a given build. See the **Feature Flag Matrix** in [Workspace and Build](/architecture/workspace-and-build/#feature-flag-matrix-capabilities-vs-profiles) for a concise overview of which inference capabilities are enabled per profile.
+</Aside>
+
+## Architecture Context / Relationships
+
+The `inference` crate is the "Brain" of the system. It is a driven adapter that sits on the right side of the Hexagon. It is invoked purely by `core` to perform heavy ML tasks (STT, TTS, LLM generation, Wake Word detection). Interestingly, `inference` also implements an MCP Client adapter, meaning it can reach further out to external MCP Servers when the LLM decides to use a tool.
+
+## Crate Structure
+
+```text
+crates/inference/
+├── src/
+│   ├── domain/               # InferenceController, ResourceManager
+│   │   └── ports.rs          # Traits: `LLM`, `ObjectDetector`, `WakeWordDetector`, etc.
+│   ├── adapters/             # Concrete ML backend implementations
+│   │   ├── rknn.rs           # Rockchip NPU Vision/CNN models
+│   │   ├── rkllm.rs          # Rockchip NPU LLMs
+│   │   ├── llamacpp.rs       # CPU/GPU fallback for LLMs
+│   │   ├── sherpa.rs         # CPU-optimized Audio ML (Wake word, STT)
+│   │   └── mcp_client.rs     # External Tool Execution via MCP
+│   └── lib.rs                # Implements Core's `InferenceInterface`
+└── Cargo.toml
+```
+
+## The Inference Domain
+
+:::note
+The code blocks and configuration examples in this document are conceptual references to better show the idea. The real code and structure might differ.
+:::
+
+### InferenceController
+
+The central facade implementing `InferenceInterface`:
+
+```rust
+pub struct InferenceController {
+    resource_manager: ResourceManager,
+    adapters: InferenceAdapterRegistry,
+}
+
+impl InferenceInterface for InferenceController {
+    fn execute_llm(&self, prompt: &str, context: &InferenceContext) -> Result<LLMResponse>;
+    fn detect_wake_word(&self, audio: &[f32]) -> Result<WakeWordResult>;
+    fn transcribe(&self, audio: &[f32]) -> Result<String>;
+    // ... other inference methods
+}
+```
+
+### Inference Ports (Capability Traits)
+
+The domain defines capability traits; adapters implement one or more:
+
+| Category | Ports |
+|----------|-------|
+| **Audio** | `WakeWordDetector`, `VoiceActivityDetector`, `SpeakerDiarizer`, `SpeechToText`, `TextToSpeech` |
+| **Vision** | `ObjectDetector`, `ImageCaptioner` (multimodal), `VisualQA`, `SemanticChangeDetector` |
+| **Language** | `LLM` (text generation), `EmbeddingModel` (RAG), `FunctionCaller` (tool use / grammars) |
+| **Actions** | `ToolExecution` (MCP client for external tool calls) |
+
+## Hardware Acceleration & Adapter Split
+
+### Rockchip NPU (Separated)
+
+We **strictly split** Rockchip NPU acceleration into two adapters:
+
+| Feature | Adapter | Purpose | Models |
+|---------|---------|---------|--------|
+| `infer_rknn` | `RknnAdapter` | Vision and CNNs | Object Detection, VisualQA, Image Classification |
+| `infer_rkllm` | `RkllmAdapter` | Large Language Models | Llama, Mistral, Qwen (via `rk-llama.cpp` fork) |
+
+**Why separate:** Different C-APIs and runtimes, different load patterns and resource profiles, separate features prevent monolithic bloat.
+
+### Audio ML (Sherpa-ONNX on CPU)
+
+| Feature | Adapter | Purpose |
+|---------|---------|---------|
+| `infer_sherpa` | `SherpaAdapter` | Wake Word, STT, TTS, VAD (ONNX-based, CPU-optimized) |
+
+**Architectural decision: CPU vs. NPU for Audio:**
+- **Battery:** Wake Word runs 24/7; keeping NPU powered on drains battery. Lightweight ONNX on "LITTLE" CPU cores saves power.
+- **Compatibility:** Audio models are difficult to quantize for RKNN without accuracy loss. CPU-based ONNX guarantees high accuracy.
+- **Resource reservation:** CPU for audio reserves **100 percent of NPU** for LLMs and Vision.
+
+### Fallback: LlamaCppAdapter
+
+| Features | Adapter | Ports | Purpose |
+|----------|---------|-------|---------|
+| `infer_llamacpp_cpu`, `infer_llamacpp_vulkan` | `LlamaCppAdapter` | `LLM`, `EmbeddingModel` | Host development + fallback |
+
+Essential for development on host/desktop where no NPU exists. Supports GGUF models with grammar/function-calling.
+
+### Adapter Selection
+
+The `InferenceController` selects adapters based on:
+- **Model format** (RKNN → NPU, GGUF → LlamaCpp, ONNX → Sherpa)
+- **Hardware availability** (NPU cores, GPU memory, CPU load)
+- **Feature flags** (only enabled adapters are considered)
+- **Selection modes:** Auto (best available), Manual (user-specified), Fallback (graceful degradation: NPU → GPU → CPU)
+
+## Resource Management (Edge-AI Critical)
+
+### InferenceResourceManager
+
+**Problem:** Rockchip SoC has unified but limited RAM (8–16GB total). Loading LLM + Vision + Audio simultaneously can cause OOM crashes.
+
+**Solution:** Acts as the memory traffic controller:
+- Monitors RAM/VRAM usage
+- Dynamically unloads/swaps models using strategies: LRU, Priority-Based, or Size-Based
+- Ensures only needed models are loaded at any time
+
+**Example scenario:** User requests object detection (2GB Vision model loaded), then requests LLM query (needs 4GB). ResourceManager unloads Vision, loads LLM, executes. When Vision is needed again, it swaps back.
+
+### SharedBackendContext
+
+Prevents redundant memory. If multiple ports (e.g., `ImageCaptioner` and `VisualQA`) need the same model, it's loaded once and shared:
+
+- **Memory Efficiency**: Single model instance serves multiple ports
+- **Performance**: Shared KV cache for faster multi-turn LLM conversations
+- **Consistency**: All ports using the same model see identical behavior
+
+### InferenceConfig & ModelProvider
+
+- **InferenceConfig:** Model paths, context window sizes, temperature, hardware preferences, fallback strategies
+- **ModelProvider:** Resolves model availability: local filesystem, remote download (HuggingFace), caching, integrity validation
+
+## MCP Client and Tool Execution
+
+### Strict Separation: "Thinking" vs "Acting"
+
+The LLM **never executes tools directly**. It generates structured JSON tool-calls that are routed through the `ToolExecutionPort` to external MCP servers.
+
+**Security:** Direct execution of LLM output would expose the device to prompt injection and unpredictable behavior. The MCP Client enforces a clear security boundary and auditability.
+
+### McpClientAdapter
+
+| Feature | Adapter | Protocol |
+|---------|---------|----------|
+| `infer_mcp_client` | `McpClientAdapter` | MCP (JSON-RPC 2.0 via `mcp-rs`) |
+
+**Flow:**
+1. LLM generates structured tool-call JSON
+2. InferenceManager routes to `ToolExecutionPort` (does **not** execute)
+3. `McpClientAdapter` resolves tool → MCP server, forwards via JSON-RPC
+4. External MCP server executes, returns result
+5. Result fed back to LLM for follow-up reasoning
+
+**MCP Server Examples:** Home Assistant (smart home), SQLite Memory (long-term memory), Web Search, File System, Email.
+
+**Benefits:**
+- **Boundless capabilities** via standard MCP protocol without engine changes
+- **Lightweight core**: tool execution delegated to external systems
+- **Security**: tool calls gated by [PermissionManager](/architecture/security/) ([HITL](/glossary/#h))
+
+<Aside type="note">
+The MCP **Client** role (engine uses external tools) is separate from the MCP **Server** role (`api_mcp_server` in `api`, where external clients use the engine). See [API Module](/architecture/modules/api/).
+</Aside>
+
+## Data Flow
+
+```
+Core (SessionManager)
+    │
+    ▼
+InferenceController ──→ ResourceManager (memory check)
+    │                       │
+    ▼                       ▼
+ModelProvider ────→ SharedBackendContext
+    │                       │
+    ▼                       ▼
+Adapters:                Loaded Models:
+├── SherpaAdapter ───────→ Wake Word, STT, TTS (CPU/ONNX)
+├── RknnAdapter ─────────→ Vision models (NPU)
+├── RkllmAdapter ────────→ LLMs (NPU)
+├── LlamaCppAdapter ─────→ LLMs (CPU/GPU fallback)
+└── McpClientAdapter ────→ External MCP Servers (tool execution)
+```
+
+## Crates & Integration Reference
+
+Concrete crate usage per adapter. See [Model Integration Guide](/guides/contributing/model-integration/) for choosing the right format.
+
+:::note
+Code examples below are illustrative. The actual adapter implementations in `crates/inference/src/adapters/` are the source of truth.
+:::
+
+### ONNX — `ort` crate (`infer_sherpa` / direct)
+
+```rust
+use ort::{Session, GraphOptimizationLevel};
+
+let model = Session::builder()?
+    .with_optimization_level(GraphOptimizationLevel::Level3)?
+    .commit_from_file("model.onnx")?;
+
+let outputs = model.run(ort::inputs!["input" => input_tensor]?)?;
+```
+
+**Recommended crates:** `ort` (ONNX Runtime bindings), `silero-vad-rs` (VAD), `ten-vad-rs` (alternative VAD)
+
+### GGUF / LlamaCpp — `llama-cpp-2` crate (`infer_llamacpp_*`)
+
+```rust
+use llama_cpp_2::{model::LlamaModel, context::LlamaContext};
+
+let model = LlamaModel::load_from_file("model.gguf", LlamaParams::default())?;
+let mut ctx = model.new_context(&builder)?;
+let output = ctx.predict(prompt, &params)?;
+```
+
+**Recommended crates:** `llama-cpp-2` (LLM + embeddings), `whisper-rs` (Whisper via GGUF on CPU)
+
+### RKNN — `rknpu2` crate (`infer_rknn`)
+
+```rust
+use rknpu2::{Model, Tensor};
+
+// Model must be pre-converted to .rknn format using Rockchip RKNN Toolkit 2
+let model = Model::load("model.rknn")?;
+let output = model.inference(&input_tensor)?;
+```
+
+**Recommended crates:** `rknpu2` (Rockchip NPU bindings for CNN/Vision models)
+
+### RKLLM — `rkllm` crate (`infer_rkllm`)
+
+```rust
+// Model must be pre-converted to .rkllm format using Rockchip RKLLM Toolkit
+// Then loaded via the RkllmAdapter (wraps librkllmrt.so)
+```
+
+**Recommended crates:** `rkllm` (Rockchip NPU bindings for LLMs/Transformers via `rk-llama.cpp`)
+
+### Testing Adapters
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_model_inference() {
+        let model = load_model("test.onnx").unwrap();
+        let input = create_test_input();
+        let output = model.inference(&input).unwrap();
+        assert!(!output.is_empty());
+    }
+}
+```
+
+For benchmarking, use `std::time::Instant` around `model.inference()` calls, or `cargo bench` with the `criterion` crate.
+
+---
+
+## Related Documentation
+
+- [Model Integration Guide](/guides/contributing/model-integration/): Choosing the right model format and conversion path
+- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): High-level architecture decisions
+- [Core Module](/architecture/modules/core/): Orchestrator and InferenceInterface
+- [Vision Module](/architecture/modules/vision/): Consumes vision frames for object detection, captioning
+- [Audio Module](/architecture/modules/audio/): Provides PCM for Wake Word, STT, TTS
+- [API Module](/architecture/modules/api/): MCP Server role (engine as tool provider)
+- [Workspace and Build](/architecture/workspace-and-build/): Feature flags and build configuration
+- [Security Architecture](/architecture/security/): PermissionManager, HITL, tool execution gating

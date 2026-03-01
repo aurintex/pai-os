@@ -1,0 +1,146 @@
+/* 
+  Shared Fullscreen Modal Styles
+  Used by both ExcalidrawViewer.tsx (React) and Mermaid.astro (Astro/Vanilla)
+  Matches native <dialog> implementation style.
+*/
+
+/* The main modal container */
+.fs-modal {
+  /* Layout & Positioning */
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(95vw, 1400px) !important;
+  height: min(90vh, 900px) !important;
+  max-width: none !important;
+  max-height: none !important;
+  z-index: 1000000; /* High z-index to escape Starlight */
+  
+  /* Visuals */
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  
+  /* Flex layout for header/body */
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Open state */
+.fs-modal[open], .fs-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Backdrop */
+.fs-modal::backdrop, .fs-backdrop {
+  background: rgba(0, 0, 0, 0.85);
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+}
+
+/* Header Bar */
+.fs-modal-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  position: relative;
+  z-index: 10;
+}
+
+.fs-modal-title {
+  color: rgba(0, 0, 0, 0.8);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Close Button (Header) */
+.fs-btn-close {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 2px solid rgba(238, 70, 70, 0.6);
+  border-radius: 6px;
+  background: rgba(238, 70, 70, 0.1);
+  color: #ee4646;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: normal;
+}
+
+.fs-btn-close:hover {
+  background: rgba(238, 70, 70, 0.2);
+  border-color: rgba(238, 70, 70, 0.8);
+}
+
+/* Open Button (Trigger) */
+.fs-btn-open {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 2px solid rgba(238, 70, 70, 0.6);
+  border-radius: 6px;
+  background: rgba(238, 70, 70, 0.15);
+  color: #ee4646;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.fs-btn-open:hover {
+  background: rgba(238, 70, 70, 0.25);
+  border-color: rgba(238, 70, 70, 0.8);
+}
+
+/* Body Content Area */
+.fs-modal-body {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: #0a0a1a; /* Dark background for diagrams */
+  position: relative;
+}
+
+/* SVG specific constraints */
+.fs-modal-body svg {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Excalidraw viewer */
+.excalidraw-viewer {
+  /* Container already has position: relative from inline styles */
+}
+
+/* Wrapper for Excalidraw canvas - button overlays inside */
+.excalidraw-canvas-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}

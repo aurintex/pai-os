@@ -1,0 +1,321 @@
+---
+title: "Workspace and Build"
+description: Cargo workspace structure, feature flag conventions, default profiles, sys-crate pattern, and build configuration for paiOS.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+paiOS uses a **Cargo Workspace** with a **"Hexagonal Feature-Gated Plugin"** pattern to enforce architectural boundaries. This page documents the workspace layout, feature flag conventions, default profiles, feature aggregation, and the sys-crate pattern.
+
+## Workspace Layout
+
+The **pai-os** repository contains the full project. The Rust workspace root (where the root `Cargo.toml` and `crates/` directory live) is the **`engine/`** folder. The composition root crate is **`pai-engine`** (the final executable).
+
+```
+engine/                          # Workspace root (inside pai-os repo)
+├── Cargo.toml                   # Workspace root
+├── Cargo.lock
+│
+├── crates/                      # Hexagonal Modules (Domains + Ports + Adapters)
+│   ├── common/             # Shared types, logging, ConfigProvider
+│   ├── core/               # SessionManager, StateMachine, high-level Traits
+│   ├── vision/             # Vision Domain
+│   │   ├── Cargo.toml          # Features: vision_v4l2, vision_rga, vision_mock
+│   │   └── src/
+│   │       ├── domain/         # VisionManager, StreamProfile, FramePool
+│   │       ├── ports/          # FrameSource, ImageProcessor
+│   │       └── adapters/       # Feature-gated implementations (e.g., v4l2.rs)
+│   ├── audio/              # Audio Domain (CPAL, WebRTC)
+│   ├── inference/          # Inference Domain (RKNN, LlamaCpp, Sherpa, MCP Client)
+│   ├── api/                # API Gateway (REST, gRPC, MCP Server)
+│   └── peripherals/        # HMI, Buttons, GPIO
+│
+├── libs/                        # ONLY for pure C-FFI wrappers (sys-crates)
+│   ├── rknn-sys/               # Unsafe Rust bindings for Rockchip C-Libraries
+│   └── ...
+│
+└── pai-engine/                  # Composition Root (The Executable)
+    ├── Cargo.toml              # Pulls crates as optional dependencies
+    └── src/
+        └── main.rs             # Parses hardware.toml, instantiates adapters, injects into core
+```
+
+For details on the internal structure and layout of these domain crates (e.g., `src/domain/`, `src/ports/`, `src/adapters/`), see the [Engine Domains](/architecture/modules/) overview.
+
+### Why a Coarse-Grained Workspace (Not Single-Crate or Micro-Crates)?
+
+The workspace layout in this section follows the decision in [ADR-008: Workspace Layout for Hexagonal Engine](/architecture/adr/008-workspace-architecture/):
+
+- **Not a single crate**: a single `engine` crate would make it too easy to create a “ball of mud” where domain, ports, and adapters are mixed and boundaries rely only on social discipline.
+- **Not micro-crates**: splitting every port/adapter into separate crates would add ceremony and cognitive load without clear benefit for paiOS, which is focused on a single engine rather than a crate ecosystem.
+- **Coarse-grained domain crates**: a small number of crates (`common`, `core`, `vision`, `audio`, `inference`, `api`, `peripherals`) map directly to engine domains (domain crates) and keep Hexagonal boundaries clear while staying easy to navigate.
+
+### Key Architectural Rules
+
+| Rule | Description |
+|------|-------------|
+| **No Root Adapters** | Adapters are feature-gated modules **inside** their domain crate (e.g., `crates/vision/src/adapters/v4l2.rs`). They do NOT get their own top-level crates. |
+| **The Executable** | `pai-engine` is the **only** place for dependency injection (Composition Root). |
+| **Sys-Crates** | `libs/` is strictly for `*-sys` crates (raw, unsafe FFI bindings). Rationale: [ADR-008](/architecture/adr/008-workspace-architecture/) (why sys-crates live in `libs/`). |
+
+## Feature Flag Convention
+
+We enforce a strict **`[domain]_[technology]`** naming convention for **capability features** on domain crates, and keep **profile features** on `pai-engine` only. `[domain]` is the abbreviated domain prefix (e.g. `infer` for Inference, `periph` for Peripherals):
+
+| Kind | Pattern | Examples | Purpose |
+|------|---------|----------|---------|
+| **Capability** (domain crate) | `[domain]_[tech]` | `vision_v4l2`, `vision_image`, `infer_rknn`, `infer_llamacpp_cpu`, `api_grpc_uds`, `periph_gpio` | Isolates technology-specific adapters inside a single domain crate |
+| **Capability (mock)** (domain crate) | `[domain]_mock` | `vision_mock`, `audio_mock`, `infer_mock`, `api_mock`, `periph_mock` | Enables mock adapters for testing and CI |
+| **Profile / preset** (`pai-engine`) | free-form, but treated as a build preset | `desktop`, `target` (and future `profile_*` variants) | Groups a set of capability features for a given platform or build mode |
+
+**Rationale:**
+- **Linker safety**: Prevents linker errors on unsupported hosts by only compiling adapters for explicitly enabled capabilities.
+- **Portability**: Binary remains portable; only enabled capabilities compile, and profiles make platform selection explicit.
+- **CI/CD**: `*_mock` capabilities allow tests to run without hardware; a `test` profile aggregates these consistently.
+- **Developer experience**: Clear feature names and a small number of well-defined profiles make it obvious which adapters are active.
+
+## Why Capability-Based Features (not `target_arch`)
+
+A common mistake is checking CPU architecture to select hardware adapters:
+
+```rust
+// ❌ WRONG: aarch64 covers Rockchip RK3588, Raspberry Pi 5, AND Apple M3
+#[cfg(target_arch = "aarch64")]
+fn run_npu() { /* Rockchip code? Also true on Apple Silicon! */ }
+```
+
+paiOS takes a **capability-based** approach instead: features are named after the *hardware capability or library*, not the SoC or architecture. This solves two problems:
+
+**1. Heterogeneous SoCs:** A Rockchip RK3588 and a Raspberry Pi 5 are both `aarch64`. Only one has an RKNN NPU. The feature `infer_rknn` makes the distinction unambiguous.
+
+**2. Combo hardware:** Edge AI frequently uses modular accelerator boards (e.g. a Raspberry Pi 5 + Hailo 8L M.2 module, or a Radxa Rock 5B + Hailo breakout board). With capability-based features, this is a simple cargo invocation: no special handling needed:
+
+```bash frame="none"
+# Radxa Rock 5B + Hailo NPU via PCIe:
+cargo build --release --no-default-features \
+  --features "vision_v4l2, vision_rga, infer_hailo, infer_sherpa, periph_gpio"
+
+# Raspberry Pi 5 + Hailo 8L (no RGA, use CPU for image processing):
+cargo build --release --no-default-features \
+  --features "vision_v4l2, vision_image, infer_hailo, infer_sherpa, periph_gpio"
+```
+
+The Core (`core`) and all domain crates are **entirely unaware** of which combination is active. They only depend on well-defined port traits. The Composition Root (`main.rs`) wires the correct adapters based on `hardware.toml` at startup.
+
+**The two-level design:**
+
+| Level | Where | What |
+|-------|-------|------|
+| **Domain crate** | `vision/Cargo.toml`, `inference/Cargo.toml`, ... | Declares the fine-grained **capability** features (`vision_v4l2`, `vision_image`, `infer_rknn`, `infer_sherpa`, ...) and `*_mock` capabilities for tests |
+| **Engine aggregation (profiles)** | `pai-engine/Cargo.toml` | Re-exports those capabilities and groups them into build **profiles** (`desktop`, `target`, and future platform profiles) |
+
+### Feature Aggregation in `pai-engine`
+
+`pai-engine/Cargo.toml` aggregates features from domain crates:
+
+```toml
+[package]
+name = "pai-engine"
+
+[dependencies]
+vision = { path = "../crates/vision", optional = true }
+audio = { path = "../crates/audio", optional = true }
+inference = { path = "../crates/inference", optional = true }
+# ... etc
+
+[features]
+default = ["desktop"]
+
+# Profile: Desktop development (the default)
+desktop = [
+    "vision_mock",
+    "audio_cpal",
+    "infer_llamacpp_cpu",
+    "infer_sherpa",
+    "periph_desktop",
+    "api_grpc_uds",
+    "api_http",
+    "api_mcp_server",
+]
+
+# Profile: Target deployment (Rockchip)
+target = [
+    "vision_v4l2",
+    "vision_rga",
+    "audio_cpal",
+    "audio_webrtc",
+    "infer_rknn",
+    "infer_rkllm",
+    "infer_sherpa",
+    "infer_mcp_client",
+    "periph_gpio",
+    "periph_evdev",
+    "api_grpc_uds",
+    "api_grpc_tcp",
+    "api_http",
+    "api_mcp_server",
+    "core_sysinfo",
+]
+
+# Individual feature flags (aggregate into domain crates)
+vision_v4l2 = ["vision/vision_v4l2"]
+vision_mock = ["vision/vision_mock"]
+audio_cpal = ["audio/audio_cpal"]
+infer_rknn = ["inference/infer_rknn"]
+# ... etc
+```
+
+<Aside type="caution">
+The **`desktop` profile is the default** for development. Running `cargo build` without explicit features gives you a working engine with mock sensors, desktop hotkeys, CPU-based inference, and local API endpoints. No hardware dependencies needed.
+</Aside>
+
+## Default Features Philosophy
+
+| Principle | Description |
+|-----------|-------------|
+| **Desktop-first development** | `default = ["desktop"]` ensures `cargo build` works on any developer machine |
+| **No hardware required** | Desktop profile uses mock sensors, desktop hotkeys, CPU inference |
+| **Explicit target builds** | Rockchip-specific features require `--features target` |
+| **Additive composition** | Features are additive; enabling `target` doesn't disable `desktop` features |
+
+## Platform support
+
+paiEngine is **designed for multi-platform use** from the start. The architecture is **not limited to a single-board ARM computer**: feature-gating allows the same codebase to run on different hardware and operating systems.
+
+| Aspect | Policy |
+|--------|--------|
+| **Linux desktop** | **Supported from day one.** The default `desktop` profile lets you build and run the engine on a Linux desktop with no target hardware. This makes development and testing easy. |
+| **Deployment targets** | Currently we focus on **Rockchip-based devices** (e.g. paiBox) for deployment; the exact set of supported platforms may evolve. Feature flags keep target-specific code isolated. |
+| **Other operating systems** | **Windows, macOS, etc.:** If support is straightforward (low-hanging fruit), we will consider it. We cannot guarantee support for additional OS at the current stage. **Contributors are welcome** to add or maintain support for other platforms; we will support such efforts (review, docs, CI where feasible). |
+
+<Aside type="tip">
+If you want to contribute support for another OS or platform, open an issue or PR and we can align on scope and approach. The Hexagonal Architecture and feature-gated adapters are intended to make adding new platforms manageable.
+</Aside>
+
+## Sys-Crate Pattern
+
+All `unsafe` and FFI code lives in **sys-crates** under `libs/`. The **domain crates** never depend on them; only **adapters** (inside domain crates) do. The rationale for this layout (including why sys-crates live in `libs/`) is in [ADR-008: Workspace Layout for Hexagonal Engine](/architecture/adr/008-workspace-architecture/).
+
+```
+libs/
+├── rknn-sys/          # Rockchip NPU bindings
+└── usb-gadget/        # USB HID bindings
+
+crates/
+├── inference/
+│   └── src/
+│       ├── domain/            # No dependency on libs/
+│       ├── ports/              # Pure Rust traits
+│       └── adapters/
+│           └── rknn.rs        # Depends on rknn-sys, implements domain port
+```
+
+**Benefits:**
+- **Clear unsafe boundary**: All unsafe code isolated in `libs/`
+- **Domain testability**: Domain logic testable with mocks; no hardware dependencies
+- **Backend swappability**: Swap adapters without touching business logic
+- **Feature isolation**: Adapters are feature-gated, so sys-crates are only linked when needed
+
+<Aside type="note">
+The sys-crate pattern may evolve as the project matures. If Rust-native alternatives emerge for vendor SDKs or if the FFI surface area grows beyond what `libs/` comfortably contains, we will revisit this decision. The key invariant is: **domain code never touches unsafe or FFI directly**.
+</Aside>
+
+## Adapter Implementation Pattern
+
+Adapters are compiled conditionally inside domain crates. The **decision** which features are on is made at build time by the root (`pai-engine` profiles and feature re-exports). Cargo propagates those features to dependency crates. Domain crates do not need to "handle" feature selection; they only gate adapter code with `#[cfg(feature = "...")]` in `adapters/mod.rs` or on the adapter modules.
+
+For detailed examples and explanation of how `main.rs` and feature propagation interact, see the [Composition Root](/architecture/composition-root/#does-feature-handling-reach-into-domain-crates) documentation.
+
+This ensures heavy C-bindings are **opt-in** and only compiled when explicitly enabled. Adapters are **co-located** with their domain, making the relationship explicit and maintainable.
+
+## Feature Flag Matrix (Capabilities vs Profiles)
+
+Instead of repeating profile information on every module page, this section is the **single source of truth** for which capabilities are enabled in which profiles. Domain crate docs link back here when they describe their ports and adapters.
+
+### Profiles in `pai-engine`
+
+Current top-level profiles in `pai-engine/Cargo.toml`:
+
+| Profile feature | Intended use | Brief description |
+|-----------------|-------------|-------------------|
+| `desktop` | Developer machines (Linux desktop) | Default profile; uses mock or desktop-friendly adapters and CPU-based inference so `cargo build` works anywhere |
+| `target` | Rockchip-based deployment (e.g. Radxa Rock 5C / paiBox) | Deployment profile; enables Rockchip-specific adapters (RKNN/RKLLM, RGA, GPIO, EVDEV, etc.) |
+| `test` *(conceptual)* | CI / tests | Aggregates `*_mock` capabilities across domain crates so the engine can run without hardware (defined as needed in `pai-engine`) |
+
+> For exact profile definitions and build commands, see the `Feature Aggregation in pai-engine` snippet earlier in this page.
+
+### Capability Overview (selected examples)
+
+The following table highlights the most important capability features and which profiles enable them today. It is not an exhaustive list of every feature, but it captures the key adapters and should be kept in sync with `pai-engine/Cargo.toml`.
+
+| Capability feature | Domain crate | Adapter / Purpose | `desktop` | `target` | `test` |
+|--------------------|--------|-------------------|:---------:|:--------:|:------:|
+| `vision_mock` | `vision` | Mock camera / image processing for host development | ✅ | ✖ | ✅ |
+| `vision_v4l2` | `vision` | V4L2 camera (MIPI-CSI / USB) | ✖ | ✅ | ✖ |
+| `vision_rga` | `vision` | Rockchip RGA 2D accelerator | ✖ | ✅ | ✖ |
+| `vision_image` | `vision` | `image`-crate CPU processing | ✅ | optional / fallback | ✅ |
+| `audio_cpal` | `audio` | CPAL-based capture/playback | ✅ | ✅ | ✖ (replaced by `audio_mock`) |
+| `audio_webrtc` | `audio` | WebRTC AEC / noise suppression | ✖ | ✅ | ✖ |
+| `audio_mock` | `audio` | Simulated audio stack for CI | ✖ | ✖ | ✅ |
+| `infer_llamacpp_cpu` | `inference` | CPU LLM / embeddings (fallback) | ✅ | optional | ✖ |
+| `infer_rknn` | `inference` | Rockchip NPU vision models | ✖ | ✅ | ✖ |
+| `infer_rkllm` | `inference` | Rockchip NPU LLMs | ✖ | ✅ | ✖ |
+| `infer_sherpa` | `inference` | Audio ML (Wake Word, STT, TTS, VAD) | ✅ | ✅ | ✖ |
+| `infer_mcp_client` | `inference` | MCP client (tool execution) | ✖ | ✅ | ✖ |
+| `infer_mock` | `inference` | Simulated ML backend | ✖ | ✖ | ✅ |
+| `api_grpc_uds` | `api` | gRPC over UDS (local IPC) | ✅ | ✅ | ✖ (replaced by `api_mock`) |
+| `api_grpc_tcp` | `api` | gRPC over TCP/TLS | ✖ | ✅ | ✖ |
+| `api_http` | `api` | REST (Ollama / OpenAI compatibility) | ✅ | ✅ | ✖ |
+| `api_mcp_server` | `api` | MCP server for host integration | ✅ | ✅ | ✖ |
+| `api_mock` | `api` | Simulated API for CI | ✖ | ✖ | ✅ |
+| `periph_desktop` | `peripherals` | Desktop hotkeys / notifications | ✅ | ✖ | ✖ |
+| `periph_gpio` | `peripherals` | GPIO buttons / LEDs | ✖ | ✅ | ✖ |
+| `periph_evdev` | `peripherals` | EVDEV touch/keyboard events | ✖ | ✅ | ✖ |
+| `periph_usb_hid` | `peripherals` | USB HID keyboard emulation | ✖ | ✅ | ✖ |
+| `periph_desktop_hid` | `peripherals` | Desktop typing simulation | ✅ | ✖ | ✖ |
+| `periph_mock` | `peripherals` | Mock peripherals for CI | ✖ | ✖ | ✅ |
+
+Profiles should be interpreted as **“enable these capabilities”**; new boards or accelerator combinations are added by:
+
+1. Defining any new capabilities (only where necessary) in the relevant domain crate.
+2. Adding a new profile in `pai-engine` that lists the desired capabilities.
+3. Updating this matrix so readers can see, at a glance, which adapters each profile activates.
+
+For domain-specific details on what each adapter does, see the corresponding domain pages (Vision, Audio, Inference, API, Peripherals); for the rationale behind this structure, see [ADR-008: Workspace Layout for Hexagonal Engine](/architecture/adr/008-workspace-architecture/).
+
+## Compile-Time vs Runtime: The Golden Rule
+
+**Cargo features define the driver/capability; runtime config defines the concrete device and settings.**
+
+This distinction is critical for hardware abstraction. A USB webcam and a Rockchip MIPI CSI camera both use the V4L2 API under Linux; they share the same Cargo feature (`vision_v4l2`) and the same adapter code. The difference is only in the device path and format, which are runtime configuration:
+
+```toml
+# hardware.toml: Rockchip wearable (MIPI CSI)
+[vision.camera]
+device_path = "/dev/video11"
+format = "NV12"
+```
+
+```toml
+# hardware.toml: Developer laptop (USB webcam)
+[vision.camera]
+device_path = "/dev/video0"
+format = "MJPEG"
+```
+
+**Rule of thumb:**
+
+| Level | Controls | Examples |
+|-------|----------|---------|
+| **Compile-time** (Cargo feature) | Which driver/library is **linked** | `vision_v4l2`, `infer_rknn`, `periph_gpio`, `audio_cpal` |
+| **Runtime** (config file) | Which device, paths, and parameters are **used** | Device path, format, GPIO pin number, model file path, audio sensitivity |
+
+This means: do **not** create separate Cargo features for "USB webcam" vs "MIPI CSI"; they are the same driver (`vision_v4l2`), different config. Create a new feature only when the underlying library or FFI binding is different (e.g. `vision_v4l2` vs `vision_rga`: different C libraries).
+
+## Composition Root (`pai-engine`)
+
+The executable crate pulls in specific domain crates via feature flags and wires them in **`pai-engine/src/main.rs`**. That file is the **Composition Root**: the only place that knows which adapters exist and how they are selected (config, features). The Core (Orchestrator) receives only injected interfaces and does not know which concrete adapters are loaded.
+
+For the full responsibility of `main.rs` (config → init adapters → inject into Orchestrator → run), the pattern, and code examples, see the [Composition Root](/architecture/composition-root/) documentation.

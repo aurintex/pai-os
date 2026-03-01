@@ -1,80 +1,73 @@
 ---
 title: Architecture Overview
-description: System architecture and design patterns for paiOS
+description: "Entry point for paiOS architecture documentation: architectural decisions, domain documentation, and cross-cutting concerns."
 ---
 
-This section covers the system architecture, design patterns, and architectural decisions for **paiOS**.
+import { Aside } from '@astrojs/starlight/components';
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+## Architecture Documentation
 
-<CardGrid>
-  <Card title="C4 Architecture" icon="diagram">
-    System Context (Level 1) and Container (Level 2) diagrams showing paiOS's external relationships and internal structure.
-    
-    [View C4 Diagrams →](/architecture/c4-architecture/)
-  </Card>
-  <Card title="Layer Architecture" icon="layers">
-    Android-style layer view from Hardware to Apps, including technology stack and form factor evolution.
-    
-    [View Layer Diagrams →](/architecture/layer-architecture/)
-  </Card>
-</CardGrid>
+paiOS architecture documentation falls into three categories:
 
-## Clean Architecture
+### 📐 Architecture Views
 
-paiOS follows **Clean Architecture** principles, ensuring testability, maintainability, and clear separation of concerns.
+High-level visualizations of the system from different perspectives:
 
-### Core Layers
+- **[C4 Architecture](/architecture/c4-architecture/)**: System Context, Container, and Component diagrams (C4 model)
+- **[OS and Infrastructure](/architecture/operating-system/)**: OS, Hardware, and Deployment context
 
-The `pai-engine` follows Clean Architecture with distinct module responsibilities:
+### 🧩 Engine Domains
 
-- **`rpc/`** - Interface Adapter (Ingress): Handles all gRPC/UDS communication
-- **`core/`** - Domain Layer: Contains `SystemController` and business logic
-- **`orchestrator/`** - Application Logic: Contains `InferenceOrchestrator` for resource scheduling
-- **`hal/`** - Infrastructure Layer: Hardware abstraction (Audio, HID, LED, NPU/GPU/CPU backends)
+Detailed documentation for each domain crate, covering ports, adapters, feature flags, and data flow:
 
-### Dependency Flow
+- **[Domains Overview](/architecture/modules/)**: Index of all domain crates
+- **[Common](/architecture/modules/common/)**: Shared foundation (logging, config, permissions)
+- **[Core](/architecture/modules/core/)**: Orchestrator, SessionManager, FlowRunner
+- **[Inference](/architecture/modules/inference/)**: AI backends, resource management, MCP client
+- **[Audio](/architecture/modules/audio/)**: Audio capture, playback, signal conditioning
+- **[Vision](/architecture/modules/vision/)**: Camera, frame processing, motion gating
+- **[API](/architecture/modules/api/)**: API Gateway, protocol adapters, routing
+- **[Peripherals](/architecture/modules/peripherals/)**: HMI, buttons, LEDs, haptics
 
-```
-rpc/ → core/ ← orchestrator/ → hal/
-```
+### 🔧 Cross-Cutting Concerns
 
-The domain layer (`core/`) has no dependencies on other modules, ensuring pure business logic.
+Topics that span multiple domains:
 
-## Sys-Crate Pattern
+- **[Workspace and Build](/architecture/workspace-and-build/)**: Feature flags, sys-crate pattern, default profiles, build configuration, and [platform support](/architecture/workspace-and-build/#platform-support) (multi-platform engine, Linux desktop for development, contributor welcome for other OS)
+- **[Composition Root (main.rs)](/architecture/composition-root/)**: The only place that knows which adapters exist; bootstrap, init, and dependency injection
+- **[Security Architecture](/architecture/security/)**: Permission system, port isolation, [HITL](/glossary/#h) workflow
 
-To maintain a strict separation between safe and unsafe code, we follow the **Sys-Crate Pattern**:
+### 📋 Architecture Decision Records (ADRs)
 
-- **Hardware bindings** (e.g., NPU drivers, custom hardware interfaces) are isolated in separate `*-sys` crates located in `pai-engine/libs/`.
-- These sys-crates handle all `bindgen` FFI bindings and `unsafe` code blocks.
-- They provide **safe Rust wrapper traits** that the main engine uses.
-- The main `pai-engine/src/` remains **pure Safe Rust**, depending on sys-crates only via trait interfaces.
+ADRs document the **"why"** behind key decisions. They capture context, alternatives considered, and consequences; not implementation details:
 
-### Benefits
+- **[ADR Index](/architecture/adr/)**: All Architecture Decision Records
+- **[ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/)**: Core Engine architectural decisions (Hexagonal Architecture, Modular Monolith, Hybrid Inference)
 
-- **Security**: Clear boundaries for unsafe code, making security audits easier.
-- **Testability**: The main engine can be tested without hardware dependencies by mocking sys-crate traits.
-- **Swappability**: Hardware backends can be swapped without changing business logic.
+## Hexagonal Architecture
 
-### Example Structure
+paiOS uses **Hexagonal Architecture** (Ports and Adapters). Rust traits map to Ports; feature-gated structs map to Adapters. Dependencies point inward; `pai-engine/src/main.rs` is the Composition Root.
+
+**Vendor Flexibility and Rapid Porting:** While the Rockchip RK3588 is the initial deployment target, this architecture ensures the engine is completely **vendor-agnostic**. Hardware-specific SDKs are isolated in adapters, meaning the system can be rapidly ported to new SoCs (e.g., from NVIDIA, Qualcomm, or Apple) without rewriting any core business logic.
+
+**paiEngine is a flexible platform:** The engine provides multiple APIs. **gRPC over Unix Domain Sockets (UDS) is the primary IPC interface** for applications/services running on the **same hardware**: comparable to Linux syscalls. For communicating with **external clients on other machines**, the engine provides **gRPC over TCP/TLS**. REST (Ollama/OpenAI compatibility) and MCP are also supported for specific use cases. For mobile/wearable form factors, a smartphone companion app can serve as a user interface for configuration and interaction; the engine itself is designed to be extended for any [AI device](/glossary/#a).
 
 ```
-pai-engine/
-├── libs/
-│   └── rknn-sys/          # Hardware bindings (AGPL-3.0)
-│       ├── Cargo.toml
-│       ├── build.rs        # bindgen configuration
-│       └── src/lib.rs      # Safe Rust wrapper
-└── src/                    # Pure Safe Rust
-    └── hal/
-        └── npu.rs          # Uses rknn-sys via trait
+                    ┌─────────────────────────────┐
+  Driving           │         Domain              │         Driven
+  Adapters ──────►  │  (Ports = Rust Traits)      │  ──────► Adapters
+  (API, HMI)        │  (Pure business logic)      │  (Camera, NPU, Mic)
+                    └─────────────────────────────┘
 ```
 
-## IPC Strategy
+## Code Layout
 
-We use **gRPC** (via `tonic` in Rust) over **Unix Domain Sockets (UDS)** for maximum performance and type safety.
+**Package by Feature:** Each domain crate contains its own domain logic, ports (traits), and feature-gated adapters. See [Workspace and Build](/architecture/workspace-and-build/) for the full workspace structure.
 
-## Architecture Decision Records (ADR)
+## ADRs vs. Module Documentation
 
-All major architectural decisions are documented in [Architecture Decision Records](/architecture/adr/).
-
+| Documentation Type | Purpose | Example |
+|-------------------|---------|---------|
+| **ADRs** | Document **decisions** and their rationale | "Why Hexagonal Architecture?" |
+| **Module docs** | Document **current state** implementation | "How `inference` manages resources" |
+| **Cross-cutting docs** | Document **shared concerns** across modules | "Feature flag conventions" |

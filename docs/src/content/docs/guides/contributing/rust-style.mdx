@@ -1,0 +1,70 @@
+---
+title: Rust Style and Best Practices
+description: "Project-specific Rust conventions: stack preference, generics vs trait objects, and when to use heap."
+sidebar:
+  order: 5
+---
+
+This page documents **paiOS-specific Rust preferences** on top of the [official Rust style guide](https://doc.rust-lang.org/style-guide/) and [Development Standards](/guides/contributing/standards/). Use it when making tradeoffs the style guide doesn’t mandate.
+
+## Stack vs heap
+
+We prefer **stack allocation when it doesn’t hurt maintainability**, especially for embedded and performance-sensitive paths.
+
+- **Stack**: Fixed size at compile time, no allocator, cache-friendly. Use for concrete types and when the full type is known at compile time.
+- **Heap** (`Box`, `Vec`, etc.): Needed for dynamic size, shared ownership, or when you must pick an implementation at **runtime**. Use when stack isn’t practical.
+
+On resource-constrained or embedded targets, prefer stack and fixed-capacity types (e.g. `heapless`) where possible; avoid unnecessary heap.
+
+## Generics vs `Box<dyn Trait>`
+
+When the **concrete type is known at compile time** (e.g. composition root wired with `#[cfg(feature = "...")]`), prefer **generics** so implementations can live on the stack:
+
+```rust
+// Preferred when the composition root knows concrete types at compile time
+pub struct Orchestrator<V, A, I, Api, P> {
+    vision: V,
+    audio: A,
+    inference: I,
+    api: Api,
+    peripherals: P,
+}
+
+impl<V, A, I, Api, P> Orchestrator<V, A, I, Api, P>
+where
+    V: VisionInterface,
+    A: AudioInterface,
+    I: InferenceInterface,
+    Api: APIInterface,
+    P: PeripheralsInterface,
+{
+    pub fn new(vision: V, audio: A, inference: I, api: Api, peripherals: P) -> Self {
+        Self { vision, audio, inference, api, peripherals }
+    }
+}
+```
+
+Use **`Box<dyn Trait>`** when you must choose the implementation at **runtime** (e.g. from config or user input), or when threading many generic parameters would make the API unwieldy and the allocation cost is acceptable.
+
+| Situation | Prefer | Reason |
+|-----------|--------|--------|
+| Composition root, one concrete type per build (e.g. feature flags) | Generics (stack) | No heap, one monomorphized type per profile. |
+| Runtime selection of implementation | `Box<dyn Trait>` | Single type, flexible. |
+| Many dependencies, type list explodes | `Box<dyn Trait>` | Keep APIs and call sites manageable. |
+
+## Formatting and tooling
+
+- Run **`cargo fmt`** (we use default [rustfmt](https://github.com/rust-lang/rustfmt) settings).
+- Aim for **zero clippy warnings**; fix or document exceptions.
+- See [Development Standards](/guides/contributing/standards/) for DoD and required checks.
+
+## Documentation
+
+- **Public and notable internal items**: Use `///` or `//!` doc comments. See [Documentation Guide](/guides/contributing/documentation/) for Starlight sync.
+- For terminal snippets in rustdoc, prefer `bash frame="none"` where possible (see project Cursor rules).
+
+## References
+
+- [Rust Style Guide](https://doc.rust-lang.org/style-guide/) (official)
+- [Development Standards](/guides/contributing/standards/): Definition of Done, code quality
+- [Embedded Rust Book](https://docs.rust-embedded.org/book/): stack, `heapless`, no_std when relevant

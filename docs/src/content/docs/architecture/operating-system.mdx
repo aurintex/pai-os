@@ -1,0 +1,110 @@
+---
+title: OS & Infrastructure
+description: Operating System, Hardware, and Infrastructure environment hosting the paiEngine.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+This page documents the **Operating System and Infrastructure** environment that hosts the [paiEngine](/architecture/adr/004-system-architecture/) process.
+
+Unlike the engine itself, which follows a Hexagonal Architecture (Ports and Adapters), the infrastructure beneath it can be viewed as a classic stack from hardware up to the OS service manager.
+
+For a **zoomed-out view** of how third-party applications and external clients integrate with the engine ([REST](/glossary/#r), [gRPC](/glossary/#g), [MCP](/glossary/#m)), see [C4 Architecture](/architecture/c4-architecture/): System Context and Container diagrams.
+
+## Deployment & Service Context
+
+<Mermaid code={`flowchart TD
+    subgraph OS ["Debian-based OS"]
+        direction TB
+        Systemd["systemd (Service Manager)"]
+        Engine["pai-engine (Daemon)"]
+        Kernel["Radxa Vendor Kernel"]
+        RAUC["RAUC Update Client"]
+        Disk["RootFS A/B Partitions"]
+        ThirdParty["3rd Party App"]
+        API(("API"))
+        
+        Systemd -->|Lifecycle| Engine
+        Engine -->|syscalls & dev nodes| Kernel
+        RAUC -->|Updates| Disk
+        ThirdParty -->|IPC: gRPC/UDS| Engine
+        Engine -->|exposes| API
+    end
+
+    subgraph HW ["Rockchip RK3588S2"]
+        direction LR
+        NPU["NPU"] --- Camera["Camera"] --- Mic["Microphones"] --- USB["USB-C"]
+    end
+
+    Kernel -->|Drivers| HW`} />
+
+The diagram includes a minimal view of **third-party integration**: an app on the same device communicates with the engine via **[IPC](/glossary/#i)** ([gRPC](/glossary/#g) over [UDS](/glossary/#u)); the engine **exposes an [API](/glossary/#a)** ([REST](/glossary/#r)/[gRPC](/glossary/#g)) for custom UIs and integrations. For protocols, clients, and a full system view, see [C4 Architecture](/architecture/c4-architecture/).
+
+---
+
+## Infrastructure Components
+
+### 🔧 Layer 0: Hardware
+
+The physical components of the paiOS device.
+
+| Component | Description |
+|-----------|-------------|
+| **SoC** | Rockchip RK3588S2 with 6 TOPS NPU + Mali-G610 GPU |
+| **Microphone** | USB mic / 3-mic beamforming array |
+| **USB-C** | Composite device (HID + UAC + Mass Storage) |
+| **Camera** | Radxa Camera 4K2 (or generic UVC camera) |
+| **Battery** | Integrated battery for standalone operation |
+
+---
+
+### 💾 Layer 1: Operating System
+
+Custom Debian-based OS built with [Debos](/architecture/adr/002-os-building-tool/) (ADR-002 explains why we chose it).
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Kernel** | Radxa Vendor Kernel (via APT) | Hardware support for RK3588S2 |
+| **Drivers** | NPU, GPU, USB Gadget, i2s | Hardware access for AI processing |
+| **systemd** | Service Manager | Manages `pai-engine` daemon and network startup |
+| **Updates** | RAUC | A/B Update System for atomic OTA updates *(Note: Assumed/[pending ADR](/architecture/adr/003-update-system/))* |
+
+<Aside type="note">
+The adoption of **RAUC** for OTA updates is currently assumed as a placeholder pending a formal ADR process.
+</Aside>
+
+---
+
+## Hardware Abstraction & Security
+
+A core principle of the paiOS architecture is that **only the `pai-engine` has direct access to hardware peripherals** (such as the camera, microphone, and NPU).
+
+This hardware abstraction provides a critical security advantage:
+
+- **Exclusive Access**: By design, third-party AIs and applications cannot read directly from hardware device nodes like `/dev/video*` or `/dev/snd/*`. They must request audio or vision data through the engine's API or IPC interfaces.
+- **Centralized Permissions**: Because all hardware requests funnel through the engine, the engine's **PermissionManager** (part of the Common domain, `common`) can reliably enforce access control. It verifies authorization tokens and user consents before routing data to the requesting app.
+- **Implementation via `udev` Rules**: To enforce this on the OS level, custom Linux **`udev` rules** must be configured. These rules alter the default behavior (where devices are typically assigned to generic `video` or `audio` groups) to assign ownership of critical device nodes exclusively to the `pai-engine` system daemon (e.g., via `OWNER="pai-engine", MODE="0600"`). This prevents any other OS process from bypassing the engine's security layer.
+
+---
+
+## Technology Stack
+
+The infrastructure technologies supporting the runtime environment:
+
+| Layer | Technology | License |
+|-------|------------|---------|
+| **OS Environment** | Debian (customised via [Debos](/architecture/adr/002-os-building-tool/)) | AGPL-3.0 (for build tools) |
+| **OS Updates** | RAUC *([Pending ADR](/architecture/adr/003-update-system/))* | LGPL-2.1 |
+| **Service Manager**| systemd | LGPL-2.1 |
+
+For detailed technology choices within the engine itself (Rust, NPU bindings, AI models), refer to the [Engine Architecture ADR](/architecture/adr/004-system-architecture/) and [Engine Domains](/architecture/modules/).
+
+---
+
+## Related Documentation
+
+- [C4 Architecture](/architecture/c4-architecture/): System Context and Container diagrams showing how the engine operates in this OS
+- [ADR-002: OS Building Tool](/architecture/adr/002-os-building-tool/): Why Debos for reproducible Debian-based image building
+- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): Hexagonal Architecture for the AI engine
+- [Workspace and Build](/architecture/workspace-and-build/): Feature flags and sys-crate pattern for interacting with OS APIs

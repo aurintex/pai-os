@@ -1,0 +1,245 @@
+---
+title: Model Integration Guide
+description: How to choose the right AI model format and integration path for paiOS
+sidebar:
+  order: 8
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Mermaid from '../../../../components/Mermaid.astro';
+
+This guide helps you choose the right model format and integration path for your AI models in paiOS. For implementation details (crates, code examples), see the [Inference Module](/architecture/modules/inference/).
+
+## Quick Decision Tree
+
+<Mermaid code={`flowchart TD
+    Start[What type of model?] --> Audio{Audio Model?}
+    Start --> LLM{Large Language Model?}
+    Start --> Vision{Vision Model?}
+    Start --> Other{Other?}
+
+    Audio --> AudioSize{Less than 100 MB?}
+    AudioSize -->|Yes| ONNX[Use ONNX]
+    AudioSize -->|No| Whisper{Whisper?}
+    Whisper -->|Yes - CPU| WhisperGGUF[Use GGUF via whisper-rs]
+    Whisper -->|Yes - NPU| WhisperRKNN[Convert to RKNN]
+    Whisper -->|No| ONNX
+
+    LLM --> LLMTarget{Target NPU?}
+    LLMTarget -->|Yes| RKLLM[Use RKLLM]
+    LLMTarget -->|No| LLMFormat{Have GGUF?}
+    LLMFormat -->|Yes| GGUF[Use GGUF]
+    LLMFormat -->|No| ConvertGGUF[Convert to GGUF]
+
+    Vision --> VisionTarget{Target NPU?}
+    VisionTarget -->|Yes| VisionRKNN[Convert to RKNN]
+    VisionTarget -->|No| VisionSize{Less than 500 MB?}
+    VisionSize -->|Yes| ONNX
+    VisionSize -->|No| Custom[Custom Adapter]
+
+    Other --> OtherONNX[Try ONNX first]
+`} />
+
+## Why Multiple Formats?
+
+Real-world use cases often require running multiple models at the same time: an [LLM](/glossary/#l) for reasoning, a wake word detector always listening, and vision for object detection. A single backend cannot serve all of these well simultaneously.
+
+On Rockchip RK3588, the [NPU](/glossary/#n) has 3 cores (6 TOPS). An LLM typically occupies all of them, leaving no capacity for audio or vision tasks. Using the [NPU](/glossary/#n) for all inference would create a bottleneck whenever multiple models are needed at once.
+
+**The solution: mix backends across workloads.**
+
+A typical parallel configuration:
+- **[NPU](/glossary/#n)** via [RKLLM](/glossary/#r): LLM inference (maximum efficiency)
+- **[CPU](/glossary/#c)** via ONNX (Sherpa): wake word + audio (lightweight, always-on)
+- **[GPU](/glossary/#g)** via GGUF/Vulkan or **[NPU](/glossary/#n)** via [RKNN](/glossary/#r): vision when the LLM is idle
+
+This is an explicit design goal of paiOS. For the full rationale and hardware allocation strategy, see [ADR-004: Inference Flexibility](/architecture/adr/004-system-architecture/#key-constraints) and the [Inference Module: Resource Management](/architecture/modules/inference/#resource-management-edge-ai-critical).
+
+---
+
+## Format Comparison
+
+| Format | Best For | Ecosystem | Performance | Flexibility | Energy Efficiency |
+|--------|----------|-----------|-------------|-------------|-------------------|
+| **[ONNX](/glossary/#o)** | Small models (< 100 MB), VAD, classifiers | ★★★★★ | ★★★☆☆ | ★★★★★ | ★★★☆☆ |
+| **[GGUF](/glossary/#g)** | [LLMs](/glossary/#l), Whisper ([CPU](/glossary/#c)/[GPU](/glossary/#g)) | ★★★★☆ | ★★★☆☆ | ★★★★★ | ★★★☆☆ |
+| **[RKNN](/glossary/#r)** | CNN-style models (YOLO, ResNet) on [NPU](/glossary/#n) | ★★☆☆☆ | ★★★★★ | ★★☆☆☆ | ★★★★★ |
+| **[RKLLM](/glossary/#r)** | [LLMs](/glossary/#l)/Transformers on [NPU](/glossary/#n) (Rockchip-specific) | ★★☆☆☆ | ★★★★★ | ★★☆☆☆ | ★★★★★ |
+| **Custom Adapter** | Model types not covered above: requires implementing a new inference adapter (contributor task) | - | - | - | - |
+
+---
+
+## When to Use ONNX
+
+### Ideal Use Cases
+- Voice Activity Detection ([VAD](/glossary/#v))
+- Wake word detection
+- Small audio models (< 100 MB)
+- Vision classifiers
+- Embedding models
+
+### Ecosystem
+- **10,000+** models on HuggingFace Hub
+- Pre-trained Silero VAD, OpenWakeWord, pyannote
+- Easy conversion from PyTorch/TensorFlow
+
+### Performance Tips
+- Use quantized models (INT8) for embedded devices
+- ARM Compute Library (ACL) backend for [NPU](/glossary/#n) acceleration is experimental
+
+---
+
+## When to Use [GGUF](/glossary/#g)
+
+### Ideal Use Cases
+- Large Language Models (Llama, Mistral, Qwen)
+- Whisper (when using CPU)
+- Models requiring flexible quantization
+
+### Ecosystem
+- HuggingFace GGUF library (growing)
+- Community-quantized models (Q4_K_M, Q5_K_M, Q8_0)
+- Direct compatibility with llama.cpp ecosystem
+
+### Performance Tips
+- Use Vulkan backend for GPU acceleration on Rockchip (Mali-G610)
+- Choose quantization level based on accuracy/speed trade-off:
+  - `Q4_K_M`: Fast, good for chat
+  - `Q5_K_M`: Balanced
+  - `Q8_0`: High accuracy
+
+---
+
+## When to Use [RKNN](/glossary/#r) / [RKLLM](/glossary/#r)
+
+Rockchip provides **two distinct NPU libraries**:
+
+- **RKNN**: for CNN-style models (YOLO, ResNet, MobileNet, BERT, Whisper encoder). Converts from ONNX.
+- **[RKLLM](/glossary/#r)**: for LLMs and Transformer-based models. A separate library with its own conversion toolchain.
+
+### Ideal Use Cases
+- **When performance is critical**: 3-5x faster than [CPU](/glossary/#c)
+- **When energy efficiency is paramount**: [NPU](/glossary/#n) uses ~1/10th power of [GPU](/glossary/#g)
+- Production deployment with fixed, pre-converted models
+
+### Ecosystem
+- Limited (manual conversion required for both RKNN and [RKLLM](/glossary/#r))
+- Rockchip RKNN Toolkit 2 for ONNX → RKNN conversion
+- Rockchip [RKLLM](/glossary/#r) for LLM/Transformer → RKLLM conversion
+- Requires model architecture support (not all ops supported)
+
+<Aside type="caution" title="Conversion Required">
+RKNN and [RKLLM](/glossary/#r) models must be pre-converted using Rockchip's respective toolkits. This requires a Python environment and model architecture support verification.
+</Aside>
+
+### When NOT to Use RKNN / [RKLLM](/glossary/#r)
+- Rapid prototyping (conversion overhead slows iteration)
+- Experimental models not yet validated on Rockchip toolchain
+- Models requiring frequent updates
+
+---
+
+## Audio Models
+
+### Voice Activity Detection
+**Recommended:** ONNX + Silero [VAD](/glossary/#v) (via the `infer_sherpa` adapter)
+
+### Speech-to-Text (Whisper)
+**Option A: [CPU](/glossary/#c) (Flexible):** GGUF via Whisper bindings: standard models, easy updates.
+
+**Option B: [NPU](/glossary/#n) (Fast):** RKNN-converted Whisper encoder: maximum performance, fixed model.
+
+**Decision:** Use CPU for development and flexibility; use NPU for production where the model is stable.
+
+### Wake Word Detection
+**Recommended:** ONNX + OpenWakeWord or Silero (via the `infer_sherpa` adapter)
+
+---
+
+## Large Language Models
+
+### Recommended Path
+
+**CPU/GPU (flexible, recommended for development):**
+1. Find model on HuggingFace (preferably pre-quantized [GGUF](/glossary/#g))
+2. Download a [GGUF](/glossary/#g) variant (e.g., `Q4_K_M`)
+3. Run via the `infer_llamacpp_cpu` or `infer_llamacpp_vulkan` adapter
+
+**NPU (maximum performance on Rockchip, production):**
+Use **[RKLLM](/glossary/#r)** via the `infer_rkllm` adapter: requires converting the model using the RKLLM Toolkit. Best energy efficiency, but introduces vendor lock-in and conversion overhead.
+
+### Quantization Guide
+
+| Quantization | Size Reduction | Quality Loss | Use Case |
+|--------------|----------------|--------------|----------|
+| Q4_K_M | ~70 percent | Low | Chat, general use |
+| Q5_K_M | ~60 percent | Very low | Balanced |
+| Q6_K | ~50 percent | Minimal | High-quality responses |
+| Q8_0 | ~30 percent | Nearly none | Production critical |
+
+---
+
+## Vision Models
+
+<Aside type="note" title="Coming Soon">
+Vision model integration is planned for a future ADR. Check back later for detailed guidance.
+</Aside>
+
+### Preliminary Recommendations
+- Small classifiers (< 100 MB) → ONNX (CPU, flexible)
+- Object detection (YOLO, ResNet) on NPU → RKNN (convert from ONNX, use `infer_rknn` adapter)
+- Vision-Language Models (LlaVA) → GGUF (CPU/GPU) or [RKLLM](/glossary/#r) (NPU)
+- Unsupported architectures → requires a custom adapter (contributor task, see [Inference Module](/architecture/modules/inference/))
+
+---
+
+## Converting Models
+
+Conversion is done offline using external tools, not at runtime.
+
+### PyTorch → ONNX
+Use `torch.onnx.export`. See the [official PyTorch ONNX docs](https://pytorch.org/docs/stable/onnx.html).
+
+### Safetensors/PyTorch → [GGUF](/glossary/#g)
+Use the `convert.py` script from the [llama.cpp repository](https://github.com/ggerganov/llama.cpp).
+
+### ONNX → [RKNN](/glossary/#r)
+Use [Rockchip RKNN Toolkit 2](https://github.com/airockchip/rknn-toolkit2): configure `target_platform='rk3588'`, load your ONNX model, and export to `.rknn` with quantization enabled.
+
+### Model → [RKLLM](/glossary/#r)
+Use the [Rockchip RKLLM Toolkit](https://github.com/airockchip/rknn-llm) to convert Llama-compatible models to the `.rkllm` format.
+
+---
+
+## Common Issues
+
+### ONNX Models Not Loading
+- Verify operator support: `ort` doesn't support all ONNX ops
+- Try exporting with an older ONNX opset version
+- Check model input/output shapes
+
+### [GGUF](/glossary/#g) Models Slow
+- Ensure Vulkan backend is enabled (`VULKAN_SDK` env var)
+- Try a lower quantization level
+- Check [GPU](/glossary/#g)/[NPU](/glossary/#n) availability
+
+### [RKNN](/glossary/#r) Conversion Fails
+- Verify model architecture is supported by [RKNN](/glossary/#r) Toolkit
+- Provide a calibration dataset for quantization
+- Check for unsupported operators
+
+---
+
+## Getting Help
+
+- **Discord:** [paiOS Community](https://discord.gg/7uSGGpRgK)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/aurintex/pai-os/issues)
+- **Documentation:** [Architecture Overview](/architecture/)
+
+---
+
+## Related
+
+- [Inference Module](/architecture/modules/inference/): Adapter implementation details, crates, and code examples
+- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): Hardware allocation and hybrid inference strategy
+- [Contributing Standards](/guides/contributing/standards): Code quality guidelines

@@ -1,0 +1,27 @@
+---
+import { ExcalidrawViewer } from './ExcalidrawViewer';
+interface Props {
+  /** URL to the .excalidraw JSON file (e.g. /images/Architecture/system-architecture.excalidraw) */
+  src: string;
+  /** Height of the canvas in pixels or CSS value (default: 480) */
+  height?: number | string;
+}
+const { src, height = 480 } = Astro.props;
+const heightPx = typeof height === 'number' ? `${height}px` : height;
+---
+<div class="excalidraw-viewer-wrapper" style={`min-height: ${heightPx}; position: relative;`}>
+  <!-- Visible until React mounts (client:load); hidden via CSS when wrapper has data-loaded -->
+  <div
+    class="excalidraw-placeholder"
+    style="position: absolute; inset: 0; min-height: 320px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; color: rgba(255,255,255,0.75); font-size: 0.95rem;"
+    aria-hidden="true"
+  >
+    Loading diagram…
+  </div>
+  <ExcalidrawViewer client:only="react" src={src} height={height} />
+  <noscript>
+    <p style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; color: rgba(255,255,255,0.75);">
+      Interactive diagram requires JavaScript. Open the source file: <a href={src}>{src}</a>
+    </p>
+  </noscript>
+</div>

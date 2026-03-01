@@ -1,42 +1,113 @@
 ---
 title: Project Roadmap
-description: The detailed development roadmap for paiOS.
+description: The development roadmap for paiOS and its first products.
 ---
 
-## 🗺️ Roadmap
+import Mermaid from '../../components/Mermaid.astro';
 
-> **⚠️ Temporary Roadmap:** This is currently a **minimalist, temporary roadmap**. A detailed roadmap is in development and will be created in parallel with the architecture documentation, where there will be overlapping content and cross-references.
->
-> This roadmap is a living document and subject to change as the project evolves.
+## Strategy
 
-## Phase 0: Foundation (Current)
-*Focus: Project Setup, High-Quality Groundwork, and Architecture Definitions.*
+paiOS is a privacy-first, open-source AI engine for edge hardware. The architecture is designed so that **each product is a different configuration of the same modular codebase**: activating only the [modules](/architecture/modules/) needed via Cargo feature flags.
+
+Each milestone adds one more architecture domain, validating the stack incrementally.
+
+## Products
+
+### paiOS Engine
+
+The open-source core. A modular, vendor-agnostic AI runtime that manages inference across heterogeneous backends (NPU, CPU, GPU), exposes multi-protocol APIs ([Ollama](/glossary/#o), OpenAI, [MCP](/glossary/#m), [gRPC](/glossary/#g)), and runs fully air-gapped. Every product built on paiOS is a different set of feature flags compiled from this codebase.
+
+**Why it matters for contributors:** Everything you build here powers every product. Inference improvements, API extensions, and security hardening have the widest impact.
+
+### paiBox
+
+A plug-and-play **local AI server** for businesses that need to keep data on-premise. Runs on commodity ARM boards (Radxa Rock 5C / RK3588) or x86 hardware. Drop-in replacement for cloud AI APIs: same Ollama/OpenAI endpoints, but nothing leaves the network.
+
+**Target use cases:** GDPR-compliant AI for European SMBs, on-premise inference for healthcare and legal, air-gapped environments (defense, classified).
+
+### paiScribe
+
+A **privacy-first meeting transcription device** that works 100 percent offline. Records, transcribes, identifies speakers, and generates summaries: all on device, with no cloud dependency.
+
+**Target use cases:** Law firms (attorney-client privilege), medical practices (HIPAA), government agencies, defense contractors, and anyone who needs meeting records without data leaving the room.
+
+## Architecture-to-Product Mapping
+
+Each product activates a different subset of [engine modules](/architecture/modules/). The following diagram shows which modules power which product:
+
+<Mermaid code={`graph LR
+    subgraph products ["Products"]
+        paiBox["paiBox<br/>Private AI Server"]
+        paiScribe["paiScribe<br/>Meeting Device"]
+    end
+
+    subgraph modules ["Engine Modules"]
+        Common["common<br/>Config · Logging · Permissions"]
+        Core["core<br/>Sessions · Events · Flows"]
+        Inference["inference<br/>LLM · STT · TTS · VAD"]
+        API["api<br/>Ollama · OpenAI · MCP · gRPC"]
+        Audio["audio<br/>Capture · AEC · Ring Buffer"]
+        Peripherals["peripherals<br/>Buttons · LEDs · Haptics"]
+        Vision["vision<br/>Camera · RGA · Motion"]
+    end
+
+    paiBox --> Common
+    paiBox --> Core
+    paiBox --> Inference
+    paiBox --> API
+
+    paiScribe --> Common
+    paiScribe --> Core
+    paiScribe --> Inference
+    paiScribe --> API
+    paiScribe --> Audio
+    paiScribe --> Peripherals
+
+    style Vision stroke-dasharray: 5 5,opacity:0.5`} />
+
+*Dashed: Vision module is designed but not yet activated by a shipped product.*
+
+## Milestone Overview
+
+| Milestone | Deliverable | Modules Activated | Key Capabilities |
+|-----------|-------------|-------------------|------------------|
+| **M0** | paiOS Engine + paiBox v0.1 | Common, Core, Inference, [API](/glossary/#a) | Text inference, Ollama/OpenAI API, [MCP](/glossary/#m) server |
+| **M1** | paiBox v1.0 + paiScribe v0.1 | + Audio, Peripherals | [STT](/glossary/#s) (Whisper), USB [HID](/glossary/#h), buttons, LEDs |
+| **M2** | paiScribe v1.0 | + Audio (AEC, Diarization) | Speaker diarization, echo cancellation, [TTS](/glossary/#t), meeting summaries |
+
+## M0: Foundation + paiBox v0.1 (Current)
+
+*Modules: `common`, `core`, `inference`, `api`*
 
 - [x] **Monorepo Setup:** Establish structure for `engine`, `os`, and `apps`.
-- [x] **Architecture Definitions:** Define Clean Architecture layers and IPC (gRPC/UDS).
+- [x] **Architecture Definitions:** Define Hexagonal Architecture layers and [IPC](/glossary/#i) ([gRPC](/glossary/#g)/[UDS](/glossary/#u)).
 - [x] **Infrastructure:** Set up CI/CD, License Compliance via `cargo-deny`, and CLA bot (CLAassistant).
 - [x] **Documentation:** Launch Starlight documentation site.
+- [ ] **Inference Engine:** LLM inference via Rockchip [NPU](/glossary/#n) (`infer_rkllm`) and CPU fallback (`infer_llamacpp_cpu`).
+- [ ] **API Layer:** Ollama-compatible API, OpenAI-compatible API, [MCP](/glossary/#m) server, [gRPC](/glossary/#g) gateway.
+- [ ] **Configuration:** Model management, user permissions, audit logging.
+- [ ] **paiBox v0.1:** Plug-and-play local AI server running on Radxa Rock 5C / RK3588 boards.
 
-## Phase 1: paiLink (USB AI Accelerator)
-*Focus: Delivering the first tangible hardware product in two variants.*
+## M1: paiBox v1.0 + paiScribe v0.1
 
-### Developer Edition (Community)
-- **Hardware:** Radxa Rock 5C Support.
-- **Software:** Basic `paiOS` image with standard NPU inference.
-- **Goal:** Enable the community to build and hack their own paiLink devices.
+*Adds: `audio`, `peripherals`*
 
-### Professional Edition
-- **Hardware:** Custom Aluminum Case, Pre-flashed trusted firmware.
-- **Software:** Tuned "Pro" image, Out-of-the-box experience (Plug & Play).
-- **Features:**
-    - Real-time Whisper STT pipeline.
-    - Basic API integrations (HID injection).
+- [ ] **Audio Pipeline:** Microphone capture, [STT](/glossary/#s) via Sherpa-ONNX (Whisper), Voice Activity Detection (Silero [VAD](/glossary/#v)).
+- [ ] **Peripherals:** Button input, LED status indicators, USB [HID](/glossary/#h) keyboard injection.
+- [ ] **paiBox v1.0:** Multi-user management, web dashboard, fleet management basics.
+- [ ] **paiScribe v0.1:** Basic offline meeting transcription, single-speaker dictation mode.
 
-## Phase 2: paiGo (AI Wearable)
-*Focus: Evolution into a standalone, context-aware wearable.*
+## M2: paiScribe v1.0
 
-- [ ] **Hardware:** Custom PCB, Battery, Camera integration.
-- [ ] **Engine:** Multimodal Pipeline (Vision-Language-Action).
-- [ ] **Ecosystem:** Sync capabilities and "Memory" interface.
-- [ ] **Goal:** A standalone "Second Brain" that physically travels with you.
+*Enhances: Audio (AEC, diarization, [TTS](/glossary/#t))*
+
+- [ ] **Speaker Diarization:** Multi-speaker identification in meetings.
+- [ ] **Echo Cancellation:** WebRTC AEC3 for rooms with speakers.
+- [ ] **Text-to-Speech:** Local [TTS](/glossary/#t) via Piper (ONNX).
+- [ ] **MCP Client:** Tool execution for extending paiScribe capabilities.
+- [ ] **paiScribe v1.0:** Full meeting transcription with speaker labels, AI summaries, secure export.
+
+## Future Vision
+
+Beyond M2, the architecture supports additional modalities -- including [vision](/architecture/modules/vision/) and wearable form factors. These milestones will be detailed as M0-M2 mature. The modular design means future products reuse the same crates; contributors working on the foundation today are building the groundwork for everything that follows.
 

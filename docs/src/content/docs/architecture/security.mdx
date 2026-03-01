@@ -1,0 +1,191 @@
+---
+title: "Security Architecture"
+description: Permission system, port isolation, HITL workflow, and defense-in-depth strategy for paiOS.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+## Overview
+
+paiOS enforces a **layered security model** inspired by Android's permission system. The architecture ensures that apps and AI models cannot access hardware (camera, microphone, NPU) without explicit user permission. Security is enforced at two levels: **port isolation** (API Gateway) and **permission management** (HITL workflow).
+
+## Hardware Ownership Model
+
+The `pai-daemon` service owns all hardware resources.
+
+<Mermaid code={`flowchart TB
+    subgraph Privileged["pai-daemon - privileged"]
+        Daemon["pai-daemon"]
+        HW["/dev/rknpu, /dev/video0"]
+    end
+
+    subgraph Sandboxed["Apps - sandboxed"]
+        App1["App 1"]
+        App2["App 2"]
+    end
+
+    App1 -->|"gRPC/UDS"| Daemon
+    App2 -->|"gRPC/UDS"| Daemon
+    Daemon -->|"udev MODE=0600"| HW`} />
+
+<Aside type="caution">
+Apps cannot bypass the core service or access hardware directly. All hardware access goes through the Engine, ensuring only the user decides what gets recorded.
+</Aside>
+
+### Sandboxing (to be decided)
+
+Sandboxing the daemon and apps is **easier said than done**; implementation choices (what to isolate, how, and at which layer) need a dedicated decision. A future **ADR on sandboxing** will capture options and trade-offs. One candidate is **systemd’s security hardening** for the `pai-engine` (and app) units (e.g. `ProtectSystem=strict`, `PrivateTmp=yes`, `NoNewPrivileges=yes`, `PrivateDevices=yes`, `ProtectHome=yes`, `RestrictAddressFamilies=AF_UNIX`) to reduce attack surface without custom isolation code. Extension sandboxing is already scoped in [ADR-006: Extension Architecture](/architecture/adr/006-extension-architecture/) (systemd/cgroups/namespaces).
+
+## Security Layers
+
+```
+Layer 1: Port Isolation (API Gateway)
+    └─→ Which ports can each adapter access?
+
+Layer 2: Permission System (HITL)
+    └─→ Does the user allow this specific action?
+
+Layer 3: Physical Confirmation
+    └─→ Requires hardware button press for sensitive actions
+```
+
+## Layer 1: Strict Port Isolation (Defense in Depth)
+
+To prevent **"Confused Deputy" attacks** and **prompt injection** from external clients, we enforce strict, hardcoded routing paths at the API Gateway. Not all adapters have access to all Core ports.
+
+| Adapter | DeviceControlPort | SessionConfigPort | SensorRelayPort | InferencePort |
+|---------|:---:|:---:|:---:|:---:|
+| **LocalSystem** (UDS/IPC) | ✅ | ✅ | ✅ | ✅ |
+| **SecureNetwork** (gRPC TCP) | ❌ | ✅ | ✅ | ✅ |
+| **McpServer** (MCP) | ❌ | ✅ | ✅ | ✅ |
+| **Ollama** (HTTP) | ❌ | ❌ | ❌ | ✅ |
+| **OpenAI** (HTTP) | ❌ | ❌ | ❌ | ✅ |
+
+**Security Properties:**
+- **Principle of Least Privilege**: Each adapter has minimal required access
+- **Attack Surface Reduction**: External clients cannot access sensitive lifecycle operations
+- **Defense in Depth**: Even if an adapter is compromised, port restrictions limit damage
+- **Auditability**: Routing rules are explicit and hardcoded in `routing.rs`
+
+See [API Module](/architecture/modules/api/) for the full routing implementation.
+
+## Layer 2: Permission System ([HITL](/glossary/#h))
+
+Even if an adapter has port access, sensitive actions require **authorization**. The `PermissionManager` enforces a HITL workflow:
+
+### Permission States
+
+| State | Description | Use Case |
+|-------|-------------|----------|
+| **Always Allow** | Action executes automatically | Low-risk (local inference, reading system time) |
+| **Deny** | Action permanently blocked | User has explicitly denied this permission |
+| **Ask** | Requires user confirmation | Sensitive (sending email, remote camera access, system commands) |
+
+<Aside type="note" title="Future scope: optional dimensions">
+For **agentic systems**, permission grants could later be refined with optional, composable constraints (e.g. **time-bound** (“for the next hour”, “until end of day”), **count-bound** (limit number of uses), or **context-bound** (“only when at home”, “only on WiFi”). Such dimensions are easy for an agent to propose and for the user to choose in natural language, but they are **out of scope for the initial MVP**. Introduce them only when a concrete use case justifies the extra complexity; avoid over-engineering the permission model up front.
+</Aside>
+
+### PermissionManager Architecture
+
+:::note
+The code blocks and configuration examples in this document are conceptual references to better show the idea. The real code and structure might differ.
+:::
+
+```rust
+pub struct PermissionManager {
+    db: Arc<SqliteDatabase>,  // Local SQLite database
+    peripherals: Arc<dyn PeripheralsInterface>,
+}
+
+impl PermissionManager {
+    pub async fn check_permission(
+        &self,
+        action: PermissionAction,
+        context: &PermissionContext,
+    ) -> Result<PermissionResult> {
+        let state = self.db.get_permission_state(&action)?;
+        
+        match state {
+            PermissionState::AlwaysAllow => Ok(PermissionResult::Granted),
+            PermissionState::Deny => Err(PermissionError::Denied),
+            PermissionState::Ask => {
+                self.request_user_confirmation(action, context).await
+            },
+        }
+    }
+}
+```
+
+### HITL Workflow Example
+
+When an MCP client requests camera access:
+
+1. **Request Received**: `McpServerAdapter` receives request to access camera stream
+2. **Port Check**: Router verifies `McpServerAdapter` has access to `SensorRelayPort` ✓
+3. **Permission Check**: `PermissionManager` queries SQLite for "camera_access_remote"
+4. **State: Ask**: First-time access: requires user confirmation
+5. **User Notification**: System vibrates and plays voice prompt: *"Allow remote camera access? Press button to confirm."*
+6. **User Decision**: Physical button press within 30 seconds
+7. **Action Execution**: If confirmed, stream provided; permission optionally updated to "Always Allow"
+
+## Layer 3: Physical Confirmation
+
+Sensitive actions require **physical button press** on the device:
+
+- **Physical Confirmation**: Prevents remote-only attacks
+- **Timeout Protection**: No response within timeout → denied by default
+- **Persistent State**: Decisions stored in local SQLite, reducing friction for repeated operations
+- **Context Awareness**: Checks include context (e.g., "remote" vs "local" camera access)
+
+<Aside type="note">
+The permission system is designed for **form factors** where physical button confirmation is natural (e.g. wearables). For other deployments (e.g., paiBox Private AI Server), alternative HITL mechanisms (LED confirmation, host PC notification) can be implemented via the `PeripheralsInterface`.
+</Aside>
+
+## MCP Security
+
+### MCP Server (Inbound)
+
+External MCP clients (e.g., Claude Desktop) connect to the [AI device](/glossary/#a). They are subject to:
+- Port isolation (no `DeviceControlPort` access)
+- Permission checks for sensitive operations (camera, microphone access)
+
+### MCP Client (Outbound)
+
+The LLM generates tool calls executed via external MCP servers. Security measures:
+- **No direct execution**: LLM output is never executed directly
+- **Structured validation**: Tool calls are validated before routing
+- **Permission gating**: Sensitive tools (send email, access files) require HITL confirmation
+- **Audit trail**: All tool executions are logged
+
+## Tool Execution Security
+
+The strict separation of "thinking" (LLM) and "acting" (tool execution) is a **core security decision**:
+
+```
+LLM generates: {"tool": "send_email", "args": {...}}
+    │
+    ▼
+ToolExecutionPort validates structure
+    │
+    ▼
+PermissionManager checks: "Allow send_email?" → HITL if "Ask"
+    │
+    ▼
+McpClientAdapter routes to external MCP server
+    │
+    ▼
+External server executes (isolated from engine)
+```
+
+This ensures the engine is never directly affected by LLM-generated actions, and users maintain control over what the AI can do.
+
+## Security Summary
+
+| Threat | Mitigation |
+|--------|------------|
+| **Confused Deputy** (MCP/network tricks engine into privileged ops) | Hardcoded port isolation matrix |
+| **Prompt Injection** (malicious input makes LLM perform unwanted actions) | Thinking/acting separation + HITL on sensitive tools |
+| **Remote Device Takeover** | `DeviceControlPort` restricted to local UDS only |
+| **Unauthorized Sensor Access** | Permission system with physical confirmation |
+| **Unsafe Code Vulnerabilities** | All FFI isolated in sys-crates under `libs/` |

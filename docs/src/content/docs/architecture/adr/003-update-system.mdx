@@ -1,0 +1,57 @@
+---
+title: "ADR-003: Update System"
+description: A/B partitioning and OTA updates for embedded devices
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="caution" title="Draft">
+This ADR is a placeholder. The decision is pending further analysis.
+</Aside>
+
+## Status
+
+**Proposed** (2026-02-01)
+
+## Context
+
+paiOS runs on embedded devices that need reliable, atomic updates with rollback capability. Key requirements:
+
+1. **Atomic updates**: No partial update states that could brick devices
+2. **Automatic rollback**: Failed updates revert to known-good state
+3. **OTA support**: Updates delivered over-the-air without physical access
+4. **Minimal downtime**: Updates applied in background, single reboot to activate
+
+## Candidates
+
+| Tool | Approach | License |
+|------|----------|---------|
+| [RAUC](https://rauc.io/) | A/B slot-based, bootloader integration | LGPL-2.1 |
+| [Mender](https://mender.io/) | A/B with hosted/self-hosted backend | Apache-2.0 / Commercial |
+| [SWUpdate](https://swupdate.org/) | Flexible update framework | GPL-2.0 |
+| APT | Traditional package manager | - |
+
+## Decision
+
+*To be determined.*
+
+Preliminary direction: **RAUC** for its simplicity, strong U-Boot/GRUB integration, and LGPL license compatibility.
+
+## Evaluation Criteria
+
+*To be evaluated:*
+
+- A/B partition support
+- Bootloader integration (U-Boot, GRUB)
+- Signature verification
+- Delta/differential updates
+- Backend requirements (self-hosted vs SaaS)
+- License compatibility with paiOS
+
+## Consequences
+
+*To be documented after decision.*
+
+## Related
+
+- [ADR-002: OS Building Tool](./002-os-building-tool): Image creation (must support A/B partition layout)

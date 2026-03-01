@@ -1,0 +1,63 @@
+---
+title: Engine Domains
+description: "Overview of paiOS engine domains: domain crates implementing Hexagonal Architecture (Ports and Adapters)."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+paiOS is organized into **domain crates** (e.g. `vision`, `audio`), each following the [Hexagonal Architecture](/architecture/adr/004-system-architecture/) ("Ports and Adapters") pattern. Each domain crate exposes:
+
+- **Domain**: Controllers, value objects, and business logic (hardware-agnostic)
+- **Ports**: Rust traits defining the domain's interfaces
+- **Adapters**: Feature-gated implementations for specific hardware or platforms
+
+Inside each crate, these layers are implemented as **Rust modules** (`domain/`, `ports/`, `adapters/`). The layout is **flat** under `src/` (no nested subdirs such as `domain/vision/`):
+
+```text
+crates/vision/              # example: Vision domain crate
+├── src/
+│   ├── domain/                 # Rust module: controllers, value objects
+│   ├── ports/                 # Rust module: trait definitions
+│   └── adapters/               # Rust module: feature-gated implementations
+└── Cargo.toml                  # crate features
+```
+
+<Aside type="tip">
+The **Vision** domain crate serves as the reference implementation. All other domain crates follow the same structure. For the full workspace layout (workspace root under **engine/** in the repo), feature flags, and build configuration, see [Workspace and Build](/architecture/workspace-and-build/).
+</Aside>
+
+## Domain crates
+
+### [Common (`common`)](/architecture/modules/common/)
+
+Shared foundation at the base of the dependency graph. Provides Logger, ErrorTypes, ArgParse, and the **ports and adapters** for ConfigProvider and PermissionManager. Pure Rust, **no feature flags**: all adapters (including PermissionManager) are always compiled. The PermissionManager is a core security mechanism ([HITL](/glossary/#h)) and is never optional. All domain crates and the composition root depend on it.
+
+### [Core (`core`)](/architecture/modules/core/)
+
+The central orchestrator coordinating all domain crates. Contains the SessionManager, StateMachine, EventBus, and FlowRunner. **Defines** domain interfaces (VisionInterface, AudioInterface, InferenceInterface) that domain crates implement. Depends on `common` for utilities; entirely hardware-agnostic.
+
+### [Inference (`inference`)](/architecture/modules/inference/)
+
+The "brain" of the system. Handles all AI model execution: [LLMs](/glossary/#l), Wake Word detection, [STT](/glossary/#s), [TTS](/glossary/#t), Object Detection, and [MCP](/glossary/#m) client for external tool execution. Manages heterogeneous hardware backends ([NPU](/glossary/#n), [CPU](/glossary/#c), [GPU](/glossary/#g)) with resource management for Edge-AI constraints.
+
+### [Audio (`audio`)](/architecture/modules/audio/)
+
+The sensory plumbing for audio capture, playback, and signal conditioning ([AEC](/glossary/#a)). Contains **zero machine learning**: all audio ML lives in `inference`. Follows the "Driven Sensor" philosophy: the Core pulls data, hardware doesn't push.
+
+### [Vision (`vision`)](/architecture/modules/vision/)
+
+Hardware-accelerated camera capture, frame conditioning, and motion gating. Like Audio, follows the "Driven Sensor" philosophy. Contains no ML; all vision inference is in `inference`.
+
+### [API (`api`)](/architecture/modules/api/)
+
+The API Gateway: primary ingress point with multiple protocol support ([gRPC](/glossary/#g), [REST](/glossary/#r), [MCP](/glossary/#m) Server). Enforces strict port isolation via hardcoded routing rules to prevent "Confused Deputy" attacks.
+
+### [Peripherals (`peripherals`)](/architecture/modules/peripherals/)
+
+[HMI](/glossary/#h) implementation. **Unique**: spans both sides of the Hexagonal Architecture: buttons **drive** the system; LEDs and haptics are **driven** by the Core. Critical for the [HITL](/glossary/#h) permission workflow, especially on screen-less form factors (e.g. wearables) where non-verbal feedback is essential.
+
+## Ports & Adapters (Feature Flags)
+
+Every domain crate defines **domain ports** and provides **hardware/platform adapters** to implement them. These adapters are feature-gated following the `[domain]_[technology]` naming convention. Each domain crate's documentation page contains a detailed capability matrix mapping its internal Ports to its Adapters and Feature Flags. See [Workspace and Build](/architecture/workspace-and-build/) for the full feature flag reference, default profiles, and aggregation strategy.

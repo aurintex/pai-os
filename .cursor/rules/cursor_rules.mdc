@@ -87,6 +87,28 @@ alwaysApply: boolean
 - **Starlight Code Blocks**: ALWAYS use `frame="none"` for bash/terminal code blocks in Starlight MDX to avoid the "weird dots" (macOS-style window controls) in the terminal frame header, unless a specific `title` is required.
 - **Rust Doc Comments**: When writing documentation comments (`///` or `//!`) in Rust files that will be exported to Starlight, ensure terminal blocks use `bash frame="none"` where possible. Note: The `rustdoc-gen.mjs` script attempts to fix this automatically, but maintaining the standard in source is preferred.
 - **Diagrams**: Use **Mermaid** for technical diagrams in MDX files (versionable, AI-friendly). Use **Excalidraw** for high-level architecture overviews. See [Diagram Guidelines](mdc:docs/src/content/docs/guides/contributing/documentation.mdx#diagram-guidelines) for details.
+- **Glossary links**: When editing documentation, link to the [Glossary](mdc:docs/src/content/docs/glossary.mdx) for any term that has an entry (e.g. IPC, gRPC, HITL, UDS, API). Do not redefine terms; use `[Term](/glossary/#first-letter)`. See [Documentation Guide – Link to the Glossary](mdc:docs/src/content/docs/guides/contributing/documentation.mdx).
+- **Punctuation in docs**: Do **not** use em dashes (—) in any documentation. Use a colon for "label then explanation" (e.g. "Option B: Workspace", "**Term**: definition") and commas or parentheses for asides. See [Documentation Guide – Punctuation](mdc:docs/src/content/docs/guides/contributing/documentation.mdx).
+- **Rust code**: When writing or reviewing Rust code in `engine/`, follow [Rust Style and Best Practices](mdc:docs/src/content/docs/guides/contributing/rust-style.mdx): stack preference where maintainable, generics vs `Box<dyn Trait>`, and project formatting (rustfmt, clippy). Do not duplicate the guide here; refer to it.
+
+## Architecture Documentation Workflow
+
+**Separation of Concerns:**
+- **ADRs** (`docs/src/content/docs/architecture/adr/`): Document **decisions** (WHY). Include high-level architecture diagrams as part of the decision context. Do NOT include detailed module implementation details.
+- **Architecture Overview** (`docs/src/content/docs/architecture/index.mdx`): Document **current state** (WHAT). Embed the same Excalidraw diagram used in the latest ADR. Link to ADRs for decision context.
+- **Module Documentation** (`docs/src/content/docs/architecture/modules/`): Document **implementation details** (HOW). Link to Architecture Overview for context, not ADRs.
+
+**Diagram Management:**
+- **Single Source**: Architecture diagrams (`.excalidraw` files) are stored in `docs/public/images/Architecture/` with descriptive names (e.g., `system-architecture.excalidraw`, not ADR-numbered names).
+- **Multiple Embeddings**: The same diagram file can be embedded in multiple places (ADR and Architecture Overview). This is NOT duplication - it's the same source file.
+- **Minor updates**: When architecture changes only slightly (tweaks, labels, layout), update the existing `.excalidraw` file once. All pages embedding it will show the updated version automatically.
+- **Significant changes**: When architecture changes significantly, do **not** overwrite the existing diagram. If you do, past ADRs (e.g. ADR-004) would no longer show the previous version. Instead: (1) create a **new** Excalidraw file (e.g. `system-architecture-v2.excalidraw` or a date-based name), (2) create a **new** Architecture ADR that embeds this new file, and (3) point the Architecture Overview to the new file. Past ADRs keep embedding the old file so they continue to show the architecture as it was at decision time.
+
+**Workflow for Architecture Changes:**
+- **Minor change:** Create new ADR (if needed) → update the existing `.excalidraw` → Architecture Overview stays correct → update module docs if needed.
+- **Significant change:** Create a new `.excalidraw` file (preserve history) → create new Architecture ADR that embeds it → point Architecture Overview to the new diagram → update module docs if needed.
+
+**Key Principle**: ADRs are append-only decision logs. Each ADR should show the architecture **as it was at decision time**; avoid overwriting shared diagrams when the change is significant. Architecture Overview always reflects the current state by embedding the latest diagram.
 
 ---
 **References:**

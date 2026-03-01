@@ -4,10 +4,11 @@ description: AGPL-3.0 for runtime, Apache-2.0 for extensions API
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Mermaid from '../../../../components/Mermaid.astro';
 
 ## Status
 
-**Accepted** (2026-01-15)
+**Accepted** (2025-03-01)
 
 ## Context
 
@@ -15,8 +16,8 @@ paiOS is a commercial open-source project that needs to:
 
 1. **Protect the core runtime** from being forked without contributing back
 2. **Allow proprietary extensions** for any developer or commercial partner
-3. **Ensure long-term sustainability** – flexibility for future business models
-4. **Maintain simplicity** – avoid "Qt licensing pain"
+3. **Ensure long-term sustainability**: flexibility for future business models
+4. **Maintain simplicity**: avoid "Qt licensing pain"
 
 The runtime communicates with extensions via **gRPC over Unix Domain Sockets (IPC)**, similar to how Linux kernel syscalls create a boundary between the GPL kernel and user-space applications.
 
@@ -47,7 +48,7 @@ pai-os/
 ### Contributor License Agreement (CLA)
 
 We require a CLA (replacing DCO) to grant aurintex the right to:
-- **Ensure long-term sustainability** – flexibility for future business models
+- **Ensure long-term sustainability**: flexibility for future business models
 - Maintain the project indefinitely with proper resources
 - Protect the project's right to defend its trademarks
 
@@ -55,21 +56,16 @@ We require a CLA (replacing DCO) to grant aurintex the right to:
 
 The gRPC/UDS communication between runtime and extensions creates a clear **process separation**:
 
-```mermaid
-flowchart TB
+<Mermaid code={`flowchart TB
     subgraph ext["✅ Your Extension"]
-        ext_label["Any license you want!<br/>Proprietary, MIT, Apache, closed..."]
+        ext_node["Any license you want!<br/>Proprietary, MIT, Apache, closed..."]
     end
-    
-    ext -->|"gRPC over UDS<br/>(License Boundary)"| runtime
-    
+
     subgraph runtime["🔒 paiOS Runtime"]
-        runtime_label["AGPL-3.0"]
+        runtime_node["AGPL-3.0"]
     end
-    
-    style ext fill:#1a4d1a,stroke:#4ade80,color:#fff
-    style ext_label fill:#1a4d1a,stroke:#4ade80,color:#fff
-```
+
+    ext_node -->|"gRPC over UDS<br/>(License Boundary)"| runtime_node`} />
 
 This follows the same pattern as:
 - **Linux Kernel (GPL)** + User-space apps (any license)
@@ -100,5 +96,6 @@ The [FSF considers](https://www.gnu.org/licenses/gpl-faq.html#GPLPlugins) shared
 
 ## Related
 
-- [Licensing Guide](/guides/licensing) – Practical FAQ for extension developers
-- [NOTICE file](https://github.com/aurintex/pai-os/blob/main/NOTICE) – Copyright and trademarks
+- [ADR-006: Extension Architecture](./006-extension-architecture): Why we use process isolation and gRPC (including why not shared memory for control)
+- [Licensing Guide](/guides/licensing): Practical FAQ for extension developers
+- [NOTICE file](https://github.com/aurintex/pai-os/blob/main/NOTICE): Copyright and trademarks
