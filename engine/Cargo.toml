@@ -24,7 +24,7 @@ tokio = { version = "1.47.0", features = ["full"] }
 
 # Error Handling
 anyhow = "1.0.100"
-thiserror = "2.0.17"
+thiserror = "2.0.18"
 
 # Logging & Tracing
 tracing = "0.1.44"
