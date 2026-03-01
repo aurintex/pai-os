@@ -12,7 +12,7 @@ export default function AnalyticsInit() {
 				route: computeRoute(window.location.pathname, {}),
 				path: window.location.pathname,
 			});
-		});
+		}).catch(() => {});
 	}, []);
 	return null;
 }

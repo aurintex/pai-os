@@ -144,9 +144,13 @@ Inference is "compute-bound" and blocking. Running it in the tokio event loop wo
 
 The Core orchestrates **setup and teardown** of pipelines (control plane). Once a pipeline is running, **data flows directly** between domains via bounded channels without routing every frame through the SessionManager:
 
-```
-Control plane (Core):  "Start Voice flow" → set up channels → connect Audio → Inference → Audio
-Data plane (channels): Audio frames ──mpsc──→ STT task ──mpsc──→ LLM thread ──mpsc──→ TTS task
+```mermaid
+flowchart LR
+  C["Core control plane"] --> S["Start Voice flow / set up channels"]
+  S --> A[Audio]
+  A --> STT[STT task]
+  STT --> LLM[LLM thread]
+  LLM --> TTS[TTS task]
 ```
 
 The Core holds the channel handles and can tear down the pipeline (close senders, cancel tasks) at any time; this is the Saga rollback mechanism. But while the pipeline runs, data moves point-to-point for efficiency.

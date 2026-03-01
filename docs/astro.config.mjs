@@ -29,10 +29,9 @@ export default defineConfig({
 				Head: './src/components/Head.astro',
 			},
 			head: [
-				{
-					tag: 'script',
-					attrs: { defer: true },
-					content: `(function(){
+			{
+				tag: 'script',
+				content: `(function(){
   // Skip on mobile — Starlight already has a hamburger menu there
   if (window.innerWidth < 800) return;
 
@@ -92,12 +91,11 @@ export default defineConfig({
   } else { init(); }
 })();`,
 				},
-				{
-					tag: 'script',
-					attrs: { defer: true },
-					content: `(function(){
+			{
+				tag: 'script',
+				content: `(function(){
   var HIDE_DELAY_MS = 1500;
-  var timeoutId = 0;
+  var hideTimers = new WeakMap();
   function getScrollTarget(el) {
     if (!el || el === document) return document.documentElement;
     if (el === document.documentElement) return document.documentElement;
@@ -109,13 +107,18 @@ export default defineConfig({
   function onScroll(e) {
     var target = getScrollTarget(e.target);
     target.classList.add('scrollbar-visible');
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(function(){ target.classList.remove('scrollbar-visible'); }, HIDE_DELAY_MS);
+    var prev = hideTimers.get(target);
+    if (prev) clearTimeout(prev);
+    var next = setTimeout(function() {
+      target.classList.remove('scrollbar-visible');
+      hideTimers.delete(target);
+    }, HIDE_DELAY_MS);
+    hideTimers.set(target, next);
   }
   document.addEventListener('scroll', onScroll, true);
 })();
 `,
-				},
+			},
 			],
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/aurintex/pai-os' },

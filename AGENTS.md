@@ -3,7 +3,7 @@
 > **Start here**: This file serves as the primary index for AI agents (Cursor, Windsurf, Copilot) to understand the paiOS project structure, conventions, and active tasks.
 
 ## 1. Project Identity
-**paiOS** is an open-source operating system for Personal AI Hardware (paiLink, paiGo).
+**paiOS** is an open-source operating system for Personal AI Hardware (paiBox, paiScribe).
 - **Core Principle**: Privacy-first, local-only inference.
 - **Architecture**: Hexagonal, Monorepo, Rust-based Engine.
 

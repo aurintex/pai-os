@@ -155,26 +155,19 @@ For the end-to-end voice pipeline (Wake Word → STT → LLM → TTS) and the in
 
 ## Data Flow
 
-```
-Microphone (Hardware)
-    │
-    ▼
-AudioSource Port (cpal) ──→ RingBuffer ──→ AudioProcessor (AEC/WebRTC)
-                                                │
-                                                ▼
-                                          Clean PCM to Inference
-                                          (Wake Word, STT, VAD)
-
-TTS Response from Inference
-    │
-    ▼
-Speaker Port (cpal) ──→ Hardware Speaker
+```mermaid
+flowchart TD
+  A[Microphone Hardware] --> B[AudioSource Port cpal]
+  B --> C[RingBuffer]
+  C --> D[AudioProcessor AEC/WebRTC]
+  D --> E[Clean PCM to Inference<br/>Wake Word, STT, VAD]
+  F[TTS Response from Inference] --> G[Speaker Port cpal]
+  G --> H[Hardware Speaker]
 ```
 
 ## Related Documentation
 
-- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): High-level architecture decisions
-- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): Hybrid inference, flows, and voice pipeline context
+- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): High-level architecture decisions, hybrid inference, flows, and voice pipeline context
 - [Inference Module](/architecture/modules/inference/): Audio ML (Wake Word, STT, TTS)
 - [Workspace and Build](/architecture/workspace-and-build/): Feature flags and build configuration
 - [OS & Infrastructure](/architecture/operating-system/): System layer overview

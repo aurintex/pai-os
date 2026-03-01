@@ -224,31 +224,34 @@ The MCP **Client** role (engine uses external tools) is separate from the MCP **
 
 ## Data Flow
 
-```
-Core (SessionManager)
-    │
-    ▼
-InferenceController ──→ ResourceManager (memory check)
-    │                       │
-    ▼                       ▼
-ModelProvider ────→ SharedBackendContext
-    │                       │
-    ▼                       ▼
-Adapters:                Loaded Models:
-├── SherpaAdapter ───────→ Wake Word, STT, TTS (CPU/ONNX)
-├── RknnAdapter ─────────→ Vision models (NPU)
-├── RkllmAdapter ────────→ LLMs (NPU)
-├── LlamaCppAdapter ─────→ LLMs (CPU/GPU fallback)
-└── McpClientAdapter ────→ External MCP Servers (tool execution)
+```mermaid
+graph TD
+    Core[Core SessionManager] --> IC[InferenceController]
+    IC --> RM[ResourceManager<br/>memory check]
+    IC --> MP[ModelProvider]
+    MP --> SBC[SharedBackendContext]
+    RM --> SBC
+
+    SBC --> SA[SherpaAdapter]
+    SBC --> RA[RknnAdapter]
+    SBC --> RLA[RkllmAdapter]
+    SBC --> LCA[LlamaCppAdapter]
+    SBC --> MCA[McpClientAdapter]
+
+    SA -.-> M1[Wake Word, STT, TTS<br/>CPU/ONNX]
+    RA -.-> M2[Vision models<br/>NPU]
+    RLA -.-> M3[LLMs<br/>NPU]
+    LCA -.-> M4[LLMs<br/>CPU/GPU fallback]
+    MCA -.-> M5[External MCP Servers<br/>tool execution]
 ```
 
 ## Crates & Integration Reference
 
 Concrete crate usage per adapter. See [Model Integration Guide](/guides/contributing/model-integration/) for choosing the right format.
 
-:::note
+<Aside type="note">
 Code examples below are illustrative. The actual adapter implementations in `crates/inference/src/adapters/` are the source of truth.
-:::
+</Aside>
 
 ### ONNX — `ort` crate (`infer_sherpa` / direct)
 

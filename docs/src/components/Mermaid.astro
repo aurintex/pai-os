@@ -216,7 +216,6 @@ const dialogId = `dialog-${id}`;
   }
 
   document.addEventListener("astro:page-load", () => {
-    delete (document as any).__mermaidDialogSetup;
     setup();
   });
 

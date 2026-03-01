@@ -244,7 +244,7 @@ In the MVP, `FlowRunner` is implemented by a concrete `HardcodedFlowRunner` that
 
 - **Strongly-typed Rust**: fast to implement, zero runtime overhead
 - **Fully testable**: no scripting engine, no runtime interpreter to mock
-- **Deterministic**: every voice query follows the exact same WakeWord → STT → LLM → TTS pipeline
+- **Deterministic**: every voice query follows the same WakeWord → STT → LLM → TTS pipeline
 
 This is a deliberate architectural choice: *start simple, make the right abstraction, ship something that works.*
 
@@ -274,7 +274,7 @@ let flow_runner = AgenticFlowAdapter::new(langgraph_runtime, user_graph);
 - **JSON/YAML flow definitions**: a lightweight, no-code DSL that users edit in a companion app
 
 <Aside type="note">
-The hardcoded MVP flows are documented in [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/) (Hybrid Inference, Future Scope). The `FlowRunner` abstraction ensures these flows can evolve (from static to dynamic, from developer-defined to user-defined) without ever touching the Core's state machine or interfaces. See [ADR-004: Future Scope](/architecture/adr/004-system-architecture/#9-future-scope--deferred-features-yagni) for the deferred feature decision.
+The hardcoded MVP flows are documented in [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/) (Hybrid Inference, Future Scope). The `FlowRunner` abstraction ensures these flows can evolve (from static to dynamic, from developer-defined to user-defined) without ever touching the Core's state machine or interfaces. See [ADR-004: Future Scope](/architecture/adr/004-system-architecture/#11-future-scope--deferred-features-yagni) for the deferred feature decision.
 </Aside>
 
 ### SystemStatus (Port) & SystemMonitorAdapter
@@ -394,15 +394,20 @@ Saga/Rollback, Idempotency, and Backpressure are architectural patterns derived 
 
 ## Data Flow
 
-```
-Config updates      → SessionConfigPort  → Core (SessionManager)
-External Request    → API Gateway        → Core (SessionManager)
-OS telemetry        → SystemMonitorAdapter → SystemStatus Port → Core (SessionManager)
-                                              ├─→ Vision (frames on demand)       [VisionInterface]
-                                              ├─→ Audio (capture/playback)        [AudioInterface]
-                                              ├─→ Inference (AI execution)        [InferenceInterface]
-                                              ├─→ Peripherals (HMI feedback)      [PeripheralsInterface]
-                                              └─→ SensorRelayPort → caller relay  [permission-gated]
+```mermaid
+flowchart LR
+  Cfg[Config updates] --> SCP[SessionConfigPort]
+  Req[External Request] --> API[API Gateway]
+  OS[OS telemetry] --> SMA[SystemMonitorAdapter]
+  SMA --> SSP[SystemStatus Port]
+  SCP --> Core[Core SessionManager]
+  API --> Core
+  SSP --> Core
+  Core --> V[VisionInterface]
+  Core --> A[AudioInterface]
+  Core --> I[InferenceInterface]
+  Core --> P[PeripheralsInterface]
+  Core --> R["SensorRelayPort (permission-gated)"]
 ```
 
 ## Related Documentation

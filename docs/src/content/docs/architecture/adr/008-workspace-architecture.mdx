@@ -148,7 +148,7 @@ For the current layout tree and mechanics, see [Workspace and Build](/architectu
 
 **Fit for paiOS**
 
-- Matches the current layout in `[Workspace and Build](/architecture/workspace-and-build/)`.
+- Matches the current layout in [Workspace and Build](/architecture/workspace-and-build/).
 - Provides clear **bounded contexts** per module, while still being easy to navigate.
 - Leaves room to extract additional crates later *if* a subsystem becomes clearly reusable or independently versioned.
 
@@ -271,7 +271,7 @@ We choose the coarse-grained workspace with domain crates (Option C) for paiEngi
   - If a subsystem becomes reusable (e.g. a generic inference crate), we can split it into a separate crate later without redesigning the whole workspace.
   - If a crate stays tiny and coupled to another, we can choose to merge them back.
 - **Alignment with existing docs**
-  - This ADR formalizes what `[Workspace and Build](/architecture/workspace-and-build/)` already describes, avoiding divergence between implementation and documentation.
+  - This ADR formalizes what [Workspace and Build](/architecture/workspace-and-build/) already describes, avoiding divergence between implementation and documentation.
 
 Alternatives were rejected because:
 
@@ -295,7 +295,7 @@ Alternatives were rejected because:
 
 ### Follow-ups
 
-- Keep `[Workspace and Build](/architecture/workspace-and-build/)` as the **“how”** reference and link back to this ADR as the **“why”** for the chosen layout.
+- Keep [Workspace and Build](/architecture/workspace-and-build/) as the **“how”** reference and link back to this ADR as the **“why”** for the chosen layout.
 - Revisit this ADR if:
   - The engine’s scale or team size changes significantly (e.g. multiple teams owning different modules).
   - We decide to publish parts of the engine as independent, reusable crates on crates.io.

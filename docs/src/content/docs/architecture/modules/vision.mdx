@@ -45,8 +45,8 @@ The **Vision Module** handles the high-performance image acquisition and preproc
       <td>Simulated image processing for CI</td>
     </tr>
     <tr>
-      <td rowspan="3"><a href="#6-motiondetector-port--motionadapter"><code>MotionAdapter</code></a></td>
-      <td rowspan="3"><a href="#6-motiondetector-port--motionadapter"><code>MotionDetector</code></a></td>
+      <td rowspan="3"><a href="#5-motiondetector-port--motionadapter"><code>MotionAdapter</code></a></td>
+      <td rowspan="3"><a href="#5-motiondetector-port--motionadapter"><code>MotionDetector</code></a></td>
       <td><code>vision_isp_motion</code></td>
       <td>Hardware MD / V4L2 Stats → Rockchip SoC</td>
     </tr>
@@ -183,10 +183,9 @@ Failure to support these cleanly will leave the camera device open after the Cor
 
 Within the Vision domain crate, frames move through a fixed sequence. This ordering is **current design** and may remain hardcoded for simplicity; any future per-flow or user-configurable ordering would be an extension.
 
-```
-FrameSource → FramePool → ImageProcessor
-     ↓            ↓            ↓
-  (NV12)    (DMA-BUF)    (RGB/RGBA)
+```mermaid
+flowchart LR
+  A["FrameSource<br/>(NV12)"] --> B["FramePool<br/>(DMA-BUF)"] --> C["ImageProcessor<br/>(RGB/RGBA)"]
 ```
 
 1. **FrameSource** (camera) retrieves ISP-processed frames (NV12).
@@ -211,7 +210,7 @@ The Vision Module leverages specific RK3588 hardware:
 | **RGA** | Raster Graphics Accelerator | Hardware-accelerated format conversion and scaling |
 | **DMA** | [Direct Memory Access](/glossary/#d) | Zero-copy buffer sharing between components |
 
-Motion gating (ISP thumbnail stream for power saving) is implemented by the [MotionDetector (Port) & MotionAdapter](#6-motiondetector-port--motionadapter) in the Internal Domain Components section.
+Motion gating (ISP thumbnail stream for power saving) is implemented by the [MotionDetector (Port) & MotionAdapter](#5-motiondetector-port--motionadapter) in the Internal Domain Components section.
 
 
 

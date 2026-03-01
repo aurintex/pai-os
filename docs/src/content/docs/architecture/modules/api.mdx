@@ -27,40 +27,40 @@ Adapter names match the [system architecture diagram](/architecture/adr/004-syst
   <tbody>
     <tr>
       <td>
-        <a href="#1-grpcserverport-port--grpcadapter"><code>LocalSystemAdapter</code></a>
+        <a href="#1-grpcserverport-port--localsystemadapter--securenetworkadapter"><code>LocalSystemAdapter</code></a>
       </td>
       <td>
-        <a href="#1-grpcserverport-port--grpcadapter"><code>GrpcServerPort</code></a>
+        <a href="#1-grpcserverport-port--localsystemadapter--securenetworkadapter"><code>GrpcServerPort</code></a>
       </td>
       <td><code>api_grpc_uds</code></td>
       <td>Tonic → Unix Domain Sockets for local IPC</td>
     </tr>
     <tr>
       <td>
-        <a href="#1-grpcserverport-port--grpcadapter"><code>SecureNetworkAdapter</code></a>
+        <a href="#1-grpcserverport-port--localsystemadapter--securenetworkadapter"><code>SecureNetworkAdapter</code></a>
       </td>
       <td>
-        <a href="#1-grpcserverport-port--grpcadapter"><code>GrpcServerPort</code></a>
+        <a href="#1-grpcserverport-port--localsystemadapter--securenetworkadapter"><code>GrpcServerPort</code></a>
       </td>
       <td><code>api_grpc_tcp</code></td>
       <td>Tonic → Secure network RPC over TCP/TLS</td>
     </tr>
     <tr>
       <td>
-        <a href="#2-restserverport-port--restadapter"><code>OllamaAdapter</code></a>
+        <a href="#2-restserverport-port--ollamaadapter--openaiadapter"><code>OllamaAdapter</code></a>
       </td>
       <td>
-        <a href="#2-restserverport-port--restadapter"><code>RestServerPort</code></a>
+        <a href="#2-restserverport-port--ollamaadapter--openaiadapter"><code>RestServerPort</code></a>
       </td>
       <td><code>api_http</code></td>
       <td>Axum → REST API (Ollama compatibility)</td>
     </tr>
     <tr>
       <td>
-        <a href="#2-restserverport-port--restadapter"><code>OpenAiAdapter</code></a>
+        <a href="#2-restserverport-port--ollamaadapter--openaiadapter"><code>OpenAiAdapter</code></a>
       </td>
       <td>
-        <a href="#2-restserverport-port--restadapter"><code>RestServerPort</code></a>
+        <a href="#2-restserverport-port--ollamaadapter--openaiadapter"><code>RestServerPort</code></a>
       </td>
       <td><code>api_http</code></td>
       <td>Axum → REST API (OpenAI compatibility)</td>

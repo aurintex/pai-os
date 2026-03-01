@@ -91,9 +91,9 @@ UDS allows us to use standard Linux file permissions to control which processes 
 -   **Security**: Kernel-level isolation.
 
 ### Negative
--   **Latency**: Context switching and serialization adds overhead compared to function calls (microsconds vs nanoseconds).
+-   **Latency**: Context switching and serialization adds overhead compared to function calls (microseconds vs nanoseconds).
 -   **Complexity**: Managing multiple processes and socket files is more complex than a monolithic binary.
 
 ## Related
 -   [ADR-001: Licensing Strategy](./001-licensing-strategy): Defines the legal necessity of this architecture.
-   -   [ADR-004: Engine Architecture](./004-system-architecture): Places the IPC adapter in the Hexagonal structure.
+-   [ADR-004: Engine Architecture](./004-system-architecture): Places the IPC adapter in the Hexagonal structure.

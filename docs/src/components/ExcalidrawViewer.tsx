@@ -151,8 +151,7 @@ export function ExcalidrawViewer({ src, height = 480 }: ExcalidrawViewerProps) {
     );
   }
 
-  // Single Excalidraw instance — light theme, original diagram colors
-  const excalidrawEl = (
+  const renderExcalidraw = () => (
     <ExcalidrawComponent
       initialData={{
         elements: scene.elements,
@@ -209,7 +208,7 @@ export function ExcalidrawViewer({ src, height = 480 }: ExcalidrawViewerProps) {
         {/* content - uses shared .fs-modal-body */}
         <div className="fs-modal-body" style={{ padding: 0 }}>
           <div style={{ width: '100%', height: '100%' }}>
-            {excalidrawEl}
+            {renderExcalidraw()}
           </div>
         </div>
       </div>
@@ -229,7 +228,7 @@ export function ExcalidrawViewer({ src, height = 480 }: ExcalidrawViewerProps) {
           >
             ⛶ Fullscreen
           </button>
-          {excalidrawEl}
+          {!isFullscreen && renderExcalidraw()}
         </div>
       </div>
       {/* Render modal via Portal directly into document.body */}

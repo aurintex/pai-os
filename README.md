@@ -109,7 +109,7 @@ graph TD
 ```
 
 *   **Hexagonal Architecture:** The engine core (domain) is fully decoupled from hardware via Rust traits (ports). Adapters implement those traits — swap hardware without touching business logic.
-*   **Security by Design:** All hardware access (camera, microphone, NPU) goes through `paiEngine`. Apps cannot bypass this layer — ensuring only *you* decide what gets recorded.
+*   **Security by Design:** Hardware access (camera, microphone, NPU) is designed to flow through `paiEngine`, where policy and permission checks are centralized. This helps ensure recording behavior is user-controlled.
 *   **Platform Flexibility:** `paiEngine` is a flexible API platform. For wearables (paiGo), the smartphone app (paiApp) is the primary interface for configuration and interaction. Developers can build custom GUIs/HMIs on top via REST, gRPC, or MCP APIs.
 *   **Single Source of Truth:** For deep dives into the architecture, see the **[Architecture Documentation](https://docs.aurintex.com/architecture/)**.
 
