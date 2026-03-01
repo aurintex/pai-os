@@ -20,7 +20,7 @@ path = "src/main.rs"
 
 [dependencies]
 # Async Runtime & System
-tokio = { version = "1.47.0", features = ["full"] }
+tokio = { version = "1.49.0", features = ["full"] }
 
 # Error Handling
 anyhow = "1.0.100"
