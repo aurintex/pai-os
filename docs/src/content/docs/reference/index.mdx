@@ -1,18 +1,28 @@
 ---
-title: Reference
-description: API documentation, configuration options, and technical reference
+title: API Reference
+description: "Overview of all APIs exposed by the paiOS engine: gRPC, REST, and MCP."
 ---
 
-Technical reference documentation for **paiOS**, including API documentation, configuration options, and hardware specifications.
+This page collects all **APIs** the paiOS engine exposes. Use it to find the right interface for your use case (local [IPC](/glossary/#i), remote control, or tool integration).
 
-## API Documentation
+## Available APIs
 
-- **[gRPC API](/reference/api/)** - Protocol Buffer definitions and gRPC service documentation
+| API | Transport | Use case | Reference |
+|-----|-----------|----------|-----------|
+| **[gRPC API](/reference/api/)** | [UDS](/glossary/#u) (local) or TCP/TLS (remote) | Primary interface: lifecycle, config, status, inference. Type-safe [Protocol Buffers](https://protobuf.dev/). | [gRPC API Reference](/reference/api/): services and messages |
+| **REST API** | HTTP | Ollama and OpenAI client compatibility (convenience). | [API domain](/architecture/modules/api/): gateway and routing |
+| **MCP Server** | SSE / stdio | Host PC integration (Claude Desktop, OpenClaw, Cursor). Engine exposes tools and sensors. | [API domain](/architecture/modules/api/): MCP Server adapter; [C4 Architecture](/architecture/c4-architecture/): system context |
 
-## Coming Soon
+For **architecture** (routing matrix, port isolation, security), see the [API domain](/architecture/modules/api/) (api) and [Security](/architecture/security/).
 
-- Rust API documentation (embedded from `cargo doc` output)
+## Quick links
+
+- **[gRPC API Reference](/reference/api/)**: [gRPC](/glossary/#g) service definitions (EngineService, messages, RPC methods). Generated from `api/grpc/*.proto`.
+- **[Rust API (Internal)](/reference/rust/)**: Internal engine crates (for contributors). Module overviews and types.
+- **[Rust API (Standard rustdoc)](https://aurintex.github.io/pai-os/rustdoc/engine/index.html)**: Full rustdoc HTML (external).
+
+## Coming soon
+
+- REST endpoint reference (OpenAI/Ollama compatibility)
 - Hardware specifications and pinouts
-- Configuration options
 - CLI reference (if applicable)
-

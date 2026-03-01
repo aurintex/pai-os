@@ -4,8 +4,9 @@ description: How paiOS licensing works and what it means for you
 ---
 
 import { Aside, Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
 
-This guide explains paiOS licensing in practical terms – what you can and cannot do.
+This guide explains paiOS licensing in practical terms: what you can and cannot do.
 
 ## Repository Structure & Licenses
 
@@ -27,34 +28,29 @@ pai-os/
 ```
 
 <Aside type="tip" title="TL;DR for Extension Developers">
-Put your extensions in `apps/` or use the `api/grpc/` API definitions – both are **Apache-2.0** licensed, so your code stays yours!
+Put your extensions in `apps/` or use the `api/grpc/` [API](/glossary/#a) definitions: both are **Apache-2.0** licensed, so your code stays yours!
 </Aside>
 
 ---
 
 ## Can I write proprietary extensions?
 
-**Yes!** Extensions communicate with the paiOS runtime via gRPC over Unix Domain Sockets (IPC). This creates a clear process boundary, meaning:
+**Yes!** Extensions communicate with the paiOS runtime via [gRPC](/glossary/#g) over Unix Domain Sockets ([IPC](/glossary/#i)). This creates a clear process boundary, meaning:
 
 - ✅ Your extension code is **not** a "derivative work" of the AGPL runtime
 - ✅ You can license your extension however you want (proprietary, MIT, Apache, etc.)
 - ✅ No requirement to share your extension source code
 
-```mermaid
-flowchart TB
+<Mermaid code={`flowchart TB
     subgraph ext["✅ Your Extension"]
-        ext_label["Any license you want!<br/>Proprietary, MIT, Apache, closed..."]
+        ext_node["Any license you want!<br/>Proprietary, MIT, Apache, closed..."]
     end
-    
-    ext -->|"gRPC over UDS<br/>(License Boundary)"| runtime
-    
+
     subgraph runtime["🔒 paiOS Runtime"]
-        runtime_label["AGPL-3.0"]
+        runtime_node["AGPL-3.0"]
     end
-    
-    style ext fill:#1a4d1a,stroke:#4ade80,color:#fff
-    style ext_label fill:#1a4d1a,stroke:#4ade80,color:#fff
-```
+
+    ext_node -->|"gRPC over UDS<br/>(License Boundary)"| runtime_node`} />
 
 This follows the same pattern as:
 - Linux kernel (GPL) + user applications (any license)
@@ -64,11 +60,11 @@ This follows the same pattern as:
 
 ## What about the API?
 
-The gRPC API definitions (`api/grpc/`) are licensed under **Apache-2.0**, which provides:
+The [gRPC](/glossary/#g) [API](/glossary/#a) definitions (`api/grpc/`) are licensed under **Apache-2.0**, which provides:
 
 - ✅ Free use in commercial products
 - ✅ Patent protection from contributors
-- ✅ No copyleft – use it however you want
+- ✅ No copyleft: use it however you want
 
 ```protobuf
 // SPDX-License-Identifier: Apache-2.0
@@ -99,8 +95,8 @@ If you need high-performance data transfer (e.g., camera frames, audio):
 
 | ✅ Allowed | ❌ Not Allowed |
 |-----------|---------------|
-| Sharing raw byte buffers (JPEG, PCM audio) | Sharing complex paiOS data structures |
-| gRPC handles pointing to shared buffers | Direct memory access to runtime internals |
+| Sharing raw byte buffers (JPEG, [PCM](/glossary/#p) audio) | Sharing complex paiOS data structures |
+| [gRPC](/glossary/#g) handles pointing to shared buffers | Direct memory access to runtime internals |
 
 <Aside type="note">
 The [FSF considers](https://www.gnu.org/licenses/gpl-faq.html#GPLPlugins) shared memory with complex data structures as equivalent to "dynamic linking," which could trigger AGPL obligations. Stick to raw bytes and you're safe.

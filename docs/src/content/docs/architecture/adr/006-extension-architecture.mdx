@@ -1,0 +1,99 @@
+---
+title: "ADR-006: Extension and Plugin Architecture"
+description: Out-of-process plugin system using gRPC and UDS for isolation and security
+---
+
+## Status
+
+**Accepted** (2025-03-01)
+
+## Context
+
+paiOS aims to be an extensible operating system where third-party developers can build "Apps" (extensions) that leverage the core AI capabilities. However, we face critical challenges:
+
+1.  **Stability**: A crashing extension must not take down the OS or the core Engine.
+2.  **Security**: Extensions may access hardware (camera, mic) only when explicitly granted permission.
+3.  **Licensing**: A hard boundary is required between the AGPL-3.0 core and potentially proprietary extensions (see [ADR-001](./001-licensing-strategy)).
+4.  **Polyglot Support**: Support multiple extension languages (e.g. Python, Node.js, Rust) using stable, well-known runtimes and tooling (don't reinvent the wheel), with low maintenance overhead and performance suitable for embedded targets.
+
+## Decision
+
+We adopt an **Out-of-Process** plugin architecture using **gRPC over Unix Domain Sockets (UDS)**.
+
+### 1. Process Isolation
+
+Each extension runs as a separate OS process. This ensures:
+-   **Fault Isolation**: If an extension segfaults, the Engine remains unaffected.
+-   **Resource Quotas**: We can use cgroups (via systemd) to limit CPU/RAM per extension.
+-   **License Boundary**: Separate address spaces satisfy the LGPL/AGPL linking requirements for non-derivative works.
+
+### 2. Communication Protocol (IPC)
+
+We use **gRPC** (with Protobuf) over Unix Domain Sockets.
+
+-   **Why gRPC?**: Strongly typed contracts, wide language support (Rust, Python, Node, Go), and high performance.
+-   **Why UDS?**: More secure than TCP (file permissions), lower latency (no TCP handshake/overhead).
+
+### 3. Extension Lifecycle
+
+The Engine manages the lifecycle of all extensions:
+
+1.  **Discovery**: Engine scans `/apps/` directory for `manifest.json` files.
+2.  **Registration**: Extension registers its capabilities (e.g., "I provide a weather tool") on startup.
+3.  **Initialization**: Engine starts the extension process via systemd or directly.
+4.  **Runtime**: Extension listens on a unique UDS path defined by the Engine.
+5.  **Termination**: Engine sends `SIGTERM` / `Shutdown` signal on user request or system sleep.
+
+### 4. API Contracts (The "api")
+
+The contract is defined in `.proto` files in the `api/` directory.
+
+```protobuf frame="none"
+// api/proto/pai/v1/extension.proto
+service Extension {
+  rpc OnWakeWord(WakeWordEvent) returns (Empty);
+  rpc GetTools(Empty) returns (ToolList);
+}
+
+service Core {
+  rpc RequestInference(InferenceRequest) returns (InferenceResponse);
+  rpc Log(LogMessage) returns (Empty);
+}
+```
+
+### 5. Sandboxing & Permissions
+
+We use **systemd** capabilities and namespaces for sandboxing (see [Security](/architecture/security/) for the full model):
+
+-   **Filesystem**: Read-only root, read-write only in private `/var/lib/pai/apps/<app-id>`.
+-   **Network**: blocked by default, allow-listed in `manifest.json`.
+-   **Hardware**: No direct access to `/dev/video0` or `/dev/snd/*`. All access must go through gRPC calls to the Engine.
+
+## Rationale
+
+### Why not WebAssembly (Wasm)?
+Wasm (WASI) is promising but lacks mature support for hardware acceleration (NPU/GPU) and complex threading models required for some AI workloads. A process-based model is battle-tested and supports all languages natively.
+
+### Why not Shared Libraries (`dlopen`)?
+Dynamic loading forces extensions to use the same language (Rust/C) and ABI as the host. It also crashes the host if the plugin crashes and creates a "derivative work" licensing risk.
+
+### Why not shared memory (for control)?
+Using shared memory for control flow or complex data structures would blur the license boundary: the [FSF considers it equivalent to dynamic linking](https://www.gnu.org/licenses/gpl-faq.html#GPLPlugins), which can trigger AGPL obligations for the extension. We keep a strict process boundary and use gRPC for all control and handles. See [ADR-001: Licensing Strategy](./001-licensing-strategy) for the shared-memory constraint (raw byte buffers only) and full licensing context.
+
+### Why not TCP?
+UDS allows us to use standard Linux file permissions to control which processes can talk to the Engine, adding a layer of security without complex TLS certificate management.
+
+## Consequences
+
+### Positive
+-   **Crash Safety**: Bad code in an extension cannot kill the OS.
+-   **Language Agnostic**: Python devs can build first-class apps.
+-   **Security**: Kernel-level isolation.
+
+### Negative
+-   **Latency**: Context switching and serialization adds overhead compared to function calls (microseconds vs nanoseconds).
+-   **Complexity**: Managing multiple processes and socket files is more complex than a monolithic binary.
+
+## Related
+-   [ADR-001: Licensing Strategy](./001-licensing-strategy): Defines the legal necessity of this architecture.
+-   [ADR-004: Engine Architecture](./004-system-architecture): Places the IPC adapter in the Hexagonal structure.

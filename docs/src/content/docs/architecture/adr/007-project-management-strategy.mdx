@@ -1,0 +1,49 @@
+---
+title: "ADR-007: Project Management Strategy"
+description: Adoption of GitHub Projects for task tracking and roadmap visibility
+---
+
+## Status
+
+**Accepted** (2025-03-01)
+
+## Context
+
+To scale paiOS effectively, we need a project management system that supports:
+
+1. **Open Source Transparency**: Contributors must see the roadmap and task state without paid seats (e.g. Jira/Linear).
+2. **Integration with Code**: AI agents and tooling inside the repo should be able to read issues and PRs via CLI/API so tasks and code stay in one place.
+
+## Decision
+
+We adopt **GitHub Projects V2** as the sole source of truth for task tracking.
+
+### Structure
+
+- **Single board** with Kanban-style views (e.g. Backlog, Todo, In Progress, Review, Done).
+- **Automation**: GitHub Actions move issues based on PR status where appropriate.
+
+### Why Not Linear or Jira?
+
+- **Visibility**: External contributors cannot see Linear/Jira boards without an invite or paid account. GitHub Projects is visible with the repo.
+- **Context**: AI agents and scripts inside the repo can read Issue/PR descriptions via GitHub CLI or API more easily than external SaaS tools.
+
+## Rationale
+
+Benchmarking against high-velocity OSS projects (e.g. VS Code, Supabase) shows that keeping code and tasks in the same place reduces friction. GitHub's GraphQL API allows custom agents (e.g. task-master) to "read the board" and stay in sync with human contributors.
+
+## Consequences
+
+### Positive
+
+- **Zero cost**: No per-seat pricing for contributors; anyone with repo access sees the project.
+- **Single place**: Issues, PRs, and project board live in GitHub.
+
+### Negative
+
+- **Feature gap**: GitHub Projects lacks some advanced features of Linear (e.g. cycles, velocity tracking). We accept this trade-off for transparency and simplicity.
+
+## Related
+
+- [ADR-009: AI Context and Workflow Strategy](./009-ai-context-strategy): How we keep AI and human context aligned (AGENTS.md, docs as SSoT).
+- [Contribution Workflow](/guides/contributing/workflow/): The resulting workflow for contributors.

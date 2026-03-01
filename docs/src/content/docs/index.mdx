@@ -3,29 +3,29 @@ title: Welcome to paiOS
 description: The open-source, local-first operating system for the paiOS ecosystem
 ---
 
-**paiOS** is the open-source, local-first operating system powering the **paiOS** ecosystem. It provides the software stack (Engine + OS) that enables paiOS hardware products (paiLink, paiGo) to process voice, vision, context, and intelligence directly on trusted hardware, giving you full control over your data. Visit [aurintex.com](https://www.aurintex.com) for more information.
+**paiOS** is the open-source, local-first operating system powering the **paiOS** ecosystem. It provides the software stack (Engine + OS) that enables paiOS hardware products to process voice, vision, context, and intelligence directly on trusted hardware, giving you full control over your data. Visit [aurintex.com](https://www.aurintex.com) for more information.
 
 ## The Vision
 
 paiOS creates a bridge between powerful local hardware and your daily digital life. Our mission is to democratize access to hardware-accelerated AI while guaranteeing data sovereignty.
 
-### 1. paiLink (Current Focus)
-The project starts with **paiLink**, a USB AI Accelerator based on the [Radxa Rock 5C](https://radxa.com/products/rock5/5c/) SBC. This device connects to your PC and acts as a dedicated AI server.
-*   **Local Inference:** Runs sLLMs, STT (Speech-to-Text), embeddings, and other specialized AI models entirely offline.
-*   **Universal Compatibility:** Acts as a Linux USB gadget, compatible with any host OS (Windows, macOS, Linux).
+### paiBox (Current Focus)
+**paiBox** is a plug-and-play Private AI Server based on the [Radxa Rock 5C](https://radxa.com/products/rock5/5c/) [SBC](/glossary/#s). It runs on your network and acts as a local AI backend for your existing tools.
+*   **Local Inference:** Runs [sLLMs](/glossary/#s), [STT](/glossary/#s), embeddings, and other AI models entirely offline.
+*   **Universal Compatibility:** Works as a USB gadget or network device, compatible with any host OS (Windows, macOS, Linux).
 *   **API-First:** Exposes OpenAI-compatible endpoints (similar to Ollama) for integration with tools like Obsidian, LibreOffice, or VS Code.
-*   **Intelligent Input & Control:** Acts as a virtual keyboard/mouse (HID) to "type" text or execute commands directly into your PC, enabling seamless AI-driven interaction.
+*   **Intelligent Input & Control:** Acts as a virtual keyboard/mouse ([HID](/glossary/#h)) to "type" text or execute commands directly into your PC, enabling seamless AI-driven interaction.
 
-### 2. paiGo (Future)
-The long-term vision is to shrink this technology into a standalone **AI Wearable**. By building a robust OS and Engine today on paiLink, we lay the foundation for a future device that captures context and assists you throughout your day - completely privately.
+### paiScribe (Next)
+**paiScribe** is a privacy-first meeting transcription device that works 100 percent offline. Records, transcribes, identifies speakers, and generates summaries: all on device, with no cloud dependency. Built for law firms, medical practices, government agencies, and anyone who needs meeting records without data leaving the room.
 
 ## Technology Stack
 
 paiOS is built for performance, security, and reproducibility.
 
-*   **Core Engine:** Built in [Rust](https://www.rust-lang.org/) for memory safety and low-latency hardware abstraction (HAL).
-*   **Operating System:** Minimal, embedded Linux (Debian-based) built with [Debos](https://github.com/go-debos/debos) for reproducibility.
-*   **Hardware:** Optimized for NPU-based SBCs (Single Board Computers), starting with the Radxa ecosystem.
+*   **Core Engine:** Built in [Rust](https://www.rust-lang.org/) for memory safety and low-latency hardware abstraction ([HAL](/glossary/#h)). The engine is **multi-platform**: it runs at least on **Linux desktop** for development and on target hardware (e.g. Rockchip [SBCs](/glossary/#s)) for deployment. See [Workspace and Build](/architecture/workspace-and-build/#platform-support) for the full platform support policy.
+*   **Operating System:** Minimal, embedded Linux (Debian-based) built with [Debos](/architecture/adr/002-os-building-tool/) for reproducibility.
+*   **Hardware:** Optimized for [NPU](/glossary/#n)-based [SBCs](/glossary/#s) (Single Board Computers), starting with the Radxa ecosystem. The engine is not limited to a single board; contributors are welcome to help support other platforms.
 
 ## Repository Structure
 
@@ -33,8 +33,8 @@ This monorepo contains the entire **paiOS** software stack:
 
 | Directory | Description |
 | :--- | :--- |
-| **`engine/`** | The **paiOS Engine**. The Rust-based neural orchestrator, handling HAL, Security, and IPC. |
-| **`api/`** | Public API definitions (gRPC, OpenAI-compat, Ollama-compat). |
+| **`engine/`** | The **paiOS Engine**. The Rust-based neural orchestrator, handling [HAL](/glossary/#h), Security, and [IPC](/glossary/#i). |
+| **`api/`** | Public API definitions ([gRPC](/glossary/#g), OpenAI-compat, Ollama-compat). |
 | **`apps/`** | Modular extensions and reference implementations for the paiOS ecosystem. |
 | **`os/`** | **paiOS** build configurations. Reproducible embedded Linux images. |
 | **`docs/`** | This documentation site (built with Starlight). |
@@ -43,9 +43,9 @@ This monorepo contains the entire **paiOS** software stack:
 
 🚧 **Phase 0: Foundation & Architecture**
 
-We are currently executing the **"Great Pivot"**: Transitioning from internal Proof-of-Concept to this clean, production-ready open-source architecture.
+The project is currently executing the **"Great Pivot"**: transitioning from internal proof-of-concept to this clean, production-ready open-source architecture.
 
-*   **Architecture:** Clean Architecture (Rust) & Modular HAL
+*   **Architecture:** Hexagonal Architecture (Rust) and modular [HAL](/glossary/#h)
 *   **License:** See our [Licensing Guide](/guides/licensing/) for details.
 *   **Focus:** Establishing the `pai-engine` and `paiOS` build pipeline.
 

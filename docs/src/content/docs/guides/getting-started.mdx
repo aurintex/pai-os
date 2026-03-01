@@ -14,13 +14,13 @@ Welcome! This guide will help you set up your development environment for **paiO
 
 ## Build Tooling
 
-Depending on what you want to build, we provide different toolchains:
+Depending on what you want to build, different toolchains are available:
 
 ### Local Rust (Core Development)
-If you are contributing to the **paiOS Engine** or the **OS Recipes**, you should set up Rust locally as described above.
+If you are contributing to the **paiOS Engine** or the **OS Recipes**, you should set up Rust locally as described in the Prerequisites section.
 
 ### Dockerized Toolchain (App Development)
-For 3rd party app developers, we provide the **`pai-builder`** Docker image. This image encapsulates the entire cross-compilation toolchain and system headers (sysroot).
+For third-party app developers, the project provides the **`pai-builder`** Docker image. This image encapsulates the entire cross-compilation toolchain and system headers (sysroot).
 - **No manual SDK installation**: Just run your build command inside the container.
 - **Reproducible**: Ensures your app builds the same way as in our CI/CD.
 
@@ -65,7 +65,7 @@ docker run --rm -v $(pwd):/workspace \
 ## Next Steps
 
 - Explore the [Architecture](/architecture/) section to understand the system design
-- Check out the [Reference](/reference/) documentation for API details
+- Check out the [API Reference](/reference/) for gRPC, REST, and MCP API details
 - Read the [Contributing Guide](/guides/contributing/) to start contributing
 
 ## Getting Help

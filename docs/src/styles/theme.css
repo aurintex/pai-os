@@ -10,9 +10,12 @@
 /* Theme Variables - B2C Style */
 :root {
   /* Global Constants (Nothing-style) */
-  --bg-page: #050505; /* Rich Black - CONSTANT */
-  --text-main: #a1a1aa; /* Zinc-400 - CONSTANT */
-  --text-heading: #ffffff; /* White - CONSTANT */
+  --bg-page: #050505;
+  /* Rich Black - CONSTANT */
+  --text-main: #a1a1aa;
+  /* Zinc-400 - CONSTANT */
+  --text-heading: #ffffff;
+  /* White - CONSTANT */
   --border-main: rgba(255, 255, 255, 0.1);
   --bg-elevated: rgba(255, 255, 255, 0.05);
 
@@ -28,71 +31,86 @@ body.theme-deep-vibe {
   --accent-glow: rgba(79, 70, 229, 0.4);
   --text-on-accent: #ffffff;
 }
+
 body.theme-neon-noir {
   --color-accent: #ef4444;
   --accent-glow: rgba(239, 68, 68, 0.4);
   --text-on-accent: #ffffff;
 }
+
 body.theme-aurora {
   --color-accent: #38bdf8;
   --accent-glow: rgba(56, 189, 248, 0.4);
   --text-on-accent: #000000;
 }
+
 body.theme-obsidian {
   --color-accent: #ffffff;
   --accent-glow: rgba(255, 255, 255, 0.2);
   --text-on-accent: #000000;
 }
+
 body.theme-terminal {
   --color-accent: #22c55e;
   --accent-glow: rgba(34, 197, 94, 0.4);
   --text-on-accent: #000000;
 }
+
 body.theme-midnight {
   --color-accent: #3b82f6;
   --accent-glow: rgba(59, 130, 246, 0.4);
   --text-on-accent: #ffffff;
 }
+
 body.theme-crimson {
   --color-accent: #dc2626;
   --accent-glow: rgba(220, 38, 38, 0.4);
   --text-on-accent: #ffffff;
 }
+
 body.theme-forest {
   --color-accent: #10b981;
   --accent-glow: rgba(16, 185, 129, 0.4);
   --text-on-accent: #ffffff;
 }
+
 body.theme-gold {
   --color-accent: #fbbf24;
   --accent-glow: rgba(251, 191, 36, 0.4);
   --text-on-accent: #000000;
 }
+
 body.theme-cyber {
   --color-accent: #22d3ee;
   --accent-glow: rgba(34, 211, 238, 0.4);
   --text-on-accent: #000000;
 }
+
 body.theme-paper {
   --color-accent: #e4e4e7;
   --accent-glow: rgba(228, 228, 231, 0.2);
   --text-on-accent: #000000;
-} /* Zinc-200 */
+}
+
+/* Zinc-200 */
 body.theme-rose {
   --color-accent: #e11d48;
   --accent-glow: rgba(225, 29, 72, 0.4);
   --text-on-accent: #ffffff;
 }
+
 body.theme-ocean {
   --color-accent: #0ea5e9;
   --accent-glow: rgba(14, 165, 233, 0.4);
   --text-on-accent: #000000;
 }
+
 body.theme-amber {
   --color-accent: #f59e0b;
   --accent-glow: rgba(245, 158, 11, 0.4);
   --text-on-accent: #000000;
 }
+
 body.theme-coral {
   --color-accent: #ff7f50;
   --accent-glow: rgba(255, 127, 80, 0.4);
@@ -112,8 +130,7 @@ html {
     Arial,
     sans-serif;
   /* Safe area insets for iOS devices with notches */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right)
-    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 body {
@@ -128,6 +145,94 @@ body {
     color 0.5s ease;
 }
 
+/* ================================================================
+   AUTO-HIDE SCROLLBARS (Cursor / Material style)
+   Hidden by default; show while scrolling, fade after ~1.5s.
+   ================================================================ */
+
+/* Root (main page) scrollbar — hidden by default */
+html {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+html.scrollbar-visible {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+/* Sidebar and right TOC — hidden by default */
+.sidebar-pane,
+.right-sidebar {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+.sidebar-pane.scrollbar-visible,
+.right-sidebar.scrollbar-visible {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+/* WebKit: hide by default, show when .scrollbar-visible */
+.sidebar-pane::-webkit-scrollbar,
+.right-sidebar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.sidebar-pane::-webkit-scrollbar-track,
+.sidebar-pane::-webkit-scrollbar-thumb,
+.right-sidebar::-webkit-scrollbar-track,
+.right-sidebar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+.sidebar-pane.scrollbar-visible::-webkit-scrollbar-thumb,
+.right-sidebar.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+}
+.sidebar-pane.scrollbar-visible::-webkit-scrollbar-thumb:hover,
+.right-sidebar.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Root scrollbar in WebKit */
+html.scrollbar-visible::-webkit-scrollbar {
+  width: 8px;
+}
+html.scrollbar-visible::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+html.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+html.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Light theme: dark scrollbar thumb when visible */
+html[data-theme="light"].scrollbar-visible {
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+html[data-theme="light"] .sidebar-pane.scrollbar-visible,
+html[data-theme="light"] .right-sidebar.scrollbar-visible {
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+html[data-theme="light"].scrollbar-visible::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+html[data-theme="light"].scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
+}
+html[data-theme="light"] .sidebar-pane.scrollbar-visible::-webkit-scrollbar-thumb,
+html[data-theme="light"] .right-sidebar.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+html[data-theme="light"] .sidebar-pane.scrollbar-visible::-webkit-scrollbar-thumb:hover,
+html[data-theme="light"] .right-sidebar.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
+}
+
 h1,
 h2,
 h3,
@@ -135,8 +240,10 @@ h4,
 h5,
 h6 {
   font-family: "Inter", sans-serif;
-  color: #ffffff; /* White */
-  letter-spacing: -0.02em; /* Tight tracking for Inter headings */
+  color: #ffffff;
+  /* White */
+  letter-spacing: -0.02em;
+  /* Tight tracking for Inter headings */
 }
 
 /* Premium Selection */
@@ -168,6 +275,7 @@ h6 {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -176,10 +284,11 @@ h6 {
 /* Starlight Theme Overrides */
 :root {
   /* Override Starlight's default colors with our theme - Match Landing Page */
-  --sl-color-accent: #ee4646; /* B2C Accent from Landing Page CTA */
+  --sl-color-accent: #ee4646;
+  /* B2C Accent from Landing Page CTA */
   --sl-color-accent-high: #ee4646;
   --sl-color-accent-low: rgba(238, 70, 70, 0.4);
-  
+
   /* Background colors */
   --sl-color-bg: var(--bg-page);
   --sl-color-bg-nav: var(--bg-elevated);
@@ -187,7 +296,7 @@ h6 {
   --sl-color-bg-inline-code: var(--bg-elevated);
   --sl-color-bg-nav-hover: rgba(255, 255, 255, 0.08);
   --sl-color-bg-sidebar-hover: rgba(255, 255, 255, 0.08);
-  
+
   /* Text colors */
   --sl-color-text: var(--text-main);
   --sl-color-text-accent: var(--text-heading);
@@ -198,18 +307,19 @@ h6 {
   --sl-color-gray-4: #545861;
   --sl-color-gray-5: #252830;
   --sl-color-gray-6: #15171c;
-  
+
   /* Border and divider colors */
   --sl-color-hairline: var(--border-main);
   --sl-color-hairline-light: rgba(255, 255, 255, 0.15);
-  
+
   /* Font */
   --sl-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --sl-font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-  
+
   /* Link colors - Match Landing Page */
   --sl-color-link: #ee4646;
-  --sl-color-link-hover: #f05a5a; /* Lighter red on hover */
+  --sl-color-link-hover: #f05a5a;
+  /* Lighter red on hover */
 }
 
 /* Dark mode is default (Starlight uses data-theme="dark") */
@@ -218,15 +328,64 @@ html:not([data-theme]) {
   --sl-color-bg: var(--bg-page);
   --sl-color-text: var(--text-main);
   --sl-color-text-accent: var(--text-heading);
-  --sl-color-bg-nav: var(--bg-elevated);
-  --sl-color-bg-sidebar: var(--bg-elevated);
+  /* Make header and sidebar fully opaque to prevent scroll bleeding */
+  --sl-color-bg-nav: #050505;
+  --sl-color-bg-sidebar: #050505;
   --sl-color-hairline: var(--border-main);
+}
+
+/* Match right-hand TOC background to left drawer */
+.right-sidebar {
+  background-color: var(--sl-color-bg-sidebar);
+}
+
+/* Desktop: keep right TOC narrow and flushed to the right edge */
+@media (min-width: 72rem) {
+  .right-sidebar {
+    width: 18rem;      /* stable TOC width */
+    max-width: 18rem;
+    inset-inline-end: 0; /* stick to right viewport edge */
+    inset-inline-start: auto;
+  }
 }
 
 /* Ensure body uses our background */
 body {
   background-color: var(--bg-page) !important;
   color: var(--text-main);
+}
+
+/* Ensure the header has a backdrop blur in case of slight transparency */
+header.header {
+  background-color: rgba(5, 5, 5, 0.8) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-main) !important;
+}
+
+/* ================================================================
+   TABLE UX & ALIGNMENT
+   ================================================================
+   Starlight strips left padding on `td:first-child`, which breaks
+   vertical alignment in rowspanned tables. We enforce uniform
+   padding on all cells to fix alignment.
+   ================================================================ */
+
+.sl-markdown-content table :is(th, td) {
+  padding-inline-start: 1rem !important;
+  padding-inline-end: 1rem !important;
+}
+
+/* Optical alignment: `<code>` blocks have internal padding (0.5em), making their text 
+   look shifted right compared to plain-text headers. This pulls them back to the left 
+   by exactly that amount so the text aligns perfectly. */
+.sl-markdown-content table td>code:first-child:last-child {
+  margin-inline-start: -0.5em;
+}
+
+/* Table wrapper — Starlight renders tables as `display: block; overflow: auto` */
+.sl-markdown-content table {
+  position: relative;
 }
 
 /* Override Starlight headings to use our white color */
@@ -242,24 +401,35 @@ body {
 /* Code Block Styles - Maximum Contrast for Readability */
 :root {
   /* Code block background - darker for better contrast */
-  --sl-color-bg-code: #0f0f0f; /* Even darker than before */
+  --sl-color-bg-code: #0f0f0f;
+  /* Even darker than before */
   --sl-color-bg-inline-code: rgba(255, 255, 255, 0.15);
-  
-  /* Code text colors - very bright for maximum readability */
-  --sl-color-code-text: #ffffff; /* Pure white for maximum contrast */
-  --sl-color-code-comment: #888888; /* Medium gray for comments */
-  --sl-color-code-keyword: #ff6b6b; /* Bright red for keywords */
-  --sl-color-code-string: #51cf66; /* Bright green for strings */
-  --sl-color-code-function: #74c0fc; /* Bright blue for functions */
-  --sl-color-code-number: #ffd43b; /* Bright yellow for numbers */
+
+  /* Code text colors - high contrast on dark background */
+  --sl-color-code-text: #e4e4e7;
+  /* Slightly soft white for body text in blocks */
+  --sl-color-code-comment: #9ca3af;
+  /* Light gray for comments - was #888 (too dim); avoid purple/lavender */
+  --sl-color-code-keyword: #f87171;
+  /* Bright red for keywords */
+  --sl-color-code-string: #4ade80;
+  /* Bright green for strings */
+  --sl-color-code-function: #60a5fa;
+  /* Bright blue for functions */
+  --sl-color-code-number: #fbbf24;
+  /* Bright yellow/amber for numbers */
+  --sl-color-code-punctuation: #c4b5fd;
+  /* Light violet for punctuation (readable, not washed out) */
 }
 
 /* Code blocks - maximum readability */
 pre,
 pre code {
-  background-color: #0f0f0f !important; /* Very dark background */
-  color: #ffffff !important; /* Pure white text */
-  border: 1px solid rgba(255, 255, 255, 0.25) !important; /* Stronger border */
+  background-color: #0f0f0f !important;
+  /* Very dark background */
+  color: var(--sl-color-code-text) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  /* Stronger border */
 }
 
 /* Code block container - Starlight specific */
@@ -271,13 +441,15 @@ pre[class*="astro-code"] {
   background-color: #0f0f0f !important;
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
   border-radius: 0.5rem !important;
-  padding: 1.5rem !important; /* More padding */
+  padding: 1.5rem !important;
+  /* More padding */
   overflow-x: auto !important;
   margin: 1.5rem 0 !important;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important; /* Subtle shadow for depth */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+  /* Subtle shadow for depth */
 }
 
-/* Code block text - ensure maximum contrast */
+/* Code block text - ensure high contrast; all spans/default text use same base */
 .sl-markdown-content pre code,
 article pre code,
 main pre code,
@@ -287,11 +459,19 @@ pre[class*="astro-code"] code {
   background-color: transparent !important;
   border: none !important;
   padding: 0 !important;
-  color: #ffffff !important; /* Pure white */
-  font-size: 0.95em !important; /* Slightly larger */
-  line-height: 1.8 !important; /* More line spacing */
+  color: var(--sl-color-code-text) !important;
+  font-size: 0.95em !important;
+  line-height: 1.8 !important;
   font-family: var(--sl-font-mono) !important;
   font-weight: 400 !important;
+}
+
+/* Unstyled spans (e.g. file paths, plain text) in code blocks - avoid light gray/purple from theme */
+.sl-markdown-content pre code span,
+article pre code span,
+main pre code span,
+pre code span {
+  color: var(--sl-color-code-text) !important;
 }
 
 /* Inline code - much better contrast */
@@ -301,22 +481,31 @@ article code:not(pre code),
 p code,
 li code,
 td code {
-  background-color: rgba(255, 255, 255, 0.15) !important; /* Brighter background */
-  color: #ffffff !important; /* Pure white text */
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  /* Brighter background */
+  color: #ffffff !important;
+  /* Pure white text */
   padding: 0.25em 0.5em !important;
   border-radius: 0.3rem !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Stronger border */
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  /* Stronger border */
   font-size: 0.9em !important;
   font-family: var(--sl-font-mono) !important;
-  font-weight: 500 !important; /* Slightly bolder */
+  font-weight: 500 !important;
+  /* Slightly bolder */
 }
 
-/* Syntax highlighting improvements */
+/* Syntax highlighting - high contrast; override any theme purple/gray */
 .sl-markdown-content pre code .token.comment,
 .sl-markdown-content pre code .token.prolog,
 .sl-markdown-content pre code .token.doctype,
 .sl-markdown-content pre code .token.cdata {
-  color: var(--sl-color-code-comment) !important;
+  color: #9ca3af !important;
+  /* Light gray, not purple */
+}
+
+.sl-markdown-content pre code .token.punctuation {
+  color: var(--sl-color-code-punctuation) !important;
 }
 
 .sl-markdown-content pre code .token.keyword,
@@ -337,6 +526,11 @@ td code {
   color: var(--sl-color-code-number) !important;
 }
 
+/* Fallback: any token without a specific color stays readable */
+.sl-markdown-content pre code .token {
+  color: var(--sl-color-code-text) !important;
+}
+
 /* Active navigation item - Match Landing Page accent */
 .sidebar a[aria-current="page"],
 .sidebar a[aria-current="true"],
@@ -344,8 +538,10 @@ td code {
 .sl-sidebar a[aria-current="true"],
 nav a[aria-current="page"],
 nav a[aria-current="true"] {
-  background-color: rgba(238, 70, 70, 0.15) !important; /* B2C accent with transparency */
-  color: #ee4646 !important; /* B2C accent */
+  background-color: rgba(238, 70, 70, 0.15) !important;
+  /* B2C accent with transparency */
+  color: #ee4646 !important;
+  /* B2C accent */
   border-left-color: #ee4646 !important;
 }
 
@@ -383,12 +579,288 @@ nav a:hover {
   color: var(--sl-color-gray-2) !important;
 }
 
-/* Fix Aside Text Colors */
+/* ============================================================
+   Aside (Note / Tip / Caution / Danger) — SINGLE SOURCE OF TRUTH
+   All pages use Starlight’s <Aside> from @astrojs/starlight/components.
+   There are no duplicate note/callout components. Change styling ONLY here.
+   ============================================================ */
 .starlight-aside {
-  color: var(--sl-color-white) !important;
+  color: var(--sl-aside-text, var(--sl-color-gray-2)) !important;
 }
 
 .starlight-aside p {
   color: inherit !important;
 }
 
+/* Inline code inside asides: ensure contrast (dark theme = light text, light theme = dark text) */
+html[data-theme="dark"] .starlight-aside code,
+html:not([data-theme]) .starlight-aside code {
+  color: #e4e4e7 !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+html[data-theme="light"] .starlight-aside code {
+  color: #1e293b !important;
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Dark theme: darker aside backgrounds + light text for clear contrast */
+html[data-theme="dark"] .starlight-aside,
+html:not([data-theme]) .starlight-aside {
+  --sl-aside-text: #e4e4e7;
+}
+
+html[data-theme="dark"] .starlight-aside--note,
+html:not([data-theme]) .starlight-aside--note {
+  background-color: hsl(234, 45%, 18%) !important;
+  border-color: hsl(234, 70%, 55%) !important;
+}
+
+html[data-theme="dark"] .starlight-aside--tip,
+html:not([data-theme]) .starlight-aside--tip {
+  background-color: hsl(281, 40%, 18%) !important;
+  border-color: hsl(281, 70%, 55%) !important;
+}
+
+html[data-theme="dark"] .starlight-aside--caution,
+html:not([data-theme]) .starlight-aside--caution {
+  background-color: hsl(41, 45%, 18%) !important;
+  border-color: hsl(41, 82%, 55%) !important;
+}
+
+html[data-theme="dark"] .starlight-aside--danger,
+html:not([data-theme]) .starlight-aside--danger {
+  background-color: hsl(339, 45%, 18%) !important;
+  border-color: hsl(339, 82%, 55%) !important;
+}
+
+html[data-theme="dark"] .starlight-aside__title,
+html:not([data-theme]) .starlight-aside__title {
+  color: var(--sl-aside-text) !important;
+}
+
+/* Aside links: high-contrast in all variants (avoid default purple/gray on light backgrounds) */
+html[data-theme="dark"] .starlight-aside__content a,
+html:not([data-theme]) .starlight-aside__content a {
+  color: #93c5fd !important;
+}
+
+html[data-theme="dark"] .starlight-aside--tip .starlight-aside__content a,
+html:not([data-theme]) .starlight-aside--tip .starlight-aside__content a {
+  color: #ddd6fe !important;
+}
+
+/* Light theme: ensure links contrast with light aside backgrounds */
+html[data-theme="light"] .starlight-aside {
+  --sl-aside-text: #1e293b;
+  --sl-color-asides-text-accent: #5b21b6;
+}
+
+html[data-theme="light"] .starlight-aside--note {
+  background-color: hsl(234, 85%, 93%) !important;
+  border-color: hsl(234, 90%, 50%) !important;
+}
+
+html[data-theme="light"] .starlight-aside--tip {
+  background-color: hsl(281, 60%, 92%) !important;
+  border-color: hsl(281, 70%, 50%) !important;
+}
+
+html[data-theme="light"] .starlight-aside__title {
+  color: #1e3a5f !important;
+}
+
+html[data-theme="light"] .starlight-aside__content a {
+  color: #5b21b6 !important;
+}
+
+html[data-theme="light"] .starlight-aside--tip .starlight-aside__content a {
+  color: #4c1d95 !important;
+}
+
+/* Mermaid: force dark fills for edge labels and note-style boxes (base theme defaults to #fff5ad / #fff4dd) */
+.mermaid-container .edgeLabel rect,
+.mermaid-container .edgeLabel span,
+.mermaid-container svg [fill="#fff5ad"],
+.mermaid-container svg [fill="#fff4dd"] {
+  fill: #161b22 !important;
+  background-color: #161b22 !important;
+}
+
+/* Mermaid: subgraph/cluster background (large container boxes) */
+.mermaid-container svg .cluster rect {
+  fill: #161b22 !important;
+  stroke: #388bfd !important;
+}
+
+/* Excalidraw viewer: hide static placeholder once React has mounted */
+.excalidraw-viewer-wrapper[data-loaded] .excalidraw-placeholder {
+  display: none !important;
+}
+
+/* Ensure fullscreen button uses right/bottom positioning, not left */
+.excalidraw-fullscreen-btn {
+  left: auto !important;
+}
+
+/* Force sidebar and TOC below modal - Portal ensures modal is in body, so these rules apply */
+body.excalidraw-fullscreen-active .sl-sidebar,
+body.excalidraw-fullscreen-active aside[aria-label="On this page"],
+body.excalidraw-fullscreen-active nav,
+body.excalidraw-fullscreen-active [role="banner"],
+body.excalidraw-fullscreen-active .sl-sidebar *,
+body.excalidraw-fullscreen-active aside[aria-label="On this page"] * {
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* Modal backdrop - VERY high z-index to be above everything */
+.excalidraw-fullscreen-backdrop {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  background: rgba(0, 0, 0, 0.95) !important;
+}
+
+/* Modal dialog - HIGHEST z-index */
+.excalidraw-fullscreen-modal {
+  z-index: 1000000 !important;
+  pointer-events: auto !important;
+}
+
+/* Header must be above Excalidraw */
+.excalidraw-fullscreen-modal>div:first-child {
+  z-index: 1000001 !important;
+  position: relative !important;
+  pointer-events: auto !important;
+}
+
+/* Close button must be above everything - absolute positioned */
+.excalidraw-fullscreen-modal>button {
+  z-index: 1000002 !important;
+  position: absolute !important;
+  pointer-events: auto !important;
+}
+
+/* Excalidraw container should be below header */
+.excalidraw-fullscreen-modal>div:last-child {
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* Prevent Excalidraw from capturing pointer events on header area */
+.excalidraw-fullscreen-modal>div:last-child>* {
+  pointer-events: auto;
+}
+
+/* ================================================================
+   LAYOUT: Wider Content Area
+   ================================================================
+   Starlight default is 45rem – bump to 70rem so wide tables
+   (like the Ports & Adapters capability matrix) fit without
+   horizontal scrolling on most monitors.
+   ================================================================ */
+:root {
+  --sl-content-width: 70rem;
+}
+
+/* When the left drawer is collapsed, let the main content use more width */
+@media (min-width: 72rem) {
+  body.sidebar-collapsed {
+    --sl-content-width: 82rem;
+  }
+}
+
+/* ================================================================
+   LEFT SIDEBAR: Collapsible navigation drawer
+   ================================================================
+   Google/Material Design pattern:
+   – Left nav helps you GET TO a page → collapsible, not needed while reading.
+   – Right TOC helps you navigate WITHIN a page → always visible.
+   Content properly expands into freed space and stays centered.
+   ================================================================ */
+
+/* --- Left sidebar transitions (desktop only, ≥50rem) --- */
+@media (min-width: 50rem) {
+  .sidebar .sidebar-pane {
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar .sidebar-content {
+    transition: opacity 0.2s ease;
+  }
+
+  /* Main content shifts smoothly */
+  .main-frame {
+    transition: padding-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ---- Collapsed state ---- */
+  body.sidebar-collapsed .sidebar .sidebar-pane {
+    width: 0 !important;
+    overflow: hidden;
+    border-inline-end: none;
+  }
+
+  body.sidebar-collapsed .sidebar .sidebar-content {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Reclaim the sidebar space for content */
+  body.sidebar-collapsed .main-frame {
+    --sl-content-inline-start: 0px !important;
+  }
+
+  /* --- Expand/collapse handle (Cursor-docs style: symmetric square, centered in both states) --- */
+  .sidebar-expand-handle {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: #2d2d2d;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    z-index: 10;
+    transition: left 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .sidebar-expand-handle:hover {
+    background: #3d3d3d;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.4);
+  }
+
+  /* When expanded: same shape, same vertical center — only horizontal position moves to sidebar right edge */
+  body:not(.sidebar-collapsed) .sidebar-expand-handle {
+    left: var(--sl-sidebar-width, 18.75rem);
+    transform: translate(-50%, -50%);
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.35);
+  }
+
+  body:not(.sidebar-collapsed) .sidebar-expand-handle:hover {
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Hide any legacy bottom toggle (removed in favor of handle) */
+.sidebar-collapse-toggle {
+  display: none !important;
+}
+
+@media (max-width: 49.99rem) {
+  .sidebar-expand-handle {
+    display: none !important;
+  }
+}

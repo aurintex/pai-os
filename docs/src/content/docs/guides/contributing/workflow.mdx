@@ -5,6 +5,8 @@ sidebar:
   order: 2
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 This guide covers the technical steps for contributing to the project.
 
 ## 1. Preparation
@@ -21,6 +23,8 @@ Always create a new branch for your changes. Use a descriptive name like `featur
 ```bash frame="none"
 git checkout -b feature/your-feature-name
 ```
+
+**Naming alignment:** When work is driven by a GitHub issue, use [Conventional Commits](https://www.conventionalcommits.org/) style for the **issue title** (e.g. `feat(common): add config format detection`). For the **branch**, use a type prefix and a short description; including the issue number improves traceability. Examples: `feature/common-config-format-detection` or `feature/36-config-format-detection`. PR title must follow the same conventional format (see the workflow section).
 
 ## 3. Make Your Changes
 
@@ -44,10 +48,11 @@ Make regular commits as you work:
 git commit -m "your commit message"
 ```
 
-### Conventional Commits (PR Titles)
+### Conventional Commits (Issue and PR Titles)
 
-To keep our changelogs automated and clean, we use the **Conventional Commits** format. However, we take a **pragmatic approach**:
+To keep our changelogs automated and clean, we use the **Conventional Commits** format for **GitHub issue titles** and **PR titles**. However, we take a **pragmatic approach**:
 
+- **Issue titles**: Use the same format (e.g., `feat(module): short description` or `fix(api): description`). This keeps issues, branches, and PRs aligned.
 - **Required for PR Titles**: The title of your Pull Request must follow the format (e.g., `feat: add HID support`). This is crucial because we **Squash & Merge**, and the PR title becomes the final commit message on the `main` branch.
 - **Optional for Local Commits**: While working on your branch, you don't need to strictly follow the format for every small commit. Use what makes you productive.
 
@@ -57,6 +62,10 @@ To keep our changelogs automated and clean, we use the **Conventional Commits** 
 - **`docs:`**: Documentation changes.
 - **`refactor:`**: Code changes that don't add features or fix bugs.
 - **`chore:`**: Maintenance tasks (dependencies, build scripts).
+
+<Aside type="note" title="Why this convention?">
+Using Conventional Commits for **issue and PR titles** is widely used (e.g. by projects adopting conventional changelogs) and keeps wording consistent from issue → PR → squash commit. **Branch names** often use a type prefix (`feature/`, `fix/`) plus a short description; including the issue number (e.g. `feature/36-description`) is a common option for traceability. We keep one format for titles and allow flexible branch names (with or without issue number) so the workflow stays simple while remaining consistent and automation-friendly.
+</Aside>
 
 See the [CLA Guide](../cla/) for information about our Contributor License Agreement.
 

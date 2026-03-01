@@ -17,11 +17,11 @@ We distinguish between three main layers of documentation:
 - **Content**: Explain the "Big Picture", "Why" decisions were made, and "How-to" tutorials.
 - **Rule**: If you add a feature or change system behavior, it belongs here.
 
-### 2. Integration-Level (gRPC API Reference)
+### 2. Integration-Level (API Reference)
 **Audience**: App developers and system integrators.
-- **Location**: `docs/src/content/docs/reference/api.mdx` (generated from Protobuf files in `api/grpc/`).
-- **Content**: Service definitions, IPC protocols, and message formats.
-- **Rule**: If you modify `.proto` files, run `npm run gen:proto` in the `docs/` directory to regenerate the documentation.
+- **Location**: `docs/src/content/docs/reference/`: [API Reference](/reference/) (overview of all APIs: gRPC, REST, MCP); `reference/api.mdx` (gRPC service definitions, generated from Protobuf files in `api/grpc/`).
+- **Content**: Overview of engine APIs, gRPC service definitions, IPC protocols, and message formats.
+- **Rule**: If you modify `.proto` files, run `npm run gen:proto` in the `docs/` directory to regenerate the gRPC API documentation.
 
 ### 3. Low-Level (Internal Rust API)
 **Audience**: Engine contributors and maintainers.
@@ -39,9 +39,37 @@ Code explains "How", but documentation must explain "Why".
 ### Stay Relevant
 If a feature changes, its documentation must change in the same PR. The [Definition of Done](/guides/contributing/standards/#definition-of-done-dod) requires all documentation to be synchronized.
 
+### Punctuation
+**Do not use em dashes (—)** in documentation. Use **colon** for "term or label then explanation" (e.g. "Option B: Workspace", "**AEC**: Acoustic Echo Cancellation") and commas or parentheses for asides. This keeps docs readable and avoids the heavy em-dash style often associated with AI-generated text.
+
+### Link to the Glossary
+When using a term that has an entry in the [Glossary](/glossary/), link to it (e.g. [IPC](/glossary/#i), [gRPC](/glossary/#g), [HITL](/glossary/#h), [UDS](/glossary/#u)). This keeps definitions in one place and helps readers discover the glossary. Use the format `[Term](/glossary/#first-letter)` (e.g. `#i` for IPC, `#h` for HITL).
+
+### Glossary vs. detailed documentation (abbreviations and terms)
+Readers may expect either a **definition** (what is IPC?) or **detailed docs** (how does paiOS do IPC?). Common approach (e.g. [MDN](https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Howto/Write_a_new_entry_in_the_glossary), [Flutter](https://docs.flutter.dev/resources/glossary)):
+
+- **Default in body text:** Link the term to the [Glossary](/glossary/). The glossary gives the short definition and can point to detailed docs via a **"See also"** line in the entry.
+- **Glossary as hub:** For terms that have both a definition and a dedicated doc (e.g. IPC, gRPC, API), add a short "See also" in the glossary entry linking to the relevant architecture or reference page. Then one click from any doc → glossary → from glossary to "how we do it."
+- **When the sentence is clearly "for details" or "how we implement":** Link to the **most relevant** destination (the detailed page) instead of the glossary. Example: "For how the engine exposes IPC, see [C4 Architecture](/architecture/c4-architecture/) and the [API domain](/architecture/modules/api/)." Do not use two links for the same concept in one sentence unless necessary; prefer one link that best matches the intent (definition → glossary; implementation/details → detailed doc).
+
+## Module Documentation Pattern
+
+When creating or updating documentation for an engine domain (in `docs/src/content/docs/architecture/modules/`), ensure it strictly follows this standard structure and order to maintain consistency across the project:
+
+1. **Frontmatter & Imports**: YAML title, description, and `Aside` component import.
+2. **`## Overview`**: Define the module's core purpose and primary responsibility. Keep this concise and avoid detailing cross-module relationships here.
+3. **`## Ports & Adapters (Feature Flags)`** or **`## Ports & Adapters`**: A unified Capability Matrix table mapping each Adapter to its implemented Port(s) and corresponding Cargo feature flag. Use **"Ports & Adapters (Feature Flags)"** when the module has feature-gated adapters; use **"Ports & Adapters"** only for modules with no feature flags (e.g. `common`). Section headings that are linked from the "Implements Port(s)" column **must start with the port name** (same as in the architecture diagram and table), so readers can match table and section. Use a suffix like " (Port)", " & Adapters", or ": purpose" as needed.
+4. **`## Architecture Context / Relationships`**: Explain how this domain fits into the Hexagonal Architecture and interacts with other domains (e.g., Core depends on Common, Vision is driven by Core).
+5. **`## Crate Structure`**: Provide a file tree representation (`crates/pai-[module]/...`) showing the internal structure, especially where the domain, ports, and adapters live. **Do not add a separate "Domain vs Adapters" subsection**: Crate Structure and Internal Domain Components already provide that separation.
+6. **`## [Module-Specific Philosophy/Concept]`** *(Optional)*: Explain any crucial architectural decisions unique to this module (e.g., "Driven Sensor Philosophy", "The 'Dumb Plumbing' Philosophy", "The 'Blind' Orchestrator").
+7. **`## Internal Domain Components`**: A table listing core internal components (like Managers or Configs) and their responsibilities. Module-specific subsections (e.g. Cancellation-Safe Interface, Wake Word and the Interface) may follow.
+8. **Module-specific sections** *(Optional)*: Any additional sections that apply only to this module (e.g. "Hardware Integration", "API Ports & Routing Matrix", "MCP Server Role", "Resource Management"). Place these after Internal Domain Components.
+9. **`## Data Flow`** *(Optional)*: When the module has a clear pipeline, include a short diagram or numbered list (e.g. FrameSource → FramePool → ImageProcessor). Omit for modules where it does not add value.
+10. **`## Related Documentation`**: Bulleted links to relevant ADRs, other domain docs, or the build guide.
+
 ## Automated Synchronization
 
-We use automated systems to keep documentation synchronized with code:
+Automated systems keep documentation synchronized with code:
 
 **For the Internal Rust API:**
 - Rust doc comments are automatically converted into Starlight pages.
@@ -57,7 +85,7 @@ For technical details on how these systems work, see the [Documentation Maintena
 
 ## Diagram Guidelines
 
-We use two types of diagrams depending on the context:
+Two types of diagrams are used depending on the context:
 
 ### Mermaid (Code-Based)
 
@@ -67,14 +95,17 @@ Use Mermaid for diagrams that:
 - Need to be **version-controlled** as text
 - Are likely to be **generated or updated by AI tools**
 
-**Usage:** Simply use a fenced code block with `mermaid` as the language:
+**Usage:** For **architecture and ADR diagrams** that should match the site’s dark theme and C4-style look (see [C4 Architecture](/architecture/c4-architecture/)), use the `<Mermaid code={...} />` component so they get the shared theme and fullscreen button:
 
-~~~markdown
-```mermaid
-flowchart LR
+```mdx
+import Mermaid from '../../../components/Mermaid.astro';  // path from your MDX file
+
+<Mermaid code={\`flowchart TD
     A[Component A] --> B[Component B]
+\`} />
 ```
-~~~
+
+For simple inline diagrams, a fenced `mermaid` code block is also supported (rendered by astro-mermaid; styling may differ).
 
 ### Excalidraw (Visual)
 
@@ -86,7 +117,7 @@ Use Excalidraw for diagrams that:
 
 Store Excalidraw source files (`.excalidraw`) alongside exported PNGs in `docs/public/images/`.
 
-### Decision Guide
+### When to use what
 
 | Use Case | Tool |
 |----------|------|
@@ -96,4 +127,4 @@ Store Excalidraw source files (`.excalidraw`) alongside exported PNGs in `docs/p
 | User-facing guides | Excalidraw (friendlier) |
 | AI-generated diagrams | Mermaid |
 
-**Rule:** The author chooses the tool – use what fits the context best. Both are acceptable as long as the source is version-controlled.
+**Rule:** Use **Mermaid** for technical diagrams and **Excalidraw** for high-level architecture overviews. Keep source files version-controlled.

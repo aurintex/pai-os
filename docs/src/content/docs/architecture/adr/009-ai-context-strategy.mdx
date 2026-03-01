@@ -1,0 +1,64 @@
+---
+title: "ADR-009: AI Context and Workflow Strategy"
+description: "Single Source of Truth for AI assistant configuration: AGENTS.md and the pointer pattern"
+---
+
+## Status
+
+**Accepted** (2025-03-01)
+
+## Context
+
+AI coding assistants (Cursor, Windsurf, Copilot) need consistent project context and coding standards. We must:
+
+1. **Unified Context**: Avoid maintaining separate "human docs" and "AI rules" so agents and contributors read the same sources.
+2. **Tool Agnostic**: Different editors use different config formats (`.cursorrules`, Copilot instructions, etc.); duplicating rules leads to drift.
+
+## Decision
+
+We establish **`AGENTS.md`** in the project root as the universal entry point for all AI coding assistants, and a **pointer pattern** for tool-specific configuration.
+
+### 1. AGENTS.md as the Map
+
+`AGENTS.md` is the master index and high-level map that tells agents where to find authoritative content (architecture, standards, workflow). It does not duplicate detailed rules; it points to `docs/`.
+
+### 2. The Pointer Pattern
+
+Tool-specific configuration files (e.g. `.cursor/rules/*.mdc`, `.github/copilot-instructions.md`) must **not** contain raw rules. Instead they:
+
+1. Briefly summarize the role (e.g. "Enforce coding standards").
+2. Explicitly tell the AI to read the authoritative files in `docs/` or `AGENTS.md`.
+
+**Architecture:**
+
+```text
+pai-os/
+├── AGENTS.md                  # Master index / high-level map for agents
+├── .cursor/
+│   └── rules/                 # Tool-specific pointers (e.g. to docs)
+├── docs/
+│   └── src/
+│       └── content/
+│           └── docs/          # Single Source of Truth (standards, architecture, workflow)
+```
+
+## Rationale
+
+Different editors have different config formats. Maintaining rules in multiple places leads to drift. By centralizing knowledge in `docs/` and using `AGENTS.md` as the map, we ensure all agents behave consistently and "read from the same book" as human contributors.
+
+## Consequences
+
+### Positive
+
+- **Universal Context**: Human docs and AI context are the same files.
+- **Tool Agnostic**: Switching from Cursor to Windsurf only requires updating the pointer, not rewriting all rules.
+
+### Negative
+
+- **Prompt Overhead**: Agents must read multiple files (pointer → AGENTS.md → docs), which consumes context window (mitigated by long-context models).
+
+## Related
+
+- [ADR-007: Project Management Strategy](./007-project-management-strategy): GitHub-centric workflow; issues/PRs are where AI and humans align on tasks.
+- [AGENTS.md](https://github.com/aurintex/pai-os/blob/main/AGENTS.md): The in-repo entry point (see repo root).
+- [Contribution Workflow](/guides/contributing/workflow/): Human-facing workflow that mirrors the same SSoT.

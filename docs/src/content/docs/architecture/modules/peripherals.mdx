@@ -1,0 +1,208 @@
+---
+title: "Peripherals Module (peripherals)"
+description: "HMI implementation: buttons, LEDs, haptics, and the bridge between user and system."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+The `peripherals` crate implements the Core's `PeripheralsInterface` and is **unique among domain crates**: it spans **both sides** of the Hexagonal Architecture. Buttons and touch surfaces **drive** the system (left side); LEDs and haptics are **driven** by the Core (right side).
+
+## Ports & Adapters (Feature Flags)
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Adapter</th>
+      <th scope="col">Implements Port(s)</th>
+      <th scope="col">Capability Feature</th>
+      <th scope="col">Technology / Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><a href="#deviceinputadapter"><code>DeviceInputAdapter</code></a></td>
+      <td rowspan="4"><a href="#userinteractionport"><code>UserInteractionPort</code></a></td>
+      <td><code>periph_gpio</code></td>
+      <td>gpiocdev → Physical GPIO buttons</td>
+    </tr>
+    <tr>
+      <td><code>periph_evdev</code></td>
+      <td>evdev → Linux touch/keyboard events</td>
+    </tr>
+    <tr>
+      <td><code>periph_i2c</code></td>
+      <td>linux-embedded-hal → I2C sensors (IMU, gesture)</td>
+    </tr>
+    <tr>
+      <td><a href="#desktophotkeyadapter"><code>DesktopHotkeyAdapter</code></a></td>
+      <td><code>periph_desktop</code></td>
+      <td>rdev → Desktop OS keyboard shortcuts</td>
+    </tr>
+    <tr>
+      <td><a href="#ledadapter"><code>LedAdapter</code></a></td>
+      <td rowspan="3"><a href="#userfeedbackport"><code>UserFeedbackPort</code></a></td>
+      <td><code>periph_gpio</code></td>
+      <td>gpiocdev / sysfs-pwm → Physical status LEDs</td>
+    </tr>
+    <tr>
+      <td><a href="#hapticfeedbackadapter"><code>HapticFeedbackAdapter</code></a></td>
+      <td><code>periph_pwm</code></td>
+      <td>sysfs-pwm → PWM haptic motor control</td>
+    </tr>
+    <tr>
+      <td><a href="#desktopnotifyadapter"><code>DesktopNotifyAdapter</code></a></td>
+      <td><code>periph_desktop</code></td>
+      <td>notify-rust → OS desktop notifications</td>
+    </tr>
+    <tr>
+      <td><a href="#usbkeyboardadapter"><code>UsbKeyboardAdapter</code></a></td>
+      <td rowspan="2"><a href="#keyboardemulatorport"><code>KeyboardEmulatorPort</code></a></td>
+      <td><code>periph_usb_hid</code></td>
+      <td>std::fs → Linux USB Gadget HID emulation</td>
+    </tr>
+    <tr>
+      <td><a href="#desktoptypingadapter"><code>DesktopTypingAdapter</code></a></td>
+      <td><code>periph_desktop_hid</code></td>
+      <td>enigo → Desktop typing simulation</td>
+    </tr>
+  </tbody>
+</table>
+
+<Aside type="note">
+The `Capability Feature` column lists features defined on the `peripherals` crate. Profiles in `pai-engine` (such as `desktop`, `target`, and `test`) select which peripherals adapters are active for a given build. For a single place to see how these capabilities map to profiles, refer to the **Feature Flag Matrix** in [Workspace and Build](/architecture/workspace-and-build/#feature-flag-matrix-capabilities-vs-profiles).
+</Aside>
+
+<Aside type="note">
+For automated tests and CI, the peripherals module also provides mock implementations behind the `periph_mock` capability. In the [system architecture diagram](/architecture/adr/004-system-architecture/), these appear as yellow `periph_mock` blocks attached to each adapter, mirroring the real hardware paths without requiring physical devices.
+</Aside>
+
+## Architecture Context / Relationships
+
+The `peripherals` crate is unique as it bridges **both sides** of the Hexagonal Architecture. It pushes events (like physical button presses) to `core` as a driving adapter, but it also receives commands (like LEDs or haptic feedback) from `core` as a driven adapter.
+
+## Crate Structure
+
+```text
+crates/peripherals/
+├── src/
+│   ├── domain/               # PeripheralsManager, Semantic Events
+│   │   └── ports.rs          # Traits: `UserInteractionPort`, `UserFeedbackPort`, `KeyboardEmulatorPort`
+│   ├── adapters/             # Hardware & OS implementations
+│   │   ├── gpio.rs           # Raw buttons and LEDs (`gpiocdev`)
+│   │   ├── evdev.rs          # Linux touch/keyboard events
+│   │   ├── desktop.rs        # Desktop hotkeys/notifications fallback
+│   │   └── usb_hid.rs        # Hardware USB Gadget keyboard emulation
+│   └── lib.rs                # Implements Core's `PeripheralsInterface`
+└── Cargo.toml
+```
+
+## The Dual Nature in the Hexagon
+
+Unlike Audio and Vision (strictly Driven right-side adapters), the Peripherals domain **bridges both sides**:
+
+- **Driving (Left side):** Physical buttons generate interrupts that trigger Core state changes (wake, start listening, confirm [HITL](/glossary/#h) prompt)
+- **Driven (Right side):** LEDs and haptic motors provide status feedback (Listening, Processing, Error) and implement [HITL](/glossary/#h) confirmation
+
+This dual role makes Peripherals the **physical bridge** between the user and the system.
+
+## Internal Domain Components
+
+| Component | Responsibility |
+|-----------|----------------|
+| **`PeripheralsManager`** | Central facade implementing `PeripheralsInterface`. Translates raw hardware signals to semantic domain events (input) and Core state to physical feedback (output). Ensures consistency across the entire paiOS architecture (matching `VisionManager`, `AudioManager`, etc.). |
+
+## Input Ports & Adapters (The Driving Side)
+
+### `UserInteractionPort`
+
+Translates **raw physical inputs** into semantic domain events (e.g., `WakeButton_Pressed`, `VolumeUp`, `LongPress`).
+
+#### DeviceInputAdapter
+
+The primary hardware adapter for this port. It is feature-gated to select the concrete technology at compile time.
+
+- Gated by `periph_gpio`, `periph_evdev`, `periph_i2c`
+- **`gpiocdev`**: raw buttons and switches (GPIO lines)
+- **`evdev`**: touch, mouse, keyboard events from Linux input subsystem
+- **`linux-embedded-hal`**: IMU and I2C sensor data (gesture triggers)
+
+#### DesktopHotkeyAdapter
+
+Development-focused adapter that maps OS-level keyboard shortcuts to the same semantic events as real hardware. Enables full development on a desktop without the target [AI device](/glossary/#a) attached.
+
+- Gated by `periph_desktop`
+- Uses **`rdev`** crate for global OS keyboard shortcuts (e.g., Ctrl+Shift+W for "wake")
+- Same semantic events emitted; Core and flows behave identically on host/desktop
+
+## Output Ports & Adapters (The Driven Side)
+
+The Driven side is split into two distinct ports to maintain strict separation of concerns:
+
+### `UserFeedbackPort`
+
+Translates **Core state into non-verbal physical feedback**. **Hyper-critical for screen-less form factors** (e.g. wearables) where the [Permission System](/architecture/security/) ([HITL](/glossary/#h)) must ask for confirmation using LED and haptic patterns only: no display. [HITL](/glossary/#h) is required on all devices regardless of screen presence; non-verbal feedback enables it on screen-less devices.
+
+#### LedAdapter
+
+Hardware adapter for visual feedback.
+
+- Gated by `periph_gpio`
+- Uses `gpiocdev`/`sysfs-pwm` for physical status LEDs (Listening, Processing, Error, HITL prompt)
+
+#### HapticFeedbackAdapter
+
+Hardware adapter for vibration feedback.
+
+- Gated by `periph_gpio`/`periph_i2c`/`periph_pwm`
+- Drives vibration motor (short buzz = "got it", double buzz = "please confirm")
+
+#### DesktopNotifyAdapter
+
+Development-focused adapter that mirrors LED/haptic patterns into desktop notifications so developers can see what the device would do.
+
+- Gated by `periph_desktop`
+- Uses **`notify-rust`** for OS-level desktop notifications
+- Developers see what the device's LED/haptic would do (e.g., popup "HITL: Confirm tool execution?")
+
+### `KeyboardEmulatorPort`
+
+Acts as a **Machine-to-Machine (M2M) interface** for active data payload output. Takes text generated by the LLM and pushes it to a host system as simulated keystrokes. This enables the **"paiType" accelerator** use case: the user speaks into the device, the local LLM transcribes and corrects the text, and the `PeripheralsManager` streams the text directly into the user's active desktop application (e.g., Word, Obsidian) via USB without requiring any driver installations on the host.
+
+#### UsbKeyboardAdapter
+
+Target hardware adapter for USB HID keyboard emulation.
+
+- Gated by `periph_usb_hid`
+- Technology: Rust `std::fs` (File I/O for HID Reports)
+- Infrastructure: Linux USB Gadget Subsystem (`/dev/hidg0`) connecting to a Host PC via USB-C
+- Enables the "USB AI Accelerator" milestone
+
+#### DesktopTypingAdapter
+
+Desktop-focused adapter that simulates keystrokes directly into the active window on the host OS.
+
+- Gated by `periph_desktop_hid`
+- Technology: The **`enigo`** Rust crate
+- Infrastructure: The Host OS (Mac/Windows). Simulates physical keystrokes directly into the active window
+- Allows full development and testing on host/desktop without USB hardware
+
+<Aside type="note">
+The `periph_desktop` adapters are a **deliberate architectural choice**: the engine can be run, debugged, and tested on a host/desktop with no target [AI device](/glossary/#a). Feature flags ensure only the appropriate adapters are compiled.
+</Aside>
+
+<Aside type="note">
+The Peripherals domain is the **only** domain that is both Driving and Driven. All button input is funneled through it into the Core; all LED and haptic output is funneled from the Core through it. This keeps [HMI](/glossary/#h) logic in one place and ensures the Permission System ([HITL](/glossary/#h)) has a single, consistent way to interact with the user.
+</Aside>
+
+<Aside type="tip" title='The "paiType" Accelerator'>
+The `KeyboardEmulatorPort` enables a key use case: users can speak into their paiOS device, have the local LLM transcribe and correct the text, and stream it directly into any desktop application via USB keyboard emulation. This creates a privacy-first, driverless "USB AI Accelerator" that works with any application that accepts keyboard input.
+</Aside>
+
+## Related Documentation
+
+- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): Dual Driving/Driven role of Peripherals
+- [Core Module](/architecture/modules/core/): PeripheralsInterface and SessionManager
+- [Workspace and Build](/architecture/workspace-and-build/): Feature flags (periph_gpio, periph_desktop, etc.)
+- [Security Architecture](/architecture/security/): HITL confirmation via LEDs and haptics

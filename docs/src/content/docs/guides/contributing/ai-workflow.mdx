@@ -3,11 +3,11 @@ title: AI-Assisted Development
 description: How to effectively use AI tools and TaskMasterAI to contribute to paiOS
 ---
 
-At paiOS, we embrace AI-assisted development. We use tools like **Cursor**, **Copilot**, and **[TaskMasterAI](https://www.task-master.dev/)** to stay productive and focus on high-value work.
+At paiOS, the project embraces AI-assisted development, using tools like **Cursor**, **Copilot**, and **[TaskMasterAI](https://www.task-master.dev/)** to stay productive and focus on high-value work.
 
 ## Recommended MCP Servers
 
-For the best AI-assisted development experience, we recommend using these **MCP (Model Context Protocol) servers**:
+For the best AI-assisted development experience, we recommend using these **[MCP](/glossary/#m) (Model Context Protocol) servers**:
 
 - **[Context7](https://context7.com/)** - Provides up-to-date documentation and code examples for libraries and frameworks. Essential for staying current with best practices and API changes.
 - **[TaskMasterAI](https://www.task-master.dev/)** - Manages task breakdown, progress tracking, and provides structured context for AI agents working on complex features.
@@ -20,7 +20,7 @@ To maximize efficiency with AI, we follow a three-layered workflow:
 
 1.  **GitHub Issues (Status)**: The single source of truth for task status. Every feature or bug fix starts here.
 2.  **Starlight Docs (Specs)**: The source of truth for architecture and technical specifications. Refer to these guides to provide context to your AI assistant.
-3.  **MCP Servers (Primary Context)**: Use MCP servers (Context7, TaskMasterAI) to provide structured, up-to-date context directly to your AI assistant. This is the preferred method.
+3.  **[MCP](/glossary/#m) Servers (Primary Context)**: Use [MCP](/glossary/#m) servers (Context7, TaskMasterAI) to provide structured, up-to-date context directly to your AI assistant. This is the preferred method.
 4.  **Local Context (Optional)**: For very specific, temporary execution details, you can still use git-ignored context files, though MCP servers often make this unnecessary.
 
 ### Using TaskMasterAI
@@ -61,7 +61,7 @@ When working with AI assistants (like Cursor), follow these best practices to en
 
 ### 1. Provide High-Quality Context
 AI tools are only as good as the context you provide. Before starting a task:
-- **Use MCP Servers**: Configure Context7 and TaskMasterAI MCP servers in your AI assistant (e.g., Cursor) to automatically provide structured context.
+- **Use [MCP](/glossary/#m) Servers**: Configure Context7 and TaskMasterAI [MCP](/glossary/#m) servers in your AI assistant (e.g., Cursor) to automatically provide structured context.
 - Reference the relevant **Starlight documentation** (Architecture, Guides).
 - Use **[TaskMasterAI](https://www.task-master.dev/)** to maintain a clear list of subtasks and provide task-specific context via MCP.
 - **Optional**: For very specific, temporary execution details, you can still use local spec files (e.g., `.cursor/active_task.md`), though MCP servers often make this unnecessary.

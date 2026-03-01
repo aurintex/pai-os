@@ -1,74 +1,223 @@
 ---
 /**
  * Mermaid Diagram Component
- * 
+ *
  * Renders Mermaid diagrams on the client side.
+ * Uses shared fullscreen modal styles (fs-*) for consistency with ExcalidrawViewer.
+ *
  * Usage: <Mermaid code={`graph TD; A-->B`} />
  */
+
+// Import shared modal styles
+import "../styles/fullscreen-modal.css";
+
 interface Props {
   code: string;
   id?: string;
 }
 
-const { code, id = `mermaid-${Math.random().toString(36).substr(2, 9)}` } = Astro.props;
+const { code, id = `mermaid-${Math.random().toString(36).substr(2, 9)}` } =
+  Astro.props;
+const dialogId = `dialog-${id}`;
 ---
 
-<div class="mermaid-container" id={id}>
-  <pre class="mermaid">{code}</pre>
+<div class="mermaid-wrapper">
+  <!-- Inline diagram with fullscreen button inside (top-right overlay) -->
+  <div class="mermaid-container" id={id}>
+    <pre class="pai-mermaid">{code}</pre>
+    <button
+      class="fs-btn-open mermaid-trigger"
+      data-source={id}
+      data-dialog={dialogId}
+      type="button"
+      title="Open diagram in fullscreen"
+      aria-label="Open diagram in fullscreen"
+    >
+      ⛶ Fullscreen
+    </button>
+  </div>
 </div>
 
+<!--
+  Native <dialog> modal using shared fs-modal styles.
+  Handles Escape, backdrop, stacking context natively.
+-->
+<dialog
+  class="fs-modal mermaid-dialog"
+  id={dialogId}
+  aria-label="Diagram expanded view"
+>
+  <div class="fs-modal-header">
+    <span class="fs-modal-title">Diagram (Expanded View)</span>
+    <button
+      class="fs-btn-close mermaid-close"
+      type="button"
+      aria-label="Close fullscreen"
+    >
+      ✕ Close (ESC)
+    </button>
+  </div>
+  <div class="fs-modal-body mermaid-dialog-body"></div>
+</dialog>
+
 <style>
-  .mermaid-container {
+  /* ── Inline wrapper only (modal styles are shared) ── */
+  .mermaid-wrapper {
+    position: relative;
     margin: 1.5rem 0;
-    overflow-x: auto;
   }
-  
-  .mermaid {
+
+  .mermaid-container {
+    position: relative;
+    border-radius: 0.5rem;
+    background: #0d1117;
+  }
+
+  /* Fullscreen button: true top-right corner for Mermaid (override shared top) */
+  .mermaid-container .fs-btn-open {
+    top: 4px;
+  }
+
+  /* Override Starlight/Global pre styles with high specificity */
+  :global(.sl-markdown-content) .mermaid-container .pai-mermaid,
+  :global(.sl-markdown-content) .mermaid-wrapper .pai-mermaid,
+  :global(.mermaid-wrapper) .pai-mermaid,
+  :global(.mermaid-container) .pai-mermaid {
     display: flex;
     justify-content: center;
     background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
   }
-  
-  .mermaid svg {
+
+  .pai-mermaid svg {
     max-width: 100%;
     height: auto;
+  }
+
+  /* Override specific to Mermaid dialog if needed (e.g. forced open display) */
+  .fs-modal[open] {
+    display: flex !important; /* Ensure flex layout is active when open */
+    opacity: 1;
+    pointer-events: auto;
   }
 </style>
 
 <script>
-  import mermaid from 'mermaid';
-  
-  // Initialize mermaid with dark theme support
+  import mermaid from "mermaid";
+
+  // Use "base" theme so themeVariables are applied (dark theme ignores some vars)
   mermaid.initialize({
     startOnLoad: true,
-    theme: 'dark',
+    theme: "base",
     themeVariables: {
-      primaryColor: '#00d4ff',
-      primaryTextColor: '#fff',
-      primaryBorderColor: '#00d4ff',
-      lineColor: '#00d4ff',
-      secondaryColor: '#1a1a2e',
-      tertiaryColor: '#16213e',
-      background: '#0a0a1a',
-      mainBkg: '#1a1a2e',
-      nodeBorder: '#00d4ff',
-      clusterBkg: '#16213e',
-      clusterBorder: '#00d4ff',
-      titleColor: '#fff',
-      edgeLabelBackground: 'transparent',
+      darkMode: true,
+      background: "#0d1117",
+      primaryColor: "#1a2332",
+      primaryTextColor: "#e6edf3",
+      primaryBorderColor: "#388bfd",
+      secondaryColor: "#161b22",
+      secondaryTextColor: "#e6edf3",
+      secondaryBorderColor: "#388bfd",
+      tertiaryColor: "#21262d",
+      tertiaryTextColor: "#e6edf3",
+      tertiaryBorderColor: "#58a6ff",
+      lineColor: "#8b949e",
+      textColor: "#e6edf3",
+      mainBkg: "#1a2332",
+      nodeBorder: "#388bfd",
+      clusterBkg: "#161b22",
+      clusterBorder: "#388bfd",
+      titleColor: "#e6edf3",
+      edgeLabelBackground: "#161b22",
+      nodeTextColor: "#e6edf3",
+      // Note/label boxes (default base theme uses #fff5ad yellow – force dark)
+      noteBkgColor: "#161b22",
+      noteTextColor: "#e6edf3",
+      noteBorderColor: "#388bfd",
+      // Derived/defaults that can show as yellow if unset
+      altBackground: "#21262d",
+      labelBoxBkgColor: "#161b22",
+      labelBoxBorderColor: "#388bfd",
+      labelTextColor: "#e6edf3",
+      actorBkg: "#1a2332",
+      actorBorder: "#388bfd",
+      actorTextColor: "#e6edf3",
+      activationBkgColor: "#161b22",
+      activationBorderColor: "#388bfd",
     },
-    flowchart: {
-      htmlLabels: true,
-      curve: 'basis',
-    },
-    sequence: {
-      diagramMarginX: 10,
-      diagramMarginY: 10,
-    },
+    flowchart: { htmlLabels: true, curve: "basis" },
+    sequence: { diagramMarginX: 10, diagramMarginY: 10 },
   });
-  
-  // Re-render on page load (for Astro's view transitions)
-  document.addEventListener('astro:page-load', () => {
-    mermaid.run();
+
+  function setup() {
+    mermaid.run({ querySelector: ".pai-mermaid" });
+
+    if ((document as any).__mermaidDialogSetup) return;
+    (document as any).__mermaidDialogSetup = true;
+
+    // Use event delegation for all Mermaid interactions
+    document.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+
+      // Open button
+      const openBtn = target.closest<HTMLButtonElement>(".mermaid-trigger");
+      if (openBtn) {
+        const sourceId = openBtn.dataset.source!;
+        const dialogId = openBtn.dataset.dialog!;
+        const dialog = document.getElementById(
+          dialogId,
+        ) as HTMLDialogElement | null;
+        if (!dialog) return;
+
+        // Move SVG content instead of cloning to prevent Duplicate ID CSS breakage
+        const sourceContainer = document.querySelector(
+          `#${sourceId} .pai-mermaid`,
+        );
+        const sourceSvg = sourceContainer?.querySelector("svg");
+        const body = dialog.querySelector<HTMLElement>(".mermaid-dialog-body");
+
+        if (sourceSvg && body && sourceContainer) {
+          // Save a reference to the container so we can return it
+          (dialog as any)._originalContainer = sourceContainer;
+
+          body.innerHTML = "";
+          body.appendChild(sourceSvg);
+
+          // Setup a one-time close listener to put it back
+          dialog.addEventListener("close", function onDialogClose() {
+            dialog.removeEventListener("close", onDialogClose);
+            const svgToReturn = body.querySelector("svg");
+            if (svgToReturn && (dialog as any)._originalContainer) {
+              (dialog as any)._originalContainer.appendChild(svgToReturn);
+            }
+          });
+        }
+
+        dialog.showModal();
+        return;
+      }
+
+      // Close button
+      if (target.closest(".mermaid-close")) {
+        target.closest<HTMLDialogElement>("dialog")?.close();
+        return;
+      }
+
+      // Backdrop click
+      if (
+        target.tagName === "DIALOG" &&
+        target.classList.contains("mermaid-dialog")
+      ) {
+        (target as HTMLDialogElement).close();
+      }
+    });
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    setup();
   });
+
+  setup();
 </script>

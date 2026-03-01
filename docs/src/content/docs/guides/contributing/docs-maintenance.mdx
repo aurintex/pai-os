@@ -9,7 +9,7 @@ This guide explains how the paiOS documentation system is structured and how to 
 
 ## Architecture Overview
 
-We use a **Hybrid Documentation Strategy** for our codebase to provide the best developer experience:
+The project uses a **Hybrid Documentation Strategy** for the codebase to provide the best developer experience:
 
 1.  **Native Starlight Integration**: Rustdoc JSON is converted to MDX files. This provides a consistent look and feel, native search, and integrated navigation.
 2.  **Standard rustdoc HTML (GitHub Pages)**: The traditional `cargo doc` output is generated via GitHub Actions and hosted on GitHub Pages at `aurintex.github.io/pai-os/rustdoc/`. This provides the deep-dive technical details Rust developers are familiar with, including private/internal items.
@@ -41,6 +41,8 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+If the build fails with `Received protocol 'astro:'` (Node 24+), use **Node 20 LTS** for the docs build. A `docs/.node-version` file is provided for fnm/nvm (`fnm install` then `fnm use` in `docs/`).
 
 ## Common Tasks
 

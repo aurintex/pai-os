@@ -1,0 +1,70 @@
+---
+title: "Common Module (common)"
+description: "Shared foundation: logging, error types, config, and permission contracts used by all engine crates."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+`common` is a **standalone crate** providing logging, standardized errors, CLI parsing, and the **ports and adapters** for configuration and permissions. It has **no domain logic** and **no hardware dependencies**; it is the cross-cutting utility layer that keeps the hexagon pure.
+
+**Key principle:** `common` is **pure Rust**: no `unsafe` code, no FFI, no platform-specific dependencies. It can be compiled and tested on any platform.
+
+## Ports & Adapters
+
+`common` has **no feature flags**. It contains only portable, cross-platform code. Unlike other domain crates, its adapters are **always compiled** (not feature-gated) since they provide essential cross-cutting functionality.
+
+| Adapter | Implements Port | Purpose |
+|---------|-----------------|---------|
+| [`FileConfigAdapter`](#configprovider-port--fileconfigadapter) | [`ConfigProvider`](#configprovider-port--fileconfigadapter) | Parses static configuration files (TOML, JSON, YAML) |
+| [`SQLitePermissionAdapter`](#permissionmanager-port--sqlitepermissionadapter) | [`PermissionManager`](#permissionmanager-port--sqlitepermissionadapter) | SQLite storage for user-granted permissions |
+
+## Architecture Context / Relationships
+
+At the foundation of the dependency graph, `common` acts as a shared utility layer. The composition root (`pai-engine`) and `core` depend on it directly. Together with Core, it forms the hardware-agnostic "hexagon". All other domain crates safely rely on `common` (often transitively through Core) for shared logging and error traits.
+
+## Crate Structure
+
+Like other domain crates, `common` follows the Hexagonal Architecture pattern. For an overview of this structure, see [Engine Domains](/architecture/modules/).
+
+**Key difference from other crates:** The adapters in `common` are **always compiled** (not feature-gated), since they provide essential cross-cutting functionality needed by all domain crates.
+
+## Internal Domain Components
+
+| Component | Responsibility |
+|-----------|----------------|
+| **`Logger`** | Centralized, thread-safe tracing and logging facility used by all crates |
+| **`ErrorTypes`** | Global, standardized error definitions for consistent error handling across domain boundaries |
+| **`ArgParse`** | Command-line argument parsing for the engine executable |
+
+## Ports and Adapters
+
+### ConfigProvider Port & FileConfigAdapter
+
+- **Contract:** Defines how system and hardware configuration is retrieved.
+- **Adapter:** `FileConfigAdapter`: Parses static configuration files from the local filesystem (e.g., `hardware.toml`).
+- **Supported formats:** TOML, YAML, or JSON. The adapter must detect the format automatically (via file extension or content sniffing) or be configured explicitly at initialization.
+- Domain crates depend only on the `ConfigProvider` trait; they never depend on file formats or filesystem details.
+
+<Aside type="note">
+**Implementation detail:** The format detection/configuration mechanism for `FileConfigAdapter` needs to be defined during implementation. Options include file extension-based detection (`.toml`, `.yaml`, `.json`) or explicit format specification in the adapter constructor. Tracked in [GitHub Issue #36](https://github.com/aurintex/pai-os/issues/36).
+</Aside>
+
+### PermissionManager Port & SQLitePermissionAdapter
+
+- **Contract:** The critical contract for the **[HITL](/glossary/#h)** security concept. Resolves whether an action is "Allowed", "Denied", or "Ask".
+- **Adapter:** `SQLitePermissionAdapter`: Connects to a local SQLite database to persistently store and retrieve user-granted permissions and preferences.
+- Domain crates call the trait only; they do not depend on SQLite or any specific storage implementation.
+- **Not feature-gated.** The PermissionManager port and its adapter are always compiled. Making the permission system optional would weaken the [HITL](/glossary/#h) security guarantee: every build must enforce permission checks. For testing, a `MockPermissionAdapter` (always returns "Allowed") can be injected via the composition root; the port itself is never conditionally compiled.
+
+<Aside type="note">
+Together with `core`, `common` forms the hardware-agnostic "hexagon". Core depends on Common for logging, config, and permission checks; all other domain crates depend on Core (and often transitively on Common for shared types).
+</Aside>
+
+## Related Documentation
+
+- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): Workspace layout and shared foundation role
+- [Core Module](/architecture/modules/core/): Orchestrator that depends on common
+- [Workspace and Build](/architecture/workspace-and-build/): Where common sits in the crate tree
+- [Security Architecture](/architecture/security/): How PermissionManager and HITL integrate

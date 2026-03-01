@@ -11,14 +11,24 @@
     "gen:rustdoc": "node scripts/rustdoc-gen.mjs",
     "gen:rustdoc:html": "node scripts/rustdoc-html.mjs",
     "gen:proto": "node scripts/proto-doc-gen.mjs",
-    "test:docs": "node scripts/test-docs.mjs"
+    "test:docs": "node scripts/test-docs.mjs",
+    "build:docs": "astro build"
   },
   "dependencies": {
+    "@astrojs/react": "^4.4.2",
     "@astrojs/starlight": "^0.37.1",
+    "@excalidraw/excalidraw": "^0.18.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
     "@vercel/analytics": "^1.6.1",
     "astro": "^5.6.1",
     "astro-mermaid": "^1.2.0",
     "mermaid": "^11.12.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "sharp": "^0.34.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

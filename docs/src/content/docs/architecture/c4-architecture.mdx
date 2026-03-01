@@ -5,320 +5,123 @@ description: System Context and Container diagrams for paiOS using the C4 model
 
 import { Aside } from '@astrojs/starlight/components';
 import Mermaid from '../../../components/Mermaid.astro';
+import ExcalidrawViewer from '../../../components/ExcalidrawViewer.astro';
 
-This page documents the **paiOS architecture** using the [C4 model](https://c4model.com/) – a hierarchical approach to software architecture visualization.
+This page documents the **paiOS architecture** using the [C4 model](https://c4model.com/): a hierarchical approach to software architecture visualization.
 
-## Level 1 – System Context Diagram
+## Level 1: System Context Diagram
 
-The highest level of abstraction shows **PAI** and its external actors.
-
-<Mermaid code={`graph TB
-    subgraph External_Actors["External Actors"]
-        User["👤 User"]
-        Developer["👩‍💻 Developer"]
-    end
-
-    subgraph External_Systems["External Systems"]
-        HostPC["💻 Host PC/Mac"]
-        OllamaApps["🔌 Ollama Apps"]
-        Store["🏪 First Party Store"]
-        CICD["⚙️ CI/CD Pipeline"]
-    end
-
-    subgraph PAI["🧠 PAI Device"]
-        PAI_SYS["paiOS"]
-    end
-
-    User -->|"Voice, HID, USB"| PAI_SYS
-    Developer -->|"pai-builder SDK"| PAI_SYS
-    PAI_SYS -->|"HID Keyboard"| HostPC
-    OllamaApps -->|"Ollama API"| PAI_SYS
-    Store -->|"Downloads"| PAI_SYS
-    CICD -->|"OS Images"| PAI_SYS`} />
-
-### Key Relationships
-
-| Actor/System | Relationship | Description |
-|--------------|--------------|-------------|
-| **User** | Voice, HID, USB | Primary interaction via speech and USB connection |
-| **Developer** | pai-builder SDK | Develops apps using the Dockerized toolchain |
-| **Host PC** | HID Keyboard | Receives transcribed text as keyboard input |
-| **Ollama Apps** | API Requests | Compatible apps send inference requests |
-| **Store** | Downloads | Distributes apps and Intelligence Packs |
-| **CI/CD** | OS Images | Builds reproducible OS images via Debos |
-
----
-
-## Level 2 – Container Diagram
-
-Shows the main containers (deployable units) within the **PAI Device**.
-
-<Mermaid code={`graph TB
-    subgraph External["External"]
-        Host["💻 Host PC"]
-        Store["🏪 Store"]
-    end
-
-    subgraph Device["🧠 PAI Device"]
-        subgraph OS["paiOS"]
-            Systemd["systemd"]
-            RAUC["RAUC"]
-            USB["USB Gadget"]
-        end
-
-        subgraph Engine["pai-engine"]
-            Core["core/"]
-            Orchestrator["orchestrator/"]
-            RPC["rpc/"]
-        end
-
-        subgraph HAL["HAL Layer"]
-            NPU["NPU"]
-            GPU["GPU"]
-            Audio["Audio"]
-            HID["HID"]
-            Camera["Camera"]
-        end
-
-        subgraph Apps["Apps Container"]
-            RefApp["Reference App"]
-            Packs["Intelligence Packs"]
-        end
-    end
-
-    Host <-->|"USB"| USB
-    USB --> Engine
-    Systemd --> Engine
-    Apps <-->|"gRPC/UDS"| RPC
-    RPC --> Core
-    Core --> Orchestrator
-    Orchestrator --> HAL
-    Store -->|"HTTPS"| Apps`} />
-
-### Container Responsibilities
-
-| Container | Technology | Responsibility |
-|-----------|------------|----------------|
-| **paiOS** | Debian + Debos | Custom Linux OS with RAUC A/B updates |
-| **pai-engine** | Rust Daemon | Core brain: Audio, Inference, HID, SystemController |
-| **gRPC Server** | Tonic + UDS | IPC interface for Apps |
-| **HAL** | Rust + C Bindings | Hardware abstraction: NPU, GPU, Audio, Camera, LED |
-| **Apps Container** | Rust/Python | First/Third party Apps & Intelligence Packs |
-
----
-
-## Level 3 – Component Diagram (pai-engine)
-
-Zooms into the **pai-engine** container to show its internal components following [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html).
-
-<Mermaid code={`graph TB
-    subgraph rpc_layer["rpc/ - Interface Adapter"]
-        gRPCServer["gRPC Server"]
-        ProtoConvert["Protobuf Converter"]
-        ConnMgr["Connection Manager"]
-    end
-
-    subgraph core_layer["core/ - Domain Layer"]
-        SystemCtrl["SystemController"]
-        StateMachine["State Machine"]
-        Events["Event Bus"]
-        DomainTypes["Domain Types"]
-    end
-
-    subgraph orchestrator_layer["orchestrator/ - Application Logic"]
-        InferOrch["InferenceOrchestrator"]
-        ModelLoader["Model Loader"]
-        BackendSelector["Backend Selector"]
-        Scheduler["Inference Scheduler"]
-    end
-
-    subgraph hal_layer["hal/ - Infrastructure"]
-        AudioHAL["Audio HAL"]
-        NPUHAL["NPU HAL"]
-        GPUHAL["GPU HAL"]
-        HIDHAL["HID HAL"]
-        CameraHAL["Camera HAL"]
-    end
-
-    subgraph libs_layer["libs/ - Sys-Crates"]
-        rknn_sys["rknn-sys"]
-        usb_gadget["usb-gadget"]
-    end
-
-    %% Dependency Direction: Outside-In
-    gRPCServer --> ProtoConvert
-    ProtoConvert --> SystemCtrl
-    ConnMgr --> gRPCServer
-
-    SystemCtrl --> StateMachine
-    SystemCtrl --> Events
-    StateMachine --> DomainTypes
-
-    InferOrch --> BackendSelector
-    InferOrch --> ModelLoader
-    BackendSelector --> Scheduler
-    
-    %% Orchestrator uses Core
-    InferOrch --> SystemCtrl
-    Scheduler --> Events
-
-    %% HAL implements traits from Core/Orchestrator
-    AudioHAL -.-> SystemCtrl
-    NPUHAL -.-> InferOrch
-    GPUHAL -.-> InferOrch
-    HIDHAL -.-> SystemCtrl
-    CameraHAL -.-> SystemCtrl
-
-    %% Sys-crates used by HAL
-    NPUHAL --> rknn_sys
-    HIDHAL --> usb_gadget`} />
-
-### Component Responsibilities (Clean Architecture)
-
-| Layer | Component | Responsibility |
-|-------|-----------|----------------|
-| **rpc/** | `gRPC Server` | Listens on Unix Domain Socket, handles connections |
-| **rpc/** | `Protobuf Converter` | Transforms Protobuf ↔ Domain Types |
-| **core/** | `SystemController` | Central state machine, orchestrates all subsystems |
-| **core/** | `Event Bus` | Publishes domain events (e.g., "SpeechEnd", "TranscriptReady") |
-| **core/** | `Domain Types` | Pure Rust structs, no external dependencies |
-| **orchestrator/** | `InferenceOrchestrator` | Decides NPU/GPU/CPU routing based on availability |
-| **orchestrator/** | `Backend Selector` | Probes hardware, selects optimal inference backend |
-| **orchestrator/** | `Model Loader` | Loads/converts models (ONNX → RKNN) |
-| **hal/** | `Audio HAL` | Captures audio via `cpal`, runs VAD |
-| **hal/** | `NPU HAL` | Wraps `rknn-sys`, runs Whisper on NPU |
-| **hal/** | `HID HAL` | Emulates USB keyboard via `usb-gadget` |
-| **libs/** | `rknn-sys` | Unsafe Rust bindings to Rockchip RKNN SDK |
-
-### Dependency Direction
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  External (Apps, gRPC Clients)                              │
-└─────────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  rpc/  (Interface Adapter)                                  │
-│  - Converts external requests to domain commands            │
-└─────────────────────────────────────────────────────────────┘
-                          │ depends on
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  core/  (Domain Layer) ◄──── THE HEART ────►               │
-│  - Pure business logic, NO external dependencies            │
-│  - SystemController, State Machine, Domain Events           │
-└─────────────────────────────────────────────────────────────┘
-                          ▲
-                          │ depends on
-┌─────────────────────────────────────────────────────────────┐
-│  orchestrator/  (Application Logic)                         │
-│  - InferenceOrchestrator, Backend Selection                 │
-│  - Uses HAL via trait interfaces                            │
-└─────────────────────────────────────────────────────────────┘
-                          │ uses traits from
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  hal/  (Infrastructure)                                     │
-│  - Implements traits defined in core/orchestrator           │
-│  - Hardware-specific code (Audio, NPU, HID, Camera)         │
-└─────────────────────────────────────────────────────────────┘
-                          │ wraps
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│  libs/  (Sys-Crates)                                        │
-│  - Unsafe Rust bindings (rknn-sys, usb-gadget)              │
-│  - All `unsafe` code isolated here                          │
-└─────────────────────────────────────────────────────────────┘
-```
-
-<Aside type="note">
-**Key Insight:** The `core/` module has **zero dependencies** on other modules. This means you can test all business logic without any hardware. The `hal/` implementations are injected at runtime via trait objects.
-</Aside>
-
----
-
-## Data Flow – Speech-to-Text Pipeline
-
-The primary use case: Voice-to-Text via USB HID.
-
-<Mermaid code={`sequenceDiagram
-    participant User as 👤 User
-    participant Mic as 🎤 Mic
-    participant HAL as HAL
-    participant Core as Core
-    participant Orch as Orchestrator
-    participant NPU as NPU
-    participant HID as HID
-    participant Host as 💻 Host
-
-    User->>Mic: Speaks
-    Mic->>HAL: Audio Stream
-    HAL->>Core: Audio Chunks
-    Core->>Core: VAD Detection
-    Core->>Orch: Audio Buffer
-    Orch->>NPU: Whisper Inference
-    NPU->>Orch: Transcription
-    Orch->>Core: Transcript
-    Core->>HID: Keystrokes
-    HID->>Host: USB HID Report
-    Host->>Host: Text appears`} />
-
----
-
-## Inference Orchestrator – Backend Selection
-
-The `InferenceOrchestrator` dynamically routes inference to NPU, GPU, or CPU.
+The highest level of abstraction: **paiEngine** (the core AI engine platform) and its external actors and systems. The engine provides flexible APIs that enable others to build custom user interfaces on top; the smartphone app (paiApp) is one primary interface for mobile/wearable form factors.
 
 <Mermaid code={`flowchart TD
-    Start["Inference Request"] --> CheckNPU{"NPU Available?"}
-    
-    CheckNPU -->|Yes| NPUModel{"RKNN Format?"}
-    NPUModel -->|Yes| UseNPU["🚀 Run on NPU"]
-    NPUModel -->|No| ConvertRKNN["Convert ONNX → RKNN"]
-    ConvertRKNN --> UseNPU
-    
-    CheckNPU -->|No| CheckGPU{"GPU Available?"}
-    CheckGPU -->|Yes| UseGPU["⚡ Run on GPU"]
-    CheckGPU -->|No| UseCPU["🐢 Run on CPU"]
-    
-    UseNPU --> Metrics["📊 Log Metrics"]
-    UseGPU --> Metrics
-    UseCPU --> Metrics`} />
+    User(("👤 User<br/>[Person]"))
 
-<Aside type="tip">
-The NPU is always preferred for Whisper inference due to lowest power consumption and highest throughput (6 TOPS on RK3588S2).
+    PAI["📦 paiEngine<br/>[Software System]<br/>The Core AI Engine Platform<br/>Provides APIs: REST, gRPC<br/>MCP Server + MCP Client"]
+
+    paiApp["📱 paiApp<br/>[External System]<br/>First-Party Companion App<br/>(Smartphone/Desktop)<br/>Primary interface for configuration<br/>& interaction with device"]
+
+    World["🌍 Physical Environment<br/>[External System]<br/>Visual and auditory impressions<br/>of reality"]
+
+    HostPC["💻 Host Computer & Clients<br/>[External System]<br/>Apps connecting to the AI: Obsidian, OpenWebUI,<br/>Cursor, Claude Desktop, OpenClaw<br/>Can build custom GUIs/HMIs"]
+
+    CloudAI["☁️ Cloud AI Services<br/>[External System]<br/>Optional fallback AI (OpenAI, Anthropic)<br/>for highly complex tasks"]
+
+    ExtMCP["🏠 External MCP Servers<br/>[External System]<br/>Home Assistant, Calendar,<br/>Web Search, SQLite Memory"]
+
+    User -->|"Primary: Uses smartphone app<br/>for configuration & control"| paiApp
+    User -->|"Secondary: Voice, buttons<br/>(direct hardware interaction)"| PAI
+    paiApp -->|"Configures & controls<br/>via gRPC (UDS/TCP)"| PAI
+    PAI -->|"Captures sensor data<br/>(image & sound) from"| World
+    PAI -->|"Provides APIs<br/>(REST/gRPC + MCP Server)"| HostPC
+    HostPC -->|"Configures & controls<br/>via USB/WiFi/Network"| PAI
+    PAI -->|"Delegates tasks<br/>(Opt-In)"| CloudAI
+    PAI -->|"MCP Client:<br/>Executes tools &<br/>retrieves data"| ExtMCP`} />
+
+The actors, systems, and containers in both diagrams are described in a single table: [Actors and containers](#actors-and-containers) (after the Level 2 diagram).
+
+<Aside type="note">
+**paiEngine is a platform:** The engine provides flexible APIs. **gRPC over Unix Domain Sockets (UDS) is the primary IPC interface** for applications/services running on the **same hardware**: similar to how Linux syscalls provide the primary interface for applications to interact with the kernel. For communicating with **other PCs** over the network, the engine provides **gRPC over TCP/TLS**. This enables third-party developers to build custom user interfaces, GUIs, HMIs, and applications both locally (via UDS) and remotely (via TCP/TLS). REST (Ollama/OpenAI compatibility) and MCP are also supported for specific integration scenarios. The smartphone app (paiApp) is the first-party reference implementation, but the engine itself is designed to be extended.
 </Aside>
 
 ---
 
-## Security Model – Hardware Ownership
+## Level 2: Container Diagram
 
-The `pai-daemon` service owns all hardware resources.
+Shows the main containers (deployable units) within the **paiOS environment** and how they interact.
 
-<Mermaid code={`graph TB
-    subgraph Privileged["pai-daemon - privileged"]
-        Daemon["pai-daemon"]
-        HW["/dev/rknpu, /dev/video0"]
+<Mermaid code={`flowchart TD
+    User(("👤 User<br/>[Person]"))
+
+    subgraph PAI_Boundary ["paiOS Environment (Local AI Device / Rockchip SoC)"]
+        Engine["⚙️ paiEngine<br/>[Container: Rust]<br/>Core AI Engine. Coordinates hardware<br/>(NPU, Vision, Audio).<br/>MCP Server + MCP Client"]
+        LocalDB[("🗄️ Local Storage<br/>[Container: SQLite]<br/>Stores permissions, user configs<br/>and medium-term memory")]
+        LocalMCP["🔌 Local MCP Servers<br/>[Container: Subprocesses]<br/>Local system tools (e.g., Device Control,<br/>Local File Access)"]
+        ThirdPartyApp["📱 3rd Party App<br/>[Container: Node/Python/Rust]<br/>Runs locally on the [AI device](/glossary/#a)"]
     end
 
-    subgraph Sandboxed["Apps - sandboxed"]
-        App1["App 1"]
-        App2["App 2"]
+    subgraph Host_Boundary ["Host Computer (PC / Mac)"]
+        UI["🖥️ 3rd Party Clients<br/>[Container: Web/Desktop App]<br/>OpenWebUI, Obsidian, VSCode"]
+        MCPClients["🤖 MCP Clients<br/>[Container: Desktop App]<br/>OpenClaw, Cursor, Claude Desktop"]
+        paiApp["📱 paiApp<br/>[Container: Mobile/Desktop App]<br/>First-Party Companion App"]
     end
 
-    App1 -->|"gRPC/UDS"| Daemon
-    App2 -->|"gRPC/UDS"| Daemon
-    Daemon -->|"udev MODE=0600"| HW`} />
+    Hardware["📷 Hardware & OS<br/>[Infrastructure]<br/>Rockchip NPU, Cameras, Microphones,<br/>USB-C Gadget, Network"]
+    Cloud["☁️ Cloud APIs<br/>[External System]"]
+    ExternalMCPServer["🏠 External MCP Servers<br/>[External System]<br/>e.g., Home Assistant"]
 
-<Aside type="caution">
-Apps cannot bypass the core service or access hardware directly. All hardware access goes through the Engine, ensuring only the user decides what gets recorded.
+    User -->|"Primary: Uses smartphone app<br/>for configuration & control"| paiApp
+    User -->|"Secondary: Hardware buttons / Voice<br/>(direct interaction)"| Engine
+    User -->|"Uses"| UI
+    User -->|"Uses"| MCPClients
+
+    UI -->|"API Requests<br/>[REST: Ollama/OpenAI]"| Engine
+    MCPClients -->|"MCP Server:<br/>Tool/sensor requests<br/>(MCP via SSE/stdio)"| Engine
+    paiApp -->|"Local: gRPC over UDS<br/>Remote: gRPC over TCP/TLS"| Engine
+    ThirdPartyApp -->|"IPC: gRPC over UDS"| Engine
+
+    Engine -->|"Reads / Writes<br/>[SQL]"| LocalDB
+    Engine -->|"Calls local tools<br/>[JSON-RPC 2.0]"| LocalMCP
+    Engine -->|"Driver access<br/>[V4L2, ALSA, RKNN]"| Hardware
+    Engine -->|"Fallback Inference<br/>[HTTPS]"| Cloud
+    Engine -->|"MCP Client:<br/>Calls external tools<br/>(MCP)"| ExternalMCPServer`} />
+
+### Actors and containers
+
+All actors, external systems, and containers shown in the Level 1 and Level 2 diagrams. Grouped by **type** for easier scanning.
+
+| Name | Type | Protocol / technology | Role / responsibility |
+|------|------|------------------------|------------------------|
+| **User** | Person | - | Primary: smartphone app (paiApp) for configuration and control. Secondary: voice, buttons for direct hardware interaction. Engine is flexible: others can build custom GUIs/HMIs on top. |
+| **paiEngine** | Container | Rust (Tokio), REST, gRPC, MCP | Core AI engine. Coordinates NPU, Vision, Audio, and all APIs. **MCP Server** (clients connect to use engine as tool/sensor) and **MCP Client** (engine calls external tools). |
+| **Local Storage** | Container | SQLite | Permissions, user config, medium-term memory. |
+| **Local MCP Servers** | Container | Subprocesses, JSON-RPC 2.0 | Local tool execution (device control, file access). |
+| **paiApp** | External system | gRPC (UDS local, TCP/TLS remote) | First-party companion app (smartphone/desktop). **Primary interface** for configuring and interacting with the [AI device](/glossary/#a). |
+| **Physical Environment** | External system | - | Sensor capture: camera and microphone capture real-world data. |
+| **3rd Party Clients** | External system | REST (Ollama/OpenAI), gRPC (UDS/TCP) | OpenWebUI, Obsidian, VSCode. Developers can build custom GUIs/HMIs on top (local: gRPC/UDS; remote: gRPC/TCP or REST). |
+| **3rd Party Apps (Local)** | Container | gRPC (UDS) | Applications running directly on the [AI device](/glossary/#a). Connects to the engine via Unix Domain Sockets for high-performance IPC. |
+| **MCP Clients** | External system | MCP (SSE/stdio) | OpenClaw, Cursor, Claude Desktop. Connect to engine (**engine as MCP Server**). |
+| **Cloud AI Services** | External system | HTTPS (opt-in) | Fallback inference (OpenAI, Anthropic) for highly complex tasks. |
+| **External MCP Servers** | External system | MCP | Home Assistant, Calendar, Web Search, SQLite Memory. **Engine as MCP Client** calls these to execute tools and retrieve data. |
+| **Hardware & OS** | Infrastructure | V4L2, ALSA, RKNN | Rockchip NPU, cameras, microphones, USB-C gadget, network. |
+| **Local applications** (same hardware) | Connection | **gRPC over UDS** | **Primary IPC interface**: comparable to Linux syscalls. For applications/services on the **same hardware** where paiEngine runs. |
+| **External clients** (other PCs) | Connection | gRPC over TCP/TLS, REST, MCP | Network communication with **other PCs**. |
+
+---
+
+
+## Level 3: Component Diagram (pai-engine)
+
+Zooms into the **pai-engine** container to show its internal components following **Hexagonal Architecture** (Ports and Adapters pattern). The diagram uses a **Driving / Driven** view: external actors and clients (left), engine domains in the center (**Common**, **Peripherals**, **Core**, **Vision**, **Audio**, **Inference**), and outputs or external systems (right). Protocols and data flows (e.g. gRPC/UDS, gRPC/TCP/TLS, REST, MCP) match the Level 1 and Level 2 descriptions earlier in this page.
+
+<ExcalidrawViewer src="/images/Architecture/system-architecture.excalidraw" height={600} />
+
+<Aside type="tip" title="Full detail in ADR-004">
+This is the canonical L3 view. For the full rationale behind each component, dependency rules, and the sys-crate pattern, see [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/).
 </Aside>
-
 ---
 
 ## Related Documentation
 
-- [Layer Architecture](/architecture/layer-architecture/) – Android-style layer view
-- [Clean Architecture](/architecture/#clean-architecture) – Dependency direction and module roles
-- [Architecture Decision Records](/architecture/adr/) – Key architectural decisions
+- [OS & Infrastructure](/architecture/operating-system/): Full layer stack with technology table
+- [Hexagonal Architecture](/architecture/#hexagonal-architecture): Dependency direction and module roles
+- [Architecture Decision Records](/architecture/adr/): Key architectural decisions

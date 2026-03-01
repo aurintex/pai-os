@@ -1,0 +1,160 @@
+---
+title: "ADR-002: OS Building Tool Selection"
+description: Debos for declarative Debian-based image building
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Status
+
+**Accepted** (2025-03-01)
+
+## Context
+
+paiOS needs a tool to build customized Debian-based OS images for various target platforms (Raspberry Pi, x86, etc.). The image building process must:
+
+1. **Be reproducible**: Same inputs produce identical outputs
+2. **Support CI/CD**: Integrate cleanly with GitHub Actions
+3. **Be maintainable**: Low learning curve for contributors
+4. **Leverage Debian ecosystem**: Use existing `.deb` packages rather than cross-compiling everything
+
+Three tools were evaluated:
+
+| Tool | Configuration | Approach | Complexity |
+|------|---------------|----------|------------|
+| [**Debos**](https://github.com/go-debos/debos) | YAML | Uses Debian packages | Low |
+| [**Yocto**](https://www.yoctoproject.org/) | BitBake layers | Cross-compiles from source | High |
+| [**Elbe**](https://elbe-rfs.org/) | XML | Uses Debian packages + VM | Medium |
+
+## Evaluation Criteria
+
+### 1. Maintainability & Learning Curve
+
+| Tool | Learning Curve | Documentation | Onboarding Time |
+|------|----------------|---------------|-----------------|
+| Debos | **Low**: Simple YAML recipes | Good, examples available | Hours |
+| Yocto | High: BitBake, layers, metadata | Extensive but complex | Weeks |
+| Elbe | Medium: XML + initvm concepts | Moderate | Days |
+
+**Winner: Debos**: Contributors can understand and modify recipes without specialized knowledge.
+
+### 2. Build Speed
+
+| Tool | Approach | Typical Build Time |
+|------|----------|-------------------|
+| Debos | Downloads pre-built `.deb` packages | Minutes |
+| Yocto | Cross-compiles everything from source | Hours |
+| Elbe | Downloads packages, builds in VM | 10-30 minutes |
+
+**Winner: Debos**: Leverages Debian's package repository instead of rebuilding the world.
+
+### 3. Debian Ecosystem Support
+
+| Tool | Package Source | Custom Packages |
+|------|----------------|-----------------|
+| Debos | Native Debian repos | Add custom `.deb` via overlay |
+| Yocto | Everything from source | Requires BitBake recipes |
+| Elbe | Debian repos + custom builds | Better custom package support |
+
+**Winner: Debos/Elbe tie**: Both leverage Debian packages natively.
+
+### 4. CI/CD Integration
+
+| Tool | Container Support | GitHub Actions |
+|------|-------------------|----------------|
+| Debos | `godebos/debos` Docker image | ✅ Works well |
+| Yocto | Complex, needs large runners | ⚠️ Needs 150GB+ storage |
+| Elbe | Requires nested VM (initvm) | ⚠️ Complex setup |
+
+**Winner: Debos**: Official Docker image simplifies CI/CD integration.
+
+### 5. Security at Build Time
+
+| Tool | Security Patches in Images | Patch Turnaround | CVE Tracking |
+|------|---------------------------|------------------|--------------|
+| Debos | Via Debian Security Team | Hours–days | Automatic via APT |
+| Yocto | Manual integration | Days–weeks | Requires layer maintenance |
+| Elbe | Via Debian Security Team | Hours–days | Automatic via APT |
+
+**Winner: Debos/Elbe**: Both inherit Debian's mature security infrastructure for building images:
+
+- **Debian Security Team** monitors and patches vulnerabilities upstream
+- **Rebuilding images** pulls latest security fixes automatically
+- **No custom CVE tracking** required: Debian handles it upstream
+
+Yocto requires manual effort: security patches must be backported into BitBake recipes.
+
+<Aside type="note" title="Runtime Updates">
+This section covers **build-time security** (which packages go into the image). For **runtime updates** on deployed devices (A/B partitioning, OTA, rollback), see [ADR-003: Update System](./003-update-system).
+</Aside>
+
+## Decision
+
+We adopt **Debos** as the image building tool for paiOS.
+
+### Why Debos?
+
+Debos aligns with paiOS's [pragmatic philosophy](/guides/contributing/standards/):
+
+- **KISS**: YAML recipes are readable and maintainable
+- **Don't Reinvent the Wheel**: Uses Debian's existing package infrastructure
+- **80/20 Rule**: Simple tool that covers our needs without complexity overhead
+- **Low-Hanging Fruits**: Fast iteration with quick build times
+
+## Why Not Yocto (For Now)?
+
+Yocto is the industry standard for deeply customized embedded Linux, but it's **over-engineering for the current phase of paiOS**:
+
+1. **Unnecessary complexity**: We don't need to cross-compile everything; Debian packages exist
+2. **Steep learning curve**: BitBake syntax and layer management takes weeks to master
+3. **Long build times**: Hours vs. minutes for equivalent images
+4. **Resource intensive**: Requires 150GB+ disk space and powerful build machines
+
+Yocto would be the better choice if we needed:
+- Minimal footprint embedded systems (< 100MB)
+- Complete source control over every package
+- Complex BSPs from silicon vendors with proprietary components
+
+<Aside type="tip" title="Future Option">
+Yocto is **not ruled out** for the future. If paiOS evolves to require highly customized hardware with vendor-specific BSPs or extreme size optimization, migration to Yocto remains possible. The current choice of Debos is a pragmatic starting point that can be revisited.
+</Aside>
+
+## Why Not Elbe?
+
+Elbe is a solid middle-ground option, but has drawbacks:
+
+1. **XML configuration**: Less readable than YAML, harder to maintain
+2. **initvm requirement**: Runs builds inside a VM, complicating CI/CD
+3. **Smaller community**: Fewer examples and community resources than Debos
+
+Elbe would be preferable if we needed:
+- Complex custom package builds from source
+- Strict license compliance tooling (Elbe has built-in license management)
+- Ubuntu image support (Elbe supports Ubuntu, Debos is Debian-only)
+
+## Consequences
+
+### Positive
+
+- ✅ **Fast builds**: Minutes instead of hours
+- ✅ **Easy onboarding**: YAML recipes are self-documenting
+- ✅ **Simple CI/CD**: Docker container works out of the box
+- ✅ **Debian-native**: Direct access to Debian's package ecosystem
+- ✅ **Reproducible**: Same recipe produces identical images
+
+### Negative
+
+- ⚠️ **Debian-only**: Cannot build non-Debian distributions
+- ⚠️ **Privileged containers**: CI needs `--privileged` flag for loop device access
+
+### Technical Notes
+
+- **Custom kernels**: Supported via `.deb` packages: no need for Yocto. [Radxa's rsdk](https://github.com/RadxaOS-SDK/rsdk) uses a similar Debian-native approach.
+- **Reproducibility**: Achieved via [Debian Snapshots](https://snapshot.debian.org/), Git-versioned recipes, and pinned Docker images.
+- **CI/CD**: Requires `--privileged` Docker flag for loop device access (GitHub Actions supports this natively).
+
+## Related
+
+- [Architecture Overview](/architecture/): System layers and boundaries
+- [ADR-001: Licensing Strategy](./001-licensing-strategy): License implications for OS components
+- [ADR-003: Update System](./003-update-system): A/B partitioning and OTA updates

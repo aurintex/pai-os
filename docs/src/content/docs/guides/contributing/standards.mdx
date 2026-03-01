@@ -5,20 +5,20 @@ sidebar:
   order: 3
 ---
 
-To keep paiOS maintainable and high-quality, we follow a set of core principles and standards. Whether you are using AI tools or writing code manually, these rules apply.
+To keep paiOS maintainable and high-quality, the project follows a set of core principles and standards. Whether you are using AI tools or writing code manually, these rules apply.
 
 ## Core Principles
 
-We value code that is easy to read, test, and maintain. These principles serve as a **compass**, not a set of rigid laws.
+The project values code that is easy to read, test, and maintain. These principles serve as a *compass*, not a set of rigid laws.
 
 ### The Pragmatic Mindset
 
 -   **KISS (Keep It Simple, Stupid)**: Avoid over-engineering. Always choose the simplest solution.
--   **80/20 Rule (Pareto Principle)**: Focus on the 20% of effort that provides 80% of the value.
--   **Pragmatic Utility**: Prioritize actual usefulness over code perfection. Ask: "Does this actually help the user?"
+-   **80/20 Rule (Pareto Principle)**: Focus on the 20 percent of effort that provides 80 percent of the value.
+-   **Pragmatic Utility**: Prioritize usefulness over code perfection. Ask: "Does this help the user?"
 -   **Low-hanging Fruits First**: Start with quick wins that deliver immediate value.
 -   **Don't Reinvent the Wheel**: Use existing, proven solutions. Only build custom when necessary.
--   **Flexibility & Agility**: Stay adaptable. Avoid locking into rigid patterns too early.
+-   **Flexibility and Agility**: Stay adaptable. Avoid locking into rigid patterns too early.
 
 ### Quality Through Early Detection
 
@@ -30,7 +30,7 @@ We value code that is easy to read, test, and maintain. These principles serve a
 
 -   **SOLID**: Ensure designs are flexible and robust.
 -   **Clean Code**: Write code for humans first. Use descriptive names and small functions.
--   **Clean Architecture**: Maintain clear boundaries between layers (Engine, HAL, RPC). See [Architecture Documentation](/architecture/).
+-   **Hexagonal Architecture**: Maintain clear boundaries between core, ports, and adapters (Engine, HAL, RPC). See [Architecture Documentation](/architecture/).
 
 
 ## Code Style
@@ -42,6 +42,7 @@ We value code that is easy to read, test, and maintain. These principles serve a
 ### Rust Style
 - Use `rustfmt` and `clippy` (zero warnings target).
 - Documentation comments (`///` or `//!`) are required for all public and significant internal items.
+- For stack vs heap, generics vs `Box<dyn Trait>`, and embedded-friendly choices, see [Rust Style and Best Practices](/guides/contributing/rust-style/).
 
 ## Definition of Done (DoD)
 
@@ -51,7 +52,7 @@ All changes must meet these requirements before they can be merged:
 - Code builds without errors (`cargo build`).
 - All tests pass (`cargo test`).
 - No clippy warnings.
-- Solution follows KISS and Clean Architecture principles.
+- Solution follows KISS and Hexagonal Architecture principles.
 
 ### 2. Documentation
 -   **User/Integration**: New features or API changes are documented in Starlight.

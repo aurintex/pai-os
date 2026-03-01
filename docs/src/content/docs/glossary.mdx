@@ -1,0 +1,162 @@
+---
+title: Glossary
+description: Definitions of abbreviations, acronyms, and technical terms used throughout paiOS documentation.
+---
+
+This glossary defines abbreviations, acronyms, and technical terms used throughout the paiOS documentation. Terms are listed alphabetically. Where a term has dedicated architecture or reference docs, the entry includes a **See also** line linking to those pages for implementation details.
+
+## A
+
+**AEC**: Acoustic Echo Cancellation. Hardware-efficient loopback cancellation that prevents microphone feedback when the device is speaking (TTS). Critical for voice assistants to avoid false wake word triggers. See also [Audio domain](/architecture/modules/audio/) (AEC feature and pipeline).
+
+**AI device**: Product-neutral term for hardware running paiOS and paiEngine (the engine). The documentation uses "AI device" (or simply "device") in architecture and API docs because the platform powers multiple form factors (e.g. paiBox (Private AI Server), paiScribe (Meeting Device), and future products), and the same concepts (MCP Server/Client, HITL, adapters) apply to all. "Wearable" is used only when the form factor is specifically relevant (e.g. screen-less confirmation, mobile UI). See also [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/) (context and form factors).
+
+**ADR**: Architecture Decision Record. Documents architectural decisions and their rationale. See [ADR Index](/architecture/adr/).
+
+**API**: Application Programming Interface. A set of protocols and tools for building software applications. See also [API Reference](/reference/) (overview of all APIs), [API domain](/architecture/modules/api/) (gateway design), and [gRPC API Reference](/reference/api/) (service definitions).
+
+## C
+
+**CLI**: Command Line Interface. Text-based interface for interacting with software via terminal commands.
+
+**CPU**: Central Processing Unit. General-purpose processor used for flexible computation, fallback inference, and ARM NEON-optimized tasks (STT, VAD, Wake Word). See also [Inference domain](/architecture/modules/inference/) (hardware backends) and [Model integration](/guides/contributing/model-integration/).
+
+## D
+
+**DDD**: Domain-Driven Design. Software development approach focusing on domain logic and business rules.
+
+**Domain crate**: A Cargo crate that implements one engine domain (e.g. `vision`, `audio`). Each domain crate follows Hexagonal Architecture with Rust modules `domain/`, `ports/`, and `adapters/`. See [Engine Domains](/architecture/modules/) (overview and list).
+
+**DMA**: Direct Memory Access. Hardware feature enabling zero-copy buffer sharing between kernel drivers and user-space applications without CPU involvement. Critical for high-performance video processing. See also [Vision domain](/architecture/modules/vision/) (FramePool, zero-copy pipeline).
+
+**DMA-BUF**: Direct Memory Access Buffer. Linux kernel mechanism for sharing memory buffers between devices and applications without copying data. See also [Vision domain](/architecture/modules/vision/) (DMA-BUF allocator, zero-copy capture).
+
+## E
+
+**ECS**: Entity Component System. Architectural pattern used in game engines (like Bevy) for organizing game logic.
+
+## F
+
+**FFI**: Foreign Function Interface. Mechanism for calling code written in other languages (e.g., C libraries from Rust). See also [Workspace and Build](/architecture/workspace-and-build/) (layout) and [ADR-008](/architecture/adr/008-workspace-architecture/) (rationale for sys-crates in `libs/`).
+
+## G
+
+**gRPC**: gRPC Remote Procedure Calls. High-performance RPC framework using Protocol Buffers. Used for API Gateway communication. See also [gRPC API Reference](/reference/api/) (service definitions), [API Reference](/reference/) (overview), and [API domain](/architecture/modules/api/) (gateway and routing).
+
+**GPU**: Graphics Processing Unit. Parallel compute unit used for auxiliary inference tasks and small logic models. On Rockchip RK3588, the Mali-G610 GPU. See also [Inference domain](/architecture/modules/inference/) and [OS & Infrastructure](/architecture/operating-system/) (hardware).
+
+**GGUF**: GPT-Generated Unified Format. Model format used by llama.cpp for efficient model loading and CPU inference. See also [Model integration](/guides/contributing/model-integration/) (when to use GGUF, conversion).
+
+**GPIO**: General-Purpose Input/Output. Digital pins on embedded systems for reading button states and controlling LEDs. See also [Peripherals domain](/architecture/modules/peripherals/) (`periph_gpio` feature).
+
+## H
+
+**HID**: Human Interface Device. USB device class for keyboards, mice, and other input devices. paiOS uses USB HID gadget mode to emulate a keyboard. See also [Peripherals domain](/architecture/modules/peripherals/) (KeyboardEmulatorPort) and [Licensing](/guides/licensing/) (extension API).
+
+**HAL**: Hardware Abstraction Layer. Software layer that provides a uniform interface to hardware components, abstracting platform-specific details. See also [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/) and [Workspace and Build](/architecture/workspace-and-build/) (ports and adapters).
+
+**HITL**: Human-In-The-Loop. Security pattern requiring physical user confirmation (via button press) for sensitive actions. Required on all devices for security; on screen-less wearables, confirmation uses non-verbal feedback (LEDs, haptics) instead of GUI prompts. See [Security Architecture](/architecture/security/).
+
+**HMI**: Human-Machine Interface. Physical interface components (buttons, LEDs, haptics) that enable user interaction with the device. See also [Peripherals domain](/architecture/modules/peripherals/) (HMI implementation).
+
+**HTTP**: Hypertext Transfer Protocol. Web protocol used for REST APIs and external service communication.
+
+## I
+
+**I2C**: Inter-Integrated Circuit. Serial communication bus protocol for connecting low-speed peripherals (sensors, IMU).
+
+**IPC**: Inter-Process Communication. Mechanisms for processes to exchange data. paiOS uses [UDS](/glossary/#u) for local IPC. See also [API Reference](/reference/) (all APIs), [gRPC API Reference](/reference/api/) (primary IPC interface), and [API domain](/architecture/modules/api/) (gateway).
+
+**ISP**: Image Signal Processor. Hardware component that processes raw camera sensor data, performing auto-exposure, white balance, and format conversion. Can output thumbnail streams for low-power motion detection. See also [Vision domain](/architecture/modules/vision/) (ISP motion detection, capture pipeline).
+
+## J
+
+**JSON**: JavaScript Object Notation. Lightweight data interchange format used for configuration and API communication.
+
+## L
+
+**LLM**: Large Language Model. AI model capable of understanding and generating human-like text. paiOS runs LLMs locally on NPU, GPU, or CPU. See also [Inference domain](/architecture/modules/inference/) and [Model integration](/guides/contributing/model-integration/).
+
+## M
+
+**M2M**: Machine-to-Machine. Communication between devices without human intervention. The KeyboardEmulatorPort enables M2M output via USB HID. See also [Peripherals domain](/architecture/modules/peripherals/) (KeyboardEmulatorPort).
+
+**MCP**: Model Context Protocol. Protocol for connecting AI applications to external tools and data sources. paiOS uses MCP bidirectionally: as a server (host PCs use the [AI device](/glossary/#a) as a tool) and as a client (the device's [LLM](/glossary/#l) uses external tools). See also [API Reference](/reference/) (overview), [API domain](/architecture/modules/api/) (MCP Server adapter), and [C4 Architecture](/architecture/c4-architecture/) (system context).
+
+**MIPI-CSI**: Mobile Industry Processor Interface Camera Serial Interface. Standard interface for connecting cameras to SoCs. Used on Rockchip boards for camera connectivity. See also [Vision domain](/architecture/modules/vision/) (V4L2 adapter, camera capture).
+
+**MVP**: Minimum Viable Product. Initial version of a product with core features sufficient for early users.
+
+**POC**: Proof of Concept. Early prototype or demonstration to validate feasibility of an idea or approach.
+
+## N
+
+**NPU**: Neural Processing Unit. Specialized hardware accelerator for AI inference. On Rockchip RK3588, provides 6 TOPS (trillion operations per second) for high-throughput LLM and vision model execution. See also [Inference domain](/architecture/modules/inference/), [Model integration](/guides/contributing/model-integration/), and [OS & Infrastructure](/architecture/operating-system/) (hardware).
+
+**NV12**: YUV 4:2:0 format with full-resolution Y plane and interleaved UV plane at half resolution. Common format for camera outputs and video processing. See also [Vision domain](/architecture/modules/vision/) (capture and RGA pipeline).
+
+## O
+
+**ONNX**: Open Neural Network Exchange. Open standard format for AI models that allows transferring models between frameworks (PyTorch, TensorFlow, etc.). Widely used for edge deployment of small models (VAD, classifiers, embeddings). See also [Inference domain](/architecture/modules/inference/) and [Model integration](/guides/contributing/model-integration/).
+
+**OOM**: Out Of Memory. Error condition when system runs out of available RAM.
+
+## P
+
+**PBR**: Physically Based Rendering. Rendering technique that simulates realistic material properties.
+
+**PCM**: Pulse Code Modulation. Uncompressed digital audio format. paiOS processes audio as PCM streams. See also [Audio domain](/architecture/modules/audio/) and [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/) (Hybrid Inference).
+
+**PWM**: Pulse Width Modulation. Technique for controlling power delivered to devices (e.g., haptic motors, LED brightness) by varying signal duty cycle. See also [Peripherals domain](/architecture/modules/peripherals/) (`periph_pwm` feature).
+
+## R
+
+**RAG**: Retrieval-Augmented Generation. AI technique that enhances LLM responses by retrieving relevant context from external knowledge sources (e.g., vector databases).
+
+**REST**: Representational State Transfer. Architectural style for web services using HTTP methods (GET, POST, etc.). See also [API Reference](/reference/) (overview), [API domain](/architecture/modules/api/) (REST adapter, Ollama/OpenAI compatibility), and [C4 Architecture](/architecture/c4-architecture/).
+
+**RGA**: Raster Graphics Accelerator. Rockchip-specific 2D hardware accelerator for image format conversion, resizing, and cropping. Processes images at up to 4K resolution with minimal CPU overhead. See also [Vision domain](/architecture/modules/vision/) (RgaEngine port, adapters).
+
+**RKLLM**: Rockchip Large Language Model. Rockchip SDK and runtime for running [LLM](/glossary/#l)s on the Rockchip [NPU](/glossary/#n). Used by the RkllmAdapter for Llama, Qwen, Mistral and similar models (often via the `rk-llama.cpp` fork). Distinct from [RKNN](/glossary/#r), which targets vision and CNN models. See also [Inference domain](/architecture/modules/inference/) and [Model integration](/guides/contributing/model-integration/).
+
+**RKNN**: Rockchip Neural Network. Proprietary model format for Rockchip NPU. Requires conversion from standard formats (ONNX, PyTorch) via Rockchip SDK. See also [Inference domain](/architecture/modules/inference/) and [Model integration](/guides/contributing/model-integration/) (when to use RKNN, conversion).
+
+## S
+
+**SDK**: Software Development Kit. Collection of tools, libraries, and documentation for developing software for a specific platform.
+
+**SSE**: Server-Sent Events. HTTP protocol for server-to-client streaming. Used by MCP Server adapter for real-time communication. See also [API Reference](/reference/) (overview) and [API domain](/architecture/modules/api/) (MCP Server adapter).
+
+**STT**: Speech-to-Text. AI model that converts spoken audio into text. paiOS uses Sherpa-ONNX or Whisper for STT. See also [Inference domain](/architecture/modules/inference/), [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/), and [Model integration](/guides/contributing/model-integration/).
+
+**SBC**: Single Board Computer. Complete computer built on a single circuit board. paiOS initially targets Radxa Rock 5C SBC. See also [OS & Infrastructure](/architecture/operating-system/) (hardware layer).
+
+**sLLM**: Small Large Language Model. Compact LLM optimized for edge devices with reduced parameters while maintaining useful capabilities. See also [Inference domain](/architecture/modules/inference/) and [Model integration](/guides/contributing/model-integration/).
+
+**SoC**: System on Chip. Integrated circuit that combines multiple components (CPU, GPU, NPU, memory) on a single chip. paiOS targets Rockchip RK3588 SoC. See also [OS & Infrastructure](/architecture/operating-system/) (hardware layer).
+
+## T
+
+**TLS**: Transport Layer Security. Cryptographic protocol for secure network communication. Used by SecureNetworkAdapter for encrypted gRPC connections. See also [API Reference](/reference/) (gRPC over TCP/TLS), [API domain](/architecture/modules/api/) (SecureNetwork adapter), and [Security](/architecture/security/) (port matrix).
+
+**TOML**: Tom's Obvious Minimal Language. Configuration file format used for Rust projects and paiOS hardware configuration. See also [Common domain](/architecture/modules/common/) (ConfigProvider) and [Workspace and Build](/architecture/workspace-and-build/) (config and features).
+
+**TTS**: Text-to-Speech. AI model that converts text into spoken audio. paiOS uses Sherpa-ONNX or Piper TTS for TTS. See also [Inference domain](/architecture/modules/inference/), [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/), and [Model integration](/guides/contributing/model-integration/).
+
+## U
+
+**UDS**: Unix Domain Socket. Inter-process communication mechanism for local processes on Unix-like systems. paiOS uses UDS for secure local [IPC](/glossary/#i), restricting sensitive operations (DeviceControlPort) to local access only. See also [API Reference](/reference/) (gRPC over UDS), [OS & Infrastructure](/architecture/operating-system/), and [C4 Architecture](/architecture/c4-architecture/).
+
+**USB**: Universal Serial Bus. Standard interface for connecting devices. paiOS uses USB HID gadget mode to emulate a keyboard. See also [OS & Infrastructure](/architecture/operating-system/) (hardware) and [Peripherals domain](/architecture/modules/peripherals/) (KeyboardEmulatorPort).
+
+## V
+
+**V4L2**: Video4Linux2. Linux kernel API for video capture devices. Used by paiOS for camera access on Linux systems (both MIPI-CSI and USB webcams). See also [Vision domain](/architecture/modules/vision/) (FrameSource, V4L2 adapter).
+
+**VAD**: Voice Activity Detection. AI model that detects when a person is speaking versus silence or background noise. Used to avoid processing silence and save power. See also [Inference domain](/architecture/modules/inference/) and [Model integration](/guides/contributing/model-integration/).
+
+## W
+
+**WASM**: WebAssembly. Binary instruction format for stack-based virtual machines. Enables running code in web browsers and other environments.
+
+**WASI**: WebAssembly System Interface. System interface for WebAssembly, providing access to operating system features.

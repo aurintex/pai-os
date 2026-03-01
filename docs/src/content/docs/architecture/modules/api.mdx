@@ -1,0 +1,283 @@
+---
+title: "API Module (api)"
+description: API Gateway, protocol adapters, routing matrix, and port isolation for paiOS.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+The `api` crate serves as the **primary ingress point** (Driving Adapter) on the left side of the Hexagonal Architecture. It receives external requests, enforces security policies, and routes them to the Core's `APIInterface`. All API logic runs within the single `pai-engine` process.
+
+## Ports & Adapters (Feature Flags)
+
+The **capability ports** that the API Gateway routes to are: **DeviceControlPort**, **SessionConfigPort**, **SensorRelayPort**, **InferencePort** (see [Core-Facing Ports](#core-facing-ports-routing-categories) and the routing matrix below). The table here lists the **ingress adapters** (how requests enter the system) and the protocol traits they implement; the routing matrix then maps each adapter to which of the four capability ports it may access.
+
+Adapter names match the [system architecture diagram](/architecture/adr/004-system-architecture/) (LocalSystemAdapter, SecureNetworkAdapter, OllamaAdapter, OpenAiAdapter, McpServerAdapter). The same implementation may back multiple adapter identities (e.g. one gRPC implementation for LocalSystem and SecureNetwork; one REST implementation for Ollama and OpenAI).
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Adapter</th>
+      <th scope="col">Implements Port(s)</th>
+      <th scope="col">Capability Feature</th>
+      <th scope="col">Technology / Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <a href="#1-grpcserverport-port--localsystemadapter--securenetworkadapter"><code>LocalSystemAdapter</code></a>
+      </td>
+      <td>
+        <a href="#1-grpcserverport-port--localsystemadapter--securenetworkadapter"><code>GrpcServerPort</code></a>
+      </td>
+      <td><code>api_grpc_uds</code></td>
+      <td>Tonic → Unix Domain Sockets for local IPC</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="#1-grpcserverport-port--localsystemadapter--securenetworkadapter"><code>SecureNetworkAdapter</code></a>
+      </td>
+      <td>
+        <a href="#1-grpcserverport-port--localsystemadapter--securenetworkadapter"><code>GrpcServerPort</code></a>
+      </td>
+      <td><code>api_grpc_tcp</code></td>
+      <td>Tonic → Secure network RPC over TCP/TLS</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="#2-restserverport-port--ollamaadapter--openaiadapter"><code>OllamaAdapter</code></a>
+      </td>
+      <td>
+        <a href="#2-restserverport-port--ollamaadapter--openaiadapter"><code>RestServerPort</code></a>
+      </td>
+      <td><code>api_http</code></td>
+      <td>Axum → REST API (Ollama compatibility)</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="#2-restserverport-port--ollamaadapter--openaiadapter"><code>OpenAiAdapter</code></a>
+      </td>
+      <td>
+        <a href="#2-restserverport-port--ollamaadapter--openaiadapter"><code>RestServerPort</code></a>
+      </td>
+      <td><code>api_http</code></td>
+      <td>Axum → REST API (OpenAI compatibility)</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="#3-mcpserverport-port--mcpserveradapter"><code>McpServerAdapter</code></a>
+      </td>
+      <td>
+        <a href="#3-mcpserverport-port--mcpserveradapter"><code>McpServerPort</code></a>
+      </td>
+      <td><code>api_mcp_server</code></td>
+      <td>SSE/Stdio → MCP Server for host/desktop integration</td>
+    </tr>
+    <tr>
+      <td>
+        <a href="#4-mockadapter-all-ports"><code>MockAdapter</code></a>
+      </td>
+      <td><em>All Ports (Mock)</em></td>
+      <td><code>api_mock</code></td>
+      <td>Simulated API endpoints for CI/testing</td>
+    </tr>
+  </tbody>
+</table>
+
+<Aside type="note">
+The `Capability Feature` column lists features defined on the `api` crate. Profiles in `pai-engine` (such as `desktop`, `target`, and `test`) determine which API adapters are compiled for a given build. For a central overview of which API capabilities are active in each profile, see the **Feature Flag Matrix** in [Workspace and Build](/architecture/workspace-and-build/#feature-flag-matrix-capabilities-vs-profiles).
+</Aside>
+
+## Architecture Context / Relationships
+
+The `api` crate serves as the **primary ingress point** (Driving Adapter) on the left side of the Hexagonal Architecture. It receives external requests, enforces security policies via its routing matrix, and then invokes the `core` orchestrator. The [system architecture diagram](/architecture/adr/004-system-architecture/) shows the **API Gateway** block with the same adapters, ports, and feature flags as documented on this page.
+
+**GUI / Companion App:** A desktop or mobile companion application can be built as a **client** against these same APIs (gRPC UDS for local, gRPC TCP for remote, or REST for simple integration). The architecture does not require a separate "GUI port"; a GUI is simply another client of the existing API surface, subject to the same routing matrix and permission checks as any other caller.
+
+## Crate Structure
+
+```text
+crates/api/
+├── src/
+│   ├── domain/               # ApiManager, Router, Auth
+│   │   └── ports.rs          # Traits: `RestServerPort`, `GrpcServerPort`, `McpServerPort`
+│   ├── adapters/             # Protocol implementations
+│   │   ├── rest.rs           # Axum HTTP/REST endpoints (OpenAI compat)
+│   │   ├── grpc.rs           # Tonic gRPC (UDS/TCP)
+│   │   └── mcp_server.rs     # SSE/Stdio MCP Server for external clients
+│   └── lib.rs                # Implements Core's `ApiInterface`
+└── Cargo.toml
+```
+
+## The API Gateway
+
+:::note
+The code blocks and configuration examples in this document are conceptual references to better show the idea. The real code and structure might differ.
+:::
+
+The gateway supports multiple protocols, each isolated by Cargo features:
+
+| Feature | Protocol | Use Case |
+|---------|----------|----------|
+| **`api_grpc_uds`** | **Unix Domain Sockets** | **Primary IPC interface**: comparable to Linux syscalls. For applications/services running on the **same hardware** where paiEngine runs. This is the main API for 3rd-party developers building local applications on top of the engine (local IPC, systemd, CLI tools) |
+| **`api_grpc_tcp`** | **Secure Network RPC** | For communicating with **external clients on other PCs** over the network (TCP/TLS required). Enables remote control and configuration |
+| `api_http` | REST API | Ollama and OpenAI client compatibility (legacy/convenience API) |
+| `api_mcp_server` | Model Context Protocol | Host PC integration (Claude Desktop, OpenClaw) |
+
+```rust
+pub trait ApiAdapter: Send + Sync {
+    fn start(&self, core: Arc<dyn APIInterface>) -> Result<()>;
+    fn stop(&self) -> Result<()>;
+}
+```
+
+The composition root instantiates appropriate API adapters based on configuration and feature flags.
+
+## Internal Domain Components
+
+The API module consists of several core port/adapter pairs. The **port** is a trait in the domain layer and the **adapter** is a protocol-specific implementation.
+
+### 1. GrpcServerPort (Port) & LocalSystemAdapter / SecureNetworkAdapter
+
+**Role:** gRPC server endpoint for local IPC and secure network access.
+
+**Description:** `GrpcServerPort` is the domain port that defines how the Core is exposed over gRPC. A single gRPC implementation in `grpc.rs` backs two adapter identities in the routing matrix: **LocalSystemAdapter** (IPC) and **SecureNetworkAdapter**. LocalSystemAdapter binds to **Unix Domain Sockets** (`api_grpc_uds`) for same-machine callers; SecureNetworkAdapter binds to **TCP/TLS** (`api_grpc_tcp`) for remote clients. Feature flags control which listeners are compiled and enabled in the composition root.
+
+**Feature flags and defaults:**
+
+- `api_grpc_uds`: LocalSystemAdapter; enabled in both `desktop` and `target` profiles; primary local IPC.
+- `api_grpc_tcp`: SecureNetworkAdapter; enabled in the `target` profile for remote clients.
+
+### 2. RestServerPort (Port) & OllamaAdapter / OpenAiAdapter
+
+**Role:** HTTP/REST compatibility layer.
+
+**Description:** `RestServerPort` defines a REST-style API over HTTP. A single REST implementation in `rest.rs` (Axum) backs two adapter identities in the routing matrix: **OllamaAdapter** and **OpenAiAdapter**, providing endpoints compatible with **Ollama** and **OpenAI** client libraries respectively.
+
+**Feature flags and defaults:**
+
+- `api_http`: OllamaAdapter and OpenAiAdapter; enabled in both `desktop` and `target` profiles; compiles the Axum HTTP server and exposes the REST API.
+
+### 3. McpServerPort (Port) & McpServerAdapter
+
+**Role:** Model Context Protocol server for host/desktop integration.
+
+**Description:** `McpServerPort` describes the contract for exposing the engine as an **MCP Server**. The `McpServerAdapter` in `mcp_server.rs` implements this port using SSE/Stdio so that external tools (e.g. Claude Desktop, OpenClaw) can connect to the [AI device](/glossary/#a) and use it as a remote sensor/tool. In the routing matrix this corresponds to the `McpServer` adapter type.
+
+**Feature flags and defaults:**
+
+- `api_mcp_server`: enabled in both `desktop` and `target` profiles; turns on the MCP Server endpoints.
+
+### 4. MockAdapter (All Ports)
+
+**Role:** Test-only adapter implementing all API ports for CI and local development without network bindings.
+
+**Description:** The `MockAdapter` is a composite adapter that implements all API-facing ports in-process, without opening real sockets. It is used in tests and CI to exercise the routing matrix and Core integration without binding to the OS networking stack.
+
+**Feature flags and defaults:**
+
+- `api_mock`: enabled only in the `test` profile; provides simulated API endpoints and prevents accidental exposure of real network services in tests.
+
+## Core-Facing Ports (Routing Categories)
+
+The Core exposes four **capability ports** to the API Gateway as separate Rust traits, defined in `core` and implemented by the SessionManager. These are *not* the same as the API module's own protocol ports (`GrpcServerPort`, `RestServerPort`, `McpServerPort`): those describe *how* requests enter the system; the capability ports in this section describe *what* those requests can do.
+
+Keeping each capability as a separate trait enables **compile-time enforcement**: an adapter that only receives `&dyn InferencePort` physically cannot call lifecycle operations, regardless of runtime checks.
+
+| Port | Responsibility |
+|------|----------------|
+| **`DeviceControlPort`** (CRITICAL) | Device physical state: reboot, firmware updates, factory reset, power off. Highest privilege; only accessible from local/IPC callers. |
+| **`SessionConfigPort`** | AI session state and preferences: model switching, system prompts, user permissions |
+| **`SensorRelayPort`** | Authorized relay of sensor streams (camera frames, audio) to external callers. Coordinates the streaming pipeline; does not own hardware. |
+| **`InferencePort`** | Standard endpoint for AI workloads (text generation, object detection) |
+
+### Routing & Authorization Matrix (Defense in Depth)
+
+The **APIManager** enforces hardcoded routing rules. This matrix is the **primary defense against "Confused Deputy" attacks**:
+
+| Adapter | DeviceControlPort | SessionConfigPort | SensorRelayPort | InferencePort |
+|---------|:---:|:---:|:---:|:---:|
+| **LocalSystem** (UDS/IPC) | ✅ | ✅ | ✅ | ✅ |
+| **SecureNetwork** (gRPC TCP) | ❌ | ✅ | ✅ | ✅ |
+| **McpServer** (MCP) | ❌ | ✅ | ✅ | ✅ |
+| **Ollama** (HTTP) | ❌ | ❌ | ❌ | ✅ |
+| **OpenAI** (HTTP) | ❌ | ❌ | ❌ | ✅ |
+
+<Aside type="caution">
+The strict, hardcoded routing matrix is the **primary defense against "Confused Deputy" attacks**, especially from external MCP clients. Never expose `DeviceControlPort` to network or MCP adapters.
+</Aside>
+
+### The APIManager Component
+
+- Receives parsed requests from protocol adapters
+- **Validates** each request against the routing matrix
+- **Forwards** only authorized calls to the Core; disallowed port access is rejected before reaching the Core
+- Routing rules are **hardcoded** (in `routing.rs`) for auditability
+
+```rust
+impl ApiRouter {
+    pub fn route_request(&self, adapter_type: AdapterType, request: ApiRequest) -> Result<ApiResponse> {
+        let allowed_ports = match adapter_type {
+            AdapterType::LocalSystem => vec![Port::All],
+            AdapterType::SecureNetwork | AdapterType::McpServer => {
+                vec![Port::Inference, Port::SensorRelay, Port::SessionConfig]
+            },
+            AdapterType::Ollama | AdapterType::OpenAi => {
+                vec![Port::Inference]
+            },
+        };
+        
+        if !allowed_ports.contains(&request.target_port()) {
+            return Err(ApiError::PortAccessDenied);
+        }
+        
+        self.core.handle_request(request)
+    }
+}
+```
+
+## MCP Server Role
+
+The **MCP Server** adapter (`api_mcp_server`) allows external clients (e.g., Claude Desktop on a host PC) to use the [AI device](/glossary/#a) as a remote sensor/tool.
+
+<Aside type="note">
+This is the **Server** role: external clients use the engine. The **Client** role (engine uses external tools) is in [`inference`](/architecture/modules/inference/#mcp-client-and-tool-execution). This bidirectional MCP integration enables the device to act as both tool provider and tool consumer.
+</Aside>
+
+## Security Integration
+
+The routing matrix provides the first security layer (port isolation). The second layer is the **Permission System** ([HITL](/glossary/#h)) which requires user confirmation for sensitive operations even within allowed ports. See [Security Architecture](/architecture/security/) for the full security model.
+
+## API Versioning
+
+All Protobuf definitions use a **versioned package name** (`package pai.v1;`). This is a hard rule:
+
+- **Never remove or repurpose a field number.** Once field `1` is `string text`, it is `string text` forever in the `v1` schema.
+- **Major breaking changes** require a new package version (`pai.v2`). The engine can serve both versions concurrently during a transition period, allowing the companion app and external clients to migrate independently.
+- **Why:** gRPC Protobuf is binary-encoded. Reusing field numbers silently corrupts data for any client that was compiled against the old schema.
+
+```proto
+// Correct: versioned package
+package pai.v1;
+
+message ChatRequest {
+  string text = 1;     // Never reassign field 1 to a different type
+  // string image = 2; // Adding new fields with new numbers is safe
+}
+```
+
+## Idempotency at the API Layer
+
+API endpoints that trigger state changes (start recording, load a model, start a stream) must be **idempotent**. If the same request arrives twice (due to a double-tap, a network retry, or a companion-app reconnect), the second call must return a success response (`Already Recording`) rather than starting a second parallel operation or returning an error.
+
+This is enforced by the `SessionManager`'s `StateMachine` (see [Core: Idempotency](/architecture/modules/core/#idempotency)). The API Gateway forwards the request to Core; Core's state machine determines whether the operation is already in progress and returns an appropriate idempotent response. The API adapter never needs to track state itself.
+
+## Related Documentation
+
+- [ADR-004: Engine Architecture](/architecture/adr/004-system-architecture/): API Gateway and port isolation
+- [Core Module](/architecture/modules/core/): APIInterface and SessionManager
+- [Inference Module](/architecture/modules/inference/): MCP Client role (engine uses external tools)
+- [Workspace and Build](/architecture/workspace-and-build/): Feature flags for api_grpc_uds, api_http, api_mcp_server
+- [Security Architecture](/architecture/security/): Routing matrix, HITL, port access rules
