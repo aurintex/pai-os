@@ -23,7 +23,7 @@ path = "src/main.rs"
 tokio = { version = "1.47.0", features = ["full"] }
 
 # Error Handling
-anyhow = "1.0.100"
+anyhow = "1.0.102"
 thiserror = "2.0.17"
 
 # Logging & Tracing
