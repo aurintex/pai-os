@@ -87,7 +87,7 @@ Adapter names match the [system architecture diagram](/architecture/adr/004-syst
 </table>
 
 <Aside type="note">
-The `Capability Feature` column lists features defined on the `api` crate. Profiles in `pai-engine` (such as `desktop`, `target`, and `test`) determine which API adapters are compiled for a given build. For a central overview of which API capabilities are active in each profile, see the **Feature Flag Matrix** in [Workspace and Build](/architecture/workspace-and-build/#feature-flag-matrix-capabilities-vs-profiles).
+The `Capability Feature` column lists features defined on the `api` crate. Profiles in `pai-engine` (such as `desktop`, `rockchip`, and `test`) determine which API adapters are compiled for a given build. For a central overview of which API capabilities are active in each profile, see the **Feature Flag Matrix** in [Workspace and Build](/architecture/workspace-and-build/#feature-flag-matrix-capabilities-vs-profiles).
 </Aside>
 
 ## Architecture Context / Relationships
@@ -147,8 +147,8 @@ The API module consists of several core port/adapter pairs. The **port** is a tr
 
 **Feature flags and defaults:**
 
-- `api_grpc_uds`: LocalSystemAdapter; enabled in both `desktop` and `target` profiles; primary local IPC.
-- `api_grpc_tcp`: SecureNetworkAdapter; enabled in the `target` profile for remote clients.
+- `api_grpc_uds`: LocalSystemAdapter; enabled in both `desktop` and `rockchip` profiles; primary local IPC.
+- `api_grpc_tcp`: SecureNetworkAdapter; enabled in the `rockchip` profile for remote clients.
 
 ### 2. RestServerPort (Port) & OllamaAdapter / OpenAiAdapter
 
@@ -158,7 +158,7 @@ The API module consists of several core port/adapter pairs. The **port** is a tr
 
 **Feature flags and defaults:**
 
-- `api_http`: OllamaAdapter and OpenAiAdapter; enabled in both `desktop` and `target` profiles; compiles the Axum HTTP server and exposes the REST API.
+- `api_http`: OllamaAdapter and OpenAiAdapter; enabled in both `desktop` and `rockchip` profiles; compiles the Axum HTTP server and exposes the REST API.
 
 ### 3. McpServerPort (Port) & McpServerAdapter
 
@@ -168,7 +168,7 @@ The API module consists of several core port/adapter pairs. The **port** is a tr
 
 **Feature flags and defaults:**
 
-- `api_mcp_server`: enabled in both `desktop` and `target` profiles; turns on the MCP Server endpoints.
+- `api_mcp_server`: enabled in both `desktop` and `rockchip` profiles; turns on the MCP Server endpoints.
 
 ### 4. MockAdapter (All Ports)
 

@@ -171,7 +171,7 @@ The code blocks and configuration examples in this document are conceptual refer
 Cargo features flow **from the top-level executable crate down into domain crates**, and then into adapter modules. We distinguish two layers:
 
 - **Capability features**: fine-grained, technology-specific flags defined in **domain crates** (e.g. `vision_v4l2`, `vision_image`, `vision_mock`, `audio_cpal`, `infer_rknn`, `api_grpc_uds`, `periph_gpio`).
-- **Profile (meta) features**: high-level presets defined in **`pai-engine`** that enable a *set* of capabilities for a given environment (e.g. `desktop` for any developer machine, `target` for a Rockchip device).
+- **Profile (meta) features**: high-level presets defined in **`pai-engine`** that enable a *set* of capabilities for a given environment (e.g. `desktop` for any developer machine, `rockchip` for a Rockchip device).
 
 1. **Domain crate declares its own capability features** for technology-specific adapters.
    - Example in `crates/vision/Cargo.toml`:
@@ -194,8 +194,8 @@ Cargo features flow **from the top-level executable crate down into domain crate
        # other capabilities for host development...
      ]
 
-     # Profile: Rockchip-based target
-     target = [
+    # Profile: Rockchip-based deployment
+    rockchip = [
        "vision_v4l2",
        "vision_rga",
        # other capabilities for deployment...
@@ -226,11 +226,11 @@ Key rules:
 - **Ports and domain logic are never behind features.** Features only control which adapters are built.
 - We prefer **capability-based features** (e.g. `vision_v4l2`, `infer_rknn`) over `target_arch` flags.
 - Capability features are defined **only in the crates that own the adapters**; profile features live **only in `pai-engine`**.
-- Profiles like `desktop` and `target` are treated as **build presets**: they *only* turn on sets of capabilities; they do not introduce new behavior by themselves.
+- Profiles like `desktop` and `rockchip` are treated as **build presets**: they *only* turn on sets of capabilities; they do not introduce new behavior by themselves.
 
 This pattern keeps the feature wiring explicit and flexible:
 
-- The **top-level build command** selects a profile (e.g. `cargo build` for `desktop`, or `cargo build --features target` for deployment).
+- The **top-level build command** selects a profile (e.g. `cargo build` for `desktop`, or `cargo build --features rockchip` for Rockchip deployment).
 - The **`pai-engine` crate** translates that into concrete domain capabilities.
 - The **domain crates** use those capabilities to compile the right adapters while keeping the ports and domain logic always available.
 

@@ -1,0 +1,10 @@
+[package]
+name = "common"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "Shared foundation: logging, error types, config, and permission contracts."
+repository = "https://github.com/aurintex/pai-os"
+
+[dependencies]
+thiserror = "1.0"

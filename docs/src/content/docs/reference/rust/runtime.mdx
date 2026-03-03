@@ -7,8 +7,8 @@ sidebar:
 
 ## paiOS Engine Runtime
 
-This is the main entry point for the paiOS Engine daemon.
-It handles CLI argument parsing, logging initialization, and boots the core engine library.
+This is the main entry point for the paiOS Engine daemon (`pai-engine` binary from the `engine/` workspace).
+It handles CLI argument parsing, logging initialization, and placeholder bootstrap; adapter wiring will be added in later work.
 
 ## Usage
 
@@ -28,9 +28,7 @@ The main function for the paiOS Engine.
 
 #### Errors
 
-This function can return the following errors:
-- `Result<()>`: A result indicating success or failure.
-- `EngineError(String)`: An error with a message.
+This function returns `anyhow::Result<()>`; errors are logged and the process exits with a non-zero code on failure.
 
 ---
 

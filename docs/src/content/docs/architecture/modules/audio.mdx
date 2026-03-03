@@ -48,7 +48,7 @@ The `audio` crate is the **Driven Adapter** responsible for all audio capture an
 </table>
 
 <Aside type="note">
-The `Capability Feature` column lists features defined on the `audio` crate. Profiles in `pai-engine` (such as `desktop`, `target`, and `test`) select which of these are active at build time. For a central overview of which audio capabilities each profile enables, see the **Feature Flag Matrix** in [Workspace and Build](/architecture/workspace-and-build/#feature-flag-matrix-capabilities-vs-profiles).
+The `Capability Feature` column lists features defined on the `audio` crate. Profiles in `pai-engine` (such as `desktop`, `rockchip`, and `test`) select which of these are active at build time. For a central overview of which audio capabilities each profile enables, see the **Feature Flag Matrix** in [Workspace and Build](/architecture/workspace-and-build/#feature-flag-matrix-capabilities-vs-profiles).
 </Aside>
 
 ## Architecture Context / Relationships
@@ -129,19 +129,19 @@ Failure to support these cleanly will leave the microphone open or the speaker p
 
 - **Responsibility:** Supplies raw or processed PCM from the microphone(s)
 - **Implemented by:** `MicrophoneAdapter`, gated by `audio_cpal` (real hardware) or `audio_mock` (tests)
-- **Technology:** Uses the **`cpal`** crate to pull raw audio from the hardware mic. On desktop and target builds, `audio_cpal` selects the concrete adapter; in CI the `audio_mock` feature provides a mock microphone implementation wired into the same port.
+- **Technology:** Uses the **`cpal`** crate to pull raw audio from the hardware mic. On desktop and rockchip builds, `audio_cpal` selects the concrete adapter; in CI the `audio_mock` feature provides a mock microphone implementation wired into the same port.
 
 ### 2. `Speaker` (Port) & `SpeakerAdapter`
 
 - **Responsibility:** Outputs PCM (e.g., TTS) to the speaker or Bluetooth line-out
 - **Implemented by:** `SpeakerAdapter`, gated by `audio_cpal` or `audio_mock`
-- **Technology:** Uses **`cpal`** to push audio to the default output device. As with capture, `audio_cpal` selects the concrete adapter on desktop/target and `audio_mock` swaps in a mock speaker for tests.
+- **Technology:** Uses **`cpal`** to push audio to the default output device. As with capture, `audio_cpal` selects the concrete adapter on desktop/rockchip and `audio_mock` swaps in a mock speaker for tests.
 
 ### 3. `AudioProcessor` (Port) & `WebRtcAdapter`
 
 - **Responsibility:** **Vital for a Voice Assistant.** When the device is speaking (TTS), the microphone picks up the speaker's audio. Without AEC, the STT/Wake Word models would hear themselves and trigger false positives. Performs hardware-efficient loopback cancellation and noise suppression before handing clean PCM to Inference.
 - **Implemented by:** `WebRtcAdapter`, gated by `audio_webrtc` (real AEC pipeline) and complemented by `audio_mock` (mock processing) in CI.
-- **Technology:** Uses **`webrtc-audio-processing`** (and related bindings such as `sonora` on target) for AEC and optional noise suppression.
+- **Technology:** Uses **`webrtc-audio-processing`** (and related bindings such as `sonora` on rockchip) for AEC and optional noise suppression.
 
 ### 4. `MockAdapter` (Test Double)
 

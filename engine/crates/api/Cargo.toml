@@ -1,0 +1,20 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "API gateway domain: gRPC, HTTP, and MCP server adapters."
+repository = "https://github.com/aurintex/pai-os"
+
+[dependencies]
+common = { path = "../common", version = "0.1.0" }
+thiserror = "1.0"
+
+[features]
+default = []
+api_grpc_uds = []
+api_grpc_tcp = []
+api_http = []
+api_mcp_server = []
+api_mock = []
+

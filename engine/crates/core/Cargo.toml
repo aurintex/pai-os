@@ -1,0 +1,17 @@
+[package]
+name = "pai-core"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "Core orchestrator and engine domain logic."
+repository = "https://github.com/aurintex/pai-os"
+
+[dependencies]
+common = { path = "../common", version = "0.1.0" }
+thiserror = "1.0"
+
+[features]
+default = []
+core_sysinfo = []
+core_mock = []
+

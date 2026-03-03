@@ -1,0 +1,113 @@
+[package]
+name = "pai-engine"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "The core intelligence engine for paiOS."
+repository = "https://github.com/aurintex/pai-os"
+readme = "README.md"
+keywords = ["ai", "agent", "automation", "edge-ai", "platform"]
+categories = ["artificial-intelligence", "embedded"]
+
+[dependencies]
+common = { path = "../crates/common", version = "0.1.0" }
+core = { path = "../crates/core", version = "0.1.0", package = "pai-core" }
+vision = { path = "../crates/vision", version = "0.1.0", optional = true }
+audio = { path = "../crates/audio", version = "0.1.0", optional = true }
+inference = { path = "../crates/inference", version = "0.1.0", optional = true }
+api = { path = "../crates/api", version = "0.1.0", optional = true }
+peripherals = { path = "../crates/peripherals", version = "0.1.0", optional = true }
+
+# Async runtime & system
+tokio = { version = "1.48", features = ["full"] }
+
+# Error handling: anyhow for app-level propagation and context (no typed API); domain crates use thiserror for their error types
+anyhow = "1.0.102"
+
+# Logging & tracing
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Configuration management
+config = "0.15"
+
+# CLI argument parsing
+clap = { version = "4.5", features = ["derive"] }
+
+# Serialization & deserialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[features]
+default = ["desktop"]
+
+# Profile: Desktop development (the default)
+desktop = [
+    "vision_mock",
+    "audio_cpal",
+    "infer_llamacpp_cpu",
+    "infer_sherpa",
+    "periph_desktop",
+    "api_grpc_uds",
+    "api_http",
+    "api_mcp_server",
+]
+
+# Profile: Rockchip-based deployment (e.g. Radxa Rock 5C / paiBox)
+rockchip = [
+    "vision_v4l2",
+    "vision_rga",
+    "audio_cpal",
+    "audio_webrtc",
+    "infer_rknn",
+    "infer_rkllm",
+    "infer_sherpa",
+    "infer_mcp_client",
+    "periph_gpio",
+    "periph_evdev",
+    "api_grpc_uds",
+    "api_grpc_tcp",
+    "api_http",
+    "api_mcp_server",
+    "core_sysinfo",
+]
+
+# Capability feature re-exports into domain crates
+# Optional deps: list crate name first so the optional dependency is enabled, then the inner feature.
+
+vision_v4l2 = ["vision", "vision/vision_v4l2"]
+vision_rga = ["vision", "vision/vision_rga"]
+vision_image = ["vision", "vision/vision_image"]
+vision_mock = ["vision", "vision/vision_mock"]
+
+audio_cpal = ["audio", "audio/audio_cpal"]
+audio_webrtc = ["audio", "audio/audio_webrtc"]
+audio_mock = ["audio", "audio/audio_mock"]
+
+infer_llamacpp_cpu = ["inference", "inference/infer_llamacpp_cpu"]
+infer_rknn = ["inference", "inference/infer_rknn"]
+infer_rkllm = ["inference", "inference/infer_rkllm"]
+infer_sherpa = ["inference", "inference/infer_sherpa"]
+infer_hailo = ["inference", "inference/infer_hailo"]
+infer_mcp_client = ["inference", "inference/infer_mcp_client"]
+infer_mock = ["inference", "inference/infer_mock"]
+
+api_grpc_uds = ["api", "api/api_grpc_uds"]
+api_grpc_tcp = ["api", "api/api_grpc_tcp"]
+api_http = ["api", "api/api_http"]
+api_mcp_server = ["api", "api/api_mcp_server"]
+api_mock = ["api", "api/api_mock"]
+
+periph_desktop = ["peripherals", "peripherals/periph_desktop"]
+periph_desktop_hid = ["peripherals", "peripherals/periph_desktop_hid"]
+periph_gpio = ["peripherals", "peripherals/periph_gpio"]
+periph_evdev = ["peripherals", "peripherals/periph_evdev"]
+periph_usb_hid = ["peripherals", "peripherals/periph_usb_hid"]
+periph_mock = ["peripherals", "peripherals/periph_mock"]
+
+# core is a required dependency; only the inner feature is needed.
+core_sysinfo = ["core/core_sysinfo"]
+core_mock = ["core/core_mock"]

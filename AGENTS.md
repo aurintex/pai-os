@@ -56,7 +56,6 @@ The repo ships with **Taskmaster** in `.cursor/mcp.json` so contributors can try
 - Never use em dashes (—) in documentation; they read as AI-generated. Use a colon for "label: explanation" and commas or parentheses for asides.
 - Avoid documentation that sounds AI-generated; prefer natural, human-sounding writing throughout.
 - Apply 80/20 when improving or fixing docs: tackle only the most impactful issues, not everything at once.
-- Strategic content (product strategy, PRDs, roadmap decisions) belongs in Notion, not the open-source repository.
 - Illustrative code blocks (showing an idea rather than the real implementation) should carry a note that they are examples and the real code may differ; comparison or "why we didn't do X" code blocks do not need this note.
 
 ## Learned Workspace Facts
@@ -67,7 +66,7 @@ The repo ships with **Taskmaster** in `.cursor/mcp.json` so contributors can try
 - The documentation site lives under `docs/` and is built with Astro Starlight; significant API or docs changes should be validated with the docs build.
 - `.cursor/hooks/state/continual-learning-index.json` contains machine-specific absolute paths and must be gitignored; do not push it to the repository.
 - Brainstorm files are stored in `archive_schon_bearbeitet/brainstorms/`, not under `docs/`.
-- Strategic content (PRDs, product roadmap, market research) lives in Notion, not in the repository.
+- Strategic content (PRDs, product roadmap, market research) should live in a separate private planning system, not in this repository.
 
 ## Recommended Workflow
 - Start from the GitHub issue: treat it as the single source of truth; restate its goal and acceptance criteria before touching code, and keep any local tools (including Taskmaster) consistent with it.

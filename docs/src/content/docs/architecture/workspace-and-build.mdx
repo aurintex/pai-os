@@ -68,7 +68,7 @@ We enforce a strict **`[domain]_[technology]`** naming convention for **capabili
 |------|---------|----------|---------|
 | **Capability** (domain crate) | `[domain]_[tech]` | `vision_v4l2`, `vision_image`, `infer_rknn`, `infer_llamacpp_cpu`, `api_grpc_uds`, `periph_gpio` | Isolates technology-specific adapters inside a single domain crate |
 | **Capability (mock)** (domain crate) | `[domain]_mock` | `vision_mock`, `audio_mock`, `infer_mock`, `api_mock`, `periph_mock` | Enables mock adapters for testing and CI |
-| **Profile / preset** (`pai-engine`) | free-form, but treated as a build preset | `desktop`, `target` (and future `profile_*` variants) | Groups a set of capability features for a given platform or build mode |
+| **Profile / preset** (`pai-engine`) | free-form, but treated as a build preset | `desktop`, `rockchip` (and future platform profiles, e.g. `raspi`) | Groups a set of capability features for a given platform or build mode |
 
 **Rationale:**
 - **Linker safety**: Prevents linker errors on unsupported hosts by only compiling adapters for explicitly enabled capabilities.
@@ -109,7 +109,7 @@ The Core (`core`) and all domain crates are **entirely unaware** of which combin
 | Level | Where | What |
 |-------|-------|------|
 | **Domain crate** | `vision/Cargo.toml`, `inference/Cargo.toml`, ... | Declares the fine-grained **capability** features (`vision_v4l2`, `vision_image`, `infer_rknn`, `infer_sherpa`, ...) and `*_mock` capabilities for tests |
-| **Engine aggregation (profiles)** | `pai-engine/Cargo.toml` | Re-exports those capabilities and groups them into build **profiles** (`desktop`, `target`, and future platform profiles) |
+| **Engine aggregation (profiles)** | `pai-engine/Cargo.toml` | Re-exports those capabilities and groups them into build **profiles** (`desktop`, `rockchip`, and future platform profiles) |
 
 ### Feature Aggregation in `pai-engine`
 
@@ -140,8 +140,8 @@ desktop = [
     "api_mcp_server",
 ]
 
-# Profile: Target deployment (Rockchip)
-target = [
+# Profile: Rockchip-based deployment (e.g. Radxa Rock 5C / paiBox)
+rockchip = [
     "vision_v4l2",
     "vision_rga",
     "audio_cpal",
@@ -177,8 +177,8 @@ The **`desktop` profile is the default** for development. Running `cargo build` 
 |-----------|-------------|
 | **Desktop-first development** | `default = ["desktop"]` ensures `cargo build` works on any developer machine |
 | **No hardware required** | Desktop profile uses mock sensors, desktop hotkeys, CPU inference |
-| **Explicit target builds** | Rockchip-specific features require `--features target` |
-| **Additive composition** | Features are additive; enabling `target` doesn't disable `desktop` features |
+| **Explicit platform builds** | **Recommended for Rockchip builds**: `cargo build --no-default-features --features rockchip` (Rockchip-only, no desktop defaults). The dev-only combo `cargo build --features rockchip` keeps `desktop` enabled and is intended only for advanced local testing. |
+| **Additive composition** | Features are additive; enabling `rockchip` doesn't disable `desktop` features |
 
 ## Platform support
 
@@ -241,7 +241,7 @@ Current top-level profiles in `pai-engine/Cargo.toml`:
 | Profile feature | Intended use | Brief description |
 |-----------------|-------------|-------------------|
 | `desktop` | Developer machines (Linux desktop) | Default profile; uses mock or desktop-friendly adapters and CPU-based inference so `cargo build` works anywhere |
-| `target` | Rockchip-based deployment (e.g. Radxa Rock 5C / paiBox) | Deployment profile; enables Rockchip-specific adapters (RKNN/RKLLM, RGA, GPIO, EVDEV, etc.) |
+| `rockchip` | Rockchip-based deployment (e.g. Radxa Rock 5C / paiBox) | Deployment profile; enables Rockchip-specific adapters (RKNN/RKLLM, RGA, GPIO, EVDEV, etc.) |
 | `test` *(conceptual)* | CI / tests | Aggregates `*_mock` capabilities across domain crates so the engine can run without hardware (defined as needed in `pai-engine`) |
 
 > For exact profile definitions and build commands, see the `Feature Aggregation in pai-engine` snippet earlier in this page.
@@ -250,7 +250,7 @@ Current top-level profiles in `pai-engine/Cargo.toml`:
 
 The following table highlights the most important capability features and which profiles enable them today. It is not an exhaustive list of every feature, but it captures the key adapters and should be kept in sync with `pai-engine/Cargo.toml`.
 
-| Capability feature | Domain crate | Adapter / Purpose | `desktop` | `target` | `test` |
+| Capability feature | Domain crate | Adapter / Purpose | `desktop` | `rockchip` | `test` |
 |--------------------|--------|-------------------|:---------:|:--------:|:------:|
 | `vision_mock` | `vision` | Mock camera / image processing for host development | ✅ | ✖ | ✅ |
 | `vision_v4l2` | `vision` | V4L2 camera (MIPI-CSI / USB) | ✖ | ✅ | ✖ |
