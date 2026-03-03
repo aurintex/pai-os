@@ -1,0 +1,21 @@
+[package]
+name = "peripherals"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "Peripherals domain: HMI inputs/outputs (buttons, LEDs, haptics, HID)."
+repository = "https://github.com/aurintex/pai-os"
+
+[dependencies]
+common = { path = "../common", version = "0.1.0" }
+thiserror = "1.0"
+
+[features]
+default = []
+periph_desktop = []
+periph_desktop_hid = []
+periph_gpio = []
+periph_evdev = []
+periph_usb_hid = []
+periph_mock = []
+

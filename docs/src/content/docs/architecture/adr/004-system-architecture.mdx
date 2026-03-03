@@ -216,7 +216,7 @@ We reviewed the architecture for over-engineering. Decisions:
 |------|----------|-----------|
 | **Port count (4 capability ports)** | Keep all four (`DeviceControlPort`, `SessionConfigPort`, `SensorRelayPort`, `InferencePort`) | Merging ports (e.g. SessionConfig + SensorRelay into one "ControlPort") would weaken the routing matrix; each port is a distinct security boundary. |
 | **Crate count (7 domain crates)** | Keep all seven, but implement incrementally | The crate boundaries enforce Hexagonal Architecture at compile time. For Milestone 0, only `common`, `core`, `inference`, `api`, and `pai-engine` need code; the rest can be stubs with ports defined and mock adapters only. |
-| **Build profiles** | Keep `desktop` / `target` / `test` only | No additional profiles unless a concrete new board requires one. Avoid premature `profile_*` variants. |
+| **Build profiles** | Keep `desktop` / `rockchip` / `test` only | No additional profiles unless a concrete new board requires one (e.g. `raspi`). Avoid premature `profile_*` variants. |
 | **FlowRunner abstraction** | Keep the trait, implement only `HardcodedFlowRunner` for MVP | The trait is one file; the cost is near zero; the value (future extensibility) is high. No scripting runtime in MVP. |
 | **Composition root** | Keep single `main.rs`; extract a `composition` module only if `main.rs` exceeds ~300 lines | See [Composition Root](/architecture/composition-root/). |
 | **Module merging** | Do not merge crates (e.g. API into Core) | Blurs domain boundaries and makes the routing matrix harder to audit. |

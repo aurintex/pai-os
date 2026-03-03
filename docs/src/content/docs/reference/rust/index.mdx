@@ -41,12 +41,10 @@ Two documentation formats are available to suit different needs:
 
 ## About the Engine
 
-The `engine` crate is the core runtime for paiOS. It implements:
+The engine is a **Cargo workspace** under `engine/` with domain crates and a single binary:
 
-- **gRPC Service Layer** (`rpc/`): Handles gRPC/UDS communication
-- **Domain Logic** (`core/`): SystemController and business rules
-- **Inference Orchestration** (`orchestrator/`): [NPU](/glossary/#n)/[GPU](/glossary/#g)/[CPU](/glossary/#c) resource management
-- **Hardware Abstraction** (`hal/`): Audio, HID, LED, and hardware backends
+- **`pai-engine`**: Composition root (binary). Entry point, config load, adapter wiring. See [Composition Root](/architecture/composition-root/) and [Workspace and Build](/architecture/workspace-and-build/).
+- **Domain crates** (`common`, `core`, `vision`, `audio`, `inference`, `api`, `peripherals`): Hexagonal modules with ports and feature-gated adapters. See [Engine Domains](/architecture/modules/).
 
 For the primary [API](/glossary/#a) documentation, see the [gRPC API Reference](/reference/api/).
 
@@ -55,12 +53,12 @@ For the primary [API](/glossary/#a) documentation, see the [gRPC API Reference](
 ## Crate Documentation
 
 <CardGrid>
-  <Card title="engine Library" icon="code">
-    Core logic, structs, and common error types.
-    [View Library](/reference/rust/crate)
-  </Card>
   <Card title="Engine Runtime" icon="rocket">
-    CLI arguments, boot process, and daemon entry point.
+    CLI arguments, boot process, and daemon entry point (`pai-engine` binary).
     [View Runtime](/reference/rust/runtime)
+  </Card>
+  <Card title="Workspace and domains" icon="code">
+    Layout, feature flags, and domain crates.
+    [Workspace and Build](/architecture/workspace-and-build/) · [Engine Domains](/architecture/modules/)
   </Card>
 </CardGrid>
