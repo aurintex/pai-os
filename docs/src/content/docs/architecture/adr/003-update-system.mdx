@@ -236,6 +236,10 @@ type=ext4
 bootname=B
 ```
 
+<Aside type="note" title="Example paths">
+Device nodes in this example match an RK3588 eMMC layout. On other hardware (for example NVMe or SD card) the slot devices use different paths, so adjust `device=` values to the actual partition layout of the target.
+</Aside>
+
 ## Rationale
 
 ### Why not Mender?

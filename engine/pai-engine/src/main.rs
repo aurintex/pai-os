@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use std::path::PathBuf;
 use tracing::{error, info};
 use tracing_subscriber::FmtSubscriber;
 
@@ -9,7 +10,7 @@ use tracing_subscriber::FmtSubscriber;
 struct Args {
     /// Path to the configuration file
     #[arg(short, long)]
-    config: Option<String>,
+    config: Option<PathBuf>,
 
     /// Enable verbose logging
     #[arg(short, long)]
@@ -39,7 +40,7 @@ async fn main() -> Result<()> {
     info!("Booting paiOS engine workspace...");
 
     if let Some(path) = args.config {
-        info!("Using configuration from: {}", path);
+        info!("Using configuration from: {}", path.display());
     } else {
         info!("No configuration file provided, using defaults.");
     }
