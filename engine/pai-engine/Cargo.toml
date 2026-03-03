@@ -6,7 +6,7 @@ license = "AGPL-3.0-only"
 description = "The core intelligence engine for paiOS."
 repository = "https://github.com/aurintex/pai-os"
 readme = "README.md"
-keywords = ["ai", "os", "agent", "automation", "edge-ai", "agent-native", "platform"]
+keywords = ["ai", "agent", "automation", "edge-ai", "platform"]
 categories = ["artificial-intelligence", "embedded"]
 
 [dependencies]
