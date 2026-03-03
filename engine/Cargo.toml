@@ -5,3 +5,8 @@ members = [
     "libs/*",
     "pai-engine",
 ]
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

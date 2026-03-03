@@ -111,9 +111,3 @@ periph_mock = ["peripherals", "peripherals/periph_mock"]
 # core is a required dependency; only the inner feature is needed.
 core_sysinfo = ["core/core_sysinfo"]
 core_mock = ["core/core_mock"]
-
-[profile.release]
-lto = true
-codegen-units = 1
-strip = true
-
