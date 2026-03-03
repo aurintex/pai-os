@@ -33,8 +33,7 @@ async fn main() -> Result<()> {
         .with_env_filter("info")
         .finish();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("setting default subscriber failed");
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     // 3. Bootstrap engine (placeholder for now)
     info!("Booting paiOS engine workspace...");
@@ -56,4 +55,3 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
-

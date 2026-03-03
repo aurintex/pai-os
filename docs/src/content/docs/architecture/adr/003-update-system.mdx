@@ -1,57 +1,302 @@
 ---
-title: "ADR-003: Update System"
-description: A/B partitioning and OTA updates for embedded devices
+title: "ADR-003: Deployment & OTA Update Strategy"
+description: A/B partitioning with RAUC for atomic, secure over-the-air updates on embedded AI devices
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="Draft">
-This ADR is a placeholder. The decision is pending further analysis.
-</Aside>
-
 ## Status
 
-**Proposed** (2026-02-01)
+**Accepted** (2026-03-02)
 
 ## Context
 
-paiOS runs on embedded devices that need reliable, atomic updates with rollback capability. Key requirements:
+paiOS runs on embedded [AI devices](/glossary/#a) (e.g., RK3588-based boards) deployed in the field, often without physical access. These devices need a reliable and secure mechanism for receiving software updates. Key requirements:
 
-1. **Atomic updates**: No partial update states that could brick devices
-2. **Automatic rollback**: Failed updates revert to known-good state
-3. **OTA support**: Updates delivered over-the-air without physical access
-4. **Minimal downtime**: Updates applied in background, single reboot to activate
-
-## Candidates
-
-| Tool | Approach | License |
-|------|----------|---------|
-| [RAUC](https://rauc.io/) | A/B slot-based, bootloader integration | LGPL-2.1 |
-| [Mender](https://mender.io/) | A/B with hosted/self-hosted backend | Apache-2.0 / Commercial |
-| [SWUpdate](https://swupdate.org/) | Flexible update framework | GPL-2.0 |
-| APT | Traditional package manager | - |
+1.  **Atomic updates**: no partial update states that could brick devices
+2.  **Automatic rollback**: failed updates revert to a known-good state without user intervention
+3.  **Offline-capable**: updates must work without internet (e.g., via USB), not only over the air
+4.  **Minimal downtime**: updates applied in background, single reboot to activate
+5.  **Security**: cryptographically signed images to prevent malicious firmware injection
+6.  **Build integration**: seamless creation of update bundles from the OS building tool ([ADR-002](./002-os-building-tool))
 
 ## Decision
 
-*To be determined.*
+We adopt **RAUC** (Robust Auto-Update Controller) for A/B partition-based atomic updates with Ed25519 image signing.
 
-Preliminary direction: **RAUC** for its simplicity, strong U-Boot/GRUB integration, and LGPL license compatibility.
+### Scope
 
-## Evaluation Criteria
+This ADR covers **embedded hardware deployments** where paiOS controls the full OS image (e.g., paiBox, paiScribe). For users running just the paiEngine in a **Docker container** (e.g., on a home server or cloud VM), updates follow Docker's native mechanism (`docker pull` + restart), which handles atomicity and rollback via image tags out of the box.
 
-*To be evaluated:*
+| Deployment | Update mechanism | Managed by |
+|------------|-----------------|------------|
+| **Embedded hardware** (paiBox, paiScribe) | RAUC A/B partition swap (this ADR) | paiOS |
+| **Docker container** (engine-only) | `docker pull` + restart | Docker / user |
 
-- A/B partition support
-- Bootloader integration (U-Boot, GRUB)
-- Signature verification
-- Delta/differential updates
-- Backend requirements (self-hosted vs SaaS)
-- License compatibility with paiOS
+The rest of this ADR focuses on the embedded case.
+
+### 1. A/B Partition Switching
+
+The device storage is partitioned into two root filesystem slots (A and B). One slot is **active** (booted), the other is **inactive** (target for updates). A persistent `/data` partition holds user data, AI models, and configuration across updates.
+
+```
+┌─────────────────────────────────────────────┐
+│               Device Storage                │
+├──────────┬──────────┬──────────┬────────────┤
+│  Boot    │  Slot A  │  Slot B  │   Data     │
+│ (U-Boot) │ (rootfs) │ (rootfs) │ (/data)    │
+│          │ [active] │ [target] │ [persist]  │
+└──────────┴──────────┴──────────┴────────────┘
+```
+
+**Why A/B over package-based updates (APT)?**
+
+| Criteria | A/B (RAUC) | Package-based (APT) |
+|----------|-----------|---------------------|
+| Atomicity | ✅ Full image swap | ❌ Partial state possible |
+| Rollback | ✅ Hardware-level, instant | ❌ Complex, unreliable |
+| Reproducibility | ✅ Identical to build output | ⚠️ Drift over time |
+| Downtime | ⚠️ Reboot required | ✅ Live updates possible |
+| Disk usage | ⚠️ 2× rootfs space | ✅ Single rootfs |
+
+For embedded devices where reliability trumps flexibility, A/B partitioning is the clear choice.
+
+**Option A (chosen):** We do **not** reserve separate appfs slots. Extensions, custom apps, and user content use the persistent `/data` partition (subdirectories, managed by the extension system). Downstream products that need RAUC-managed app slots can define their own partition layout and `system.conf`.
+
+### 2. Partition filesystems and read-only policy
+
+We define filesystem types and mount policy per partition so that updates are safe and storage lifetime is preserved.
+
+| Partition | Filesystem | Mount | Rationale |
+|-----------|------------|--------|-----------|
+| **Boot** | vfat (when separate, e.g. RPi) or part of rootfs (e.g. Rockchip in `/boot`) | Read-only where possible | Boot partition holds kernel, DTB, RAUC keyring. Read-only avoids accidental overwrite; some boards require vfat for firmware. |
+| **Rootfs (slot A/B)** | ext4 | **Read-only** in normal operation | RAUC writes a full image to the inactive slot. At runtime the active rootfs is mounted read-only so power loss or crashes cannot corrupt it. Writes (e.g. `/tmp`, `/var`, `/etc` overrides) go to an **overlay**: overlayfs with upperdir on tmpfs or on a small writable area (e.g. on `/data`). |
+| **Data** | ext4 | **Read-write** | Persistent user data, AI models, config overrides, logs. Preserved across rootfs updates. |
+
+**Read-only rootfs in practice:** The rootfs image is built and shipped as ext4. At boot, the initramfs or early userspace mounts the rootfs and, if using overlayfs, creates a writable overlay (lowerdir = rootfs, upperdir/workdir = tmpfs or a dedicated dir on `/data`). That way the block device for the slot is never written at runtime, which reduces wear and prevents filesystem corruption. Services that need to write (e.g. logs, machine-id, RAUC status) use the overlay or explicit bind-mounts to `/data`.
+
+**Why ext4 for rootfs and data:** ext4 is the standard choice for RAUC slots (best-supported slot type), is robust, and supports `resize=true` and tar-based installation. SquashFS is an alternative for a read-only root (smaller, no runtime writes at all) but RAUC’s typical flow is ext4; we keep ext4 for simplicity and tooling alignment.
+
+### 4. Why RAUC
+
+We evaluated four candidates:
+
+| Tool | Approach | License | Verdict |
+|------|----------|---------|---------|
+| [**RAUC**](https://rauc.io/) | A/B slot-based, bootloader integration | LGPL-2.1 | ✅ **Selected** |
+| [Mender](https://mender.io/) | A/B with hosted/self-hosted backend | Apache-2.0 / Commercial | ❌ SaaS dependency |
+| [SWUpdate](https://swupdate.org/) | Flexible update framework, Lua scripting | GPL-2.0 | ⚠️ More complex than needed |
+| systemd-repart | Partition management (not a full update system) | LGPL-2.1 | ❌ No signing or rollback |
+
+RAUC wins on the combination of:
+
+-   **LGPL-2.1 license**: compatible with paiOS's AGPL-3.0 core ([ADR-001](./001-licensing-strategy))
+-   **Bootloader flexibility**: native support for U-Boot (used by Radxa/Rockchip boards) and GRUB, plus a **custom bootloader backend** for boards with non-standard boot flows (e.g., Raspberry Pi firmware uses `tryboot` via a custom script). This lets us support multiple hardware targets without changing the update tooling.
+-   **No SaaS dependency**: fully self-hosted, no mandatory cloud service
+-   **Mature and battle-tested**: used in industrial IoT, medical devices, and automotive
+-   **D-Bus [API](/glossary/#a)**: programmatic control from the paiOS Engine for status monitoring and update triggers
+-   **Bundle format**: self-contained `.raucb` bundles with manifest, images, and cryptographic signatures
+
+See [Rationale](#rationale) for detailed comparisons with each alternative.
+
+### 5. Security Model
+
+All update bundles are cryptographically signed with **Ed25519** to prevent malicious firmware injection. The private key lives in CI/CD secrets (GitHub Actions encrypted secrets, HSM for production). The public key is embedded on each device in the read-only boot partition (`/etc/rauc/keyring.pem`).
+
+| Step | Actor | Action |
+|------|-------|--------|
+| 1. Build | CI/CD (GitHub Actions) | Debos creates rootfs image |
+| 2. Bundle | CI/CD | RAUC packages image into `.raucb` bundle |
+| 3. Sign | CI/CD (with HSM/secrets) | Bundle signed with Ed25519 private key |
+| 4. Distribute | CDN or local media | Signed bundle made available for devices |
+| 5. Verify | Device (RAUC) | Bundle signature verified against embedded public key |
+| 6. Install | Device (RAUC) | Image written to inactive slot only if verification passes |
+
+Key rotation is supported: new public keys can be included in update bundles, with the old key verifying the transition bundle.
+
+<Aside type="caution" title="Key Security">
+The signing private key must **never** be stored in the repository or on devices. Use GitHub Actions secrets for CI and a Hardware Security Module (HSM) for production release signing.
+</Aside>
+
+### 6. Rollback Architecture
+
+Automatic rollback ensures devices recover from failed updates without manual intervention.
+
+**Health Check Flow:**
+
+```
+Boot new slot → systemd starts → watchdog timer begins
+                                         │
+                          ┌──────────────┴──────────────┐
+                          │                             │
+                   Services healthy              Watchdog expires
+                   within timeout                (services failed)
+                          │                             │
+                    Mark slot as                  Bootloader reverts
+                    "good" (confirmed)            to previous slot
+                          │                             │
+                    Normal operation              Boot old slot
+                                                  (known-good)
+```
+
+| Component | Mechanism | Details |
+|-----------|-----------|---------|
+| **Boot counter** | U-Boot `boot_count` variable | Incremented on each boot; reset on successful health check |
+| **Max attempts** | U-Boot `boot_count_limit` | Default: 3 attempts before reverting to previous slot |
+| **Health check** | `rauc status mark-good` | Called by a systemd service after critical services pass readiness checks |
+| **Watchdog** | systemd `WatchdogSec` | Hardware watchdog resets the device if the OS hangs during boot |
+| **Critical services** | systemd `Type=notify` | paiOS Engine and core services must report readiness via `sd_notify` |
+
+**Failure Scenarios:**
+
+| Scenario | Result |
+|----------|--------|
+| Kernel panic on new slot | Watchdog resets, U-Boot decrements counter, boots old slot |
+| paiOS Engine fails to start | Health check service times out, no `mark-good`, next boot decrements counter |
+| Power loss during update | Inactive slot was being written, active slot unaffected, normal boot |
+| Power loss during reboot | U-Boot boots whatever slot was last marked active, safe |
+
+### 7. Update Delivery
+
+Updates can reach the device via three paths. The verification and installation flow is identical regardless of how the bundle arrives.
+
+| Method | How it works |
+|--------|--------------|
+| **USB drive** | User plugs in a USB stick containing the `.raucb` bundle; the Engine detects it and triggers RAUC |
+| **Local file** | Bundle transferred via local network (e.g., SCP) or pre-loaded on storage |
+| **OTA (online)** | Device polls a metadata server and downloads from CDN |
+
+**OTA Version Discovery (online only):**
+
+1.  Device polls `https://updates.pai.dev/v1/manifest.json` (configurable interval, default: 6 hours)
+2.  Manifest contains available versions, hardware compatibility, and bundle URLs
+3.  If an update is available and compatible, the device downloads the `.raucb` bundle
+4.  RAUC verifies the signature and installs to the inactive slot
+
+**Manifest Format (example):**
+
+```json
+{
+  "latest": "0.3.0",
+  "channels": {
+    "stable": {
+      "version": "0.3.0",
+      "compatible": "paios-rk3588",
+      "bundle_url": "https://cdn.pai.dev/releases/0.3.0/paios-rk3588-0.3.0.raucb",
+      "bundle_sha256": "a1b2c3...",
+      "bundle_size": 524288000,
+      "release_notes": "https://pai.dev/changelog/0.3.0"
+    },
+    "beta": { "...": "..." }
+  }
+}
+```
+
+The exact user-facing workflow for offline updates (e.g., button confirmation, progress indication) will be defined when the update UI is implemented.
+
+### 8. Bandwidth and Model Updates
+
+We ship **full rootfs images** compressed with zstd (RAUC default, 30-50% savings). Delta updates (e.g., casync-based chunk differencing) would reduce transfer size further, but they add significant build pipeline complexity: every release would need deltas generated against multiple previous versions. Following the project's preference for stability and simplicity, we defer delta updates to a later phase if download size becomes a real bottleneck.
+
+Large AI model files ([ONNX](/glossary/#o), [RKNN](/glossary/#r)) live on the persistent `/data` partition and are updated via a separate, lighter mechanism (download + verify). This keeps rootfs updates small, since models change on a different cadence than the OS.
+
+### 9. Build Pipeline
+
+The OS building tool Debos ([ADR-002](./002-os-building-tool)) creates rootfs images that are packaged into RAUC bundles:
+
+```
+Debos Recipe → rootfs.ext4 → RAUC Bundle (.raucb) → Sign → Upload
+```
+
+| Step | Tool | Output |
+|------|------|--------|
+| 1. Build rootfs | Debos | `rootfs.ext4` (Debian-based image) |
+| 2. Bundle + sign | `rauc bundle --signing-keyring` | Signed `paios-rk3588-0.3.0.raucb` |
+| 3. Upload | CI/CD script | Push to CDN + update manifest |
+
+**RAUC System Configuration (`/etc/rauc/system.conf`):**
+
+```ini
+[system]
+compatible=paios-rk3588
+bootloader=uboot
+mountprefix=/mnt/rauc
+
+[keyring]
+path=/etc/rauc/keyring.pem
+
+[slot.rootfs.0]
+device=/dev/mmcblk0p2
+type=ext4
+bootname=A
+
+[slot.rootfs.1]
+device=/dev/mmcblk0p3
+type=ext4
+bootname=B
+```
+
+## Rationale
+
+### Why not Mender?
+
+Mender has excellent UX, but:
+-   **SaaS dependency**: the full feature set requires Mender Server (hosted or self-hosted)
+-   **Commercial licensing**: enterprise features are behind a paywall
+-   **Bootloader integration friction**: integration often requires a Yocto layer and manual patches for newer hardware (e.g., Compute Module 5)
+-   **Overhead**: more complex than needed for our use case
+
+### Why not SWUpdate?
+
+SWUpdate is flexible and powerful, but:
+-   **Configuration complexity**: uses Lua scripting for update logic, which adds a runtime dependency and maintenance burden
+-   **Broader scope**: SWUpdate is a general-purpose update framework (supports single-copy, dual-copy, and custom flows), so it requires more configuration to get a clean A/B setup that RAUC provides out of the box
+
+### Why not systemd-repart?
+
+systemd-repart handles partition management, but:
+-   **Not an update system**: no signing, no rollback logic, no bundle format
+-   **Would require custom tooling**: we would need to build everything RAUC provides out of the box
 
 ## Consequences
 
-*To be documented after decision.*
+### Positive
+
+-   ✅ **Brick-proof updates**: A/B partitioning means a bad update never prevents booting
+-   ✅ **Automatic recovery**: watchdog + boot counter handle failures without human intervention
+-   ✅ **Cryptographic security**: Ed25519 signing prevents unauthorized firmware
+-   ✅ **Offline-capable**: USB and local updates work identically to OTA
+-   ✅ **No SaaS lock-in**: fully self-hosted distribution infrastructure
+-   ✅ **Simple pipeline**: full-image updates avoid the complexity of delta generation
+
+### Negative
+
+-   ⚠️ **Double storage**: A/B partitioning requires 2× rootfs space (~2-4 GB overhead)
+-   ⚠️ **Reboot required**: updates are not live, a reboot is needed to activate
+-   ⚠️ **Bootloader coupling**: tight integration with U-Boot means bootloader updates require extra care
+-   ⚠️ **Full image downloads**: no delta updates initially, so each update transfers the full rootfs (mitigated by zstd compression and model separation)
+
+### Notes
+
+-   **U-Boot environment**: RAUC communicates with U-Boot via environment variables (`boot_order`, `boot_count`). The U-Boot configuration must be set up during initial image provisioning.
+-   **First boot**: factory images ship with only Slot A populated. Slot B is empty until the first OTA update.
+-   **Rollback scope**: rollback restores the OS and Engine. AI models on `/data` are preserved independently.
+-   **Platform extensibility**: teams building products on top of paiOS can add their own update layers. RAUC's slot system supports multiple named slots (e.g., `rootfs`, `appfs`, `config`), so a downstream product could define an additional app slot for their custom software without touching the core OS update flow.
+
+### Storage flexibility (BTRFS, LVM)
+
+Flexible sizing (e.g. for future app slots) is often suggested via **BTRFS subvolumes** or **LVM**. The following is accurate as of RAUC 1.15:
+
+| Approach | RAUC support | Notes |
+|----------|----------------|------|
+| **BTRFS subvolumes** | **No.** RAUC has no `type=btrfs` slot type. Supported slot types are `raw`, `ext4`, `vfat`, `nand`, `nor`, `ubivol`, `ubifs`, `jffs2`, plus bootloader types. | Systems like SteamOS use BTRFS for A/B by switching the default subvolume at boot; that is a different update mechanism, not RAUC. To use RAUC you target block devices (partitions or LVs), not subvolumes. |
+| **LVM** | **Yes.** RAUC accepts any block device. You can use logical volumes (e.g. `device=/dev/vg0/rootfs-a`) with `type=ext4`. RAUC writes the image to the LV as usual. | LVs can be resized at runtime (e.g. in a pre-install hook or out-of-band). That avoids fixing slot sizes at image creation time. Downside: extra complexity (LVM on embedded), and the partition table still needs one (or more) partition(s) for the PV. |
+
+**paiOS choice:** We use **simple partitions** (Boot \| rootfs A \| rootfs B \| data) for clarity and minimal moving parts. If a downstream product needs resizable app slots, they can adopt LVM and point RAUC at LVs; we do not mandate it in the base image.
 
 ## Related
 
-- [ADR-002: OS Building Tool](./002-os-building-tool): Image creation (must support A/B partition layout)
+- [ADR-001: Licensing Strategy](./001-licensing-strategy): license compatibility requirements for update tooling
+- [ADR-002: OS Building Tool](./002-os-building-tool): Debos creates the rootfs images that RAUC bundles
+- [ADR-004: Engine Architecture](./004-system-architecture): the Engine's update service adapter
+- [ADR-006: Extension Architecture](./006-extension-architecture): extension updates follow the same signing/verification model
