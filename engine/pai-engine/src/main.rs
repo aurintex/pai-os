@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use std::path::PathBuf;
 use tracing::{error, info};
 use tracing_subscriber::FmtSubscriber;
@@ -12,9 +12,9 @@ struct Args {
     #[arg(short, long)]
     config: Option<PathBuf>,
 
-    /// Enable verbose logging
-    #[arg(short, long)]
-    debug: bool,
+    /// Increase verbosity (-v, -vv, -vvv)
+    #[arg(short, long, action = ArgAction::Count)]
+    verbose: u8,
 }
 
 #[tokio::main]
@@ -22,16 +22,15 @@ async fn main() -> Result<()> {
     // 1. Parse command line arguments
     let args = Args::parse();
 
-    // 2. Initialize logging (tracing)
-    let log_level = if args.debug {
-        tracing::Level::DEBUG
-    } else {
-        tracing::Level::INFO
+    // 2. Initialize logging (tracing) based on verbosity
+    let log_level = match args.verbose {
+        0 => tracing::Level::INFO,
+        1 => tracing::Level::DEBUG,
+        _ => tracing::Level::TRACE,
     };
 
     let subscriber = FmtSubscriber::builder()
         .with_max_level(log_level)
-        .with_env_filter("info")
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");

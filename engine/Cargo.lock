@@ -233,14 +233,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "core"
-version = "0.1.0"
-dependencies = [
- "common",
- "thiserror",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -493,6 +485,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "pai-core"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "thiserror",
+]
+
+[[package]]
 name = "pai-engine"
 version = "0.1.0"
 dependencies = [
@@ -502,8 +502,8 @@ dependencies = [
  "clap",
  "common",
  "config",
- "core",
  "inference",
+ "pai-core",
  "peripherals",
  "serde",
  "serde_json",

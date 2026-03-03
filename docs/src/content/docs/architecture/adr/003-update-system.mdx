@@ -77,7 +77,7 @@ We define filesystem types and mount policy per partition so that updates are sa
 
 **Why ext4 for rootfs and data:** ext4 is the standard choice for RAUC slots (best-supported slot type), is robust, and supports `resize=true` and tar-based installation. SquashFS is an alternative for a read-only root (smaller, no runtime writes at all) but RAUC’s typical flow is ext4; we keep ext4 for simplicity and tooling alignment.
 
-### 4. Why RAUC
+### 3. Why RAUC
 
 We evaluated four candidates:
 
@@ -99,9 +99,9 @@ RAUC wins on the combination of:
 
 See [Rationale](#rationale) for detailed comparisons with each alternative.
 
-### 5. Security Model
+### 4. Security Model
 
-All update bundles are cryptographically signed with **Ed25519** to prevent malicious firmware injection. The private key lives in CI/CD secrets (GitHub Actions encrypted secrets, HSM for production). The public key is embedded on each device in the read-only boot partition (`/etc/rauc/keyring.pem`).
+All update bundles are cryptographically signed with **Ed25519** to prevent malicious firmware injection. The private key lives in CI/CD secrets (GitHub Actions encrypted secrets, HSM for production). The public key is embedded in the OS image at `/etc/rauc/keyring.pem` (mounted read-only at runtime).
 
 | Step | Actor | Action |
 |------|-------|--------|
@@ -118,7 +118,7 @@ Key rotation is supported: new public keys can be included in update bundles, wi
 The signing private key must **never** be stored in the repository or on devices. Use GitHub Actions secrets for CI and a Hardware Security Module (HSM) for production release signing.
 </Aside>
 
-### 6. Rollback Architecture
+### 5. Rollback Architecture
 
 Automatic rollback ensures devices recover from failed updates without manual intervention.
 
@@ -156,7 +156,7 @@ Boot new slot → systemd starts → watchdog timer begins
 | Power loss during update | Inactive slot was being written, active slot unaffected, normal boot |
 | Power loss during reboot | U-Boot boots whatever slot was last marked active, safe |
 
-### 7. Update Delivery
+### 6. Update Delivery
 
 Updates can reach the device via three paths. The verification and installation flow is identical regardless of how the bundle arrives.
 
@@ -194,13 +194,13 @@ Updates can reach the device via three paths. The verification and installation 
 
 The exact user-facing workflow for offline updates (e.g., button confirmation, progress indication) will be defined when the update UI is implemented.
 
-### 8. Bandwidth and Model Updates
+### 7. Bandwidth and Model Updates
 
 We ship **full rootfs images** compressed with zstd (RAUC default, 30-50% savings). Delta updates (e.g., casync-based chunk differencing) would reduce transfer size further, but they add significant build pipeline complexity: every release would need deltas generated against multiple previous versions. Following the project's preference for stability and simplicity, we defer delta updates to a later phase if download size becomes a real bottleneck.
 
 Large AI model files ([ONNX](/glossary/#o), [RKNN](/glossary/#r)) live on the persistent `/data` partition and are updated via a separate, lighter mechanism (download + verify). This keeps rootfs updates small, since models change on a different cadence than the OS.
 
-### 9. Build Pipeline
+### 8. Build Pipeline
 
 The OS building tool Debos ([ADR-002](./002-os-building-tool)) creates rootfs images that are packaged into RAUC bundles:
 
@@ -214,30 +214,8 @@ Debos Recipe → rootfs.ext4 → RAUC Bundle (.raucb) → Sign → Upload
 | 2. Bundle + sign | `rauc bundle --signing-keyring` | Signed `paios-rk3588-0.3.0.raucb` |
 | 3. Upload | CI/CD script | Push to CDN + update manifest |
 
-**RAUC System Configuration (`/etc/rauc/system.conf`):**
-
-```ini
-[system]
-compatible=paios-rk3588
-bootloader=uboot
-mountprefix=/mnt/rauc
-
-[keyring]
-path=/etc/rauc/keyring.pem
-
-[slot.rootfs.0]
-device=/dev/mmcblk0p2
-type=ext4
-bootname=A
-
-[slot.rootfs.1]
-device=/dev/mmcblk0p3
-type=ext4
-bootname=B
-```
-
-<Aside type="note" title="Example paths">
-Device nodes in this example match an RK3588 eMMC layout. On other hardware (for example NVMe or SD card) the slot devices use different paths, so adjust `device=` values to the actual partition layout of the target.
+<Aside type="note" title="Implementation details">
+Board-specific RAUC `system.conf` and partition layouts (including device nodes) live in operational setup documentation. This ADR only describes the decision to use A/B slots with RAUC; concrete `system.conf` examples and device paths are maintained in ops docs for each hardware target.
 </Aside>
 
 ## Rationale

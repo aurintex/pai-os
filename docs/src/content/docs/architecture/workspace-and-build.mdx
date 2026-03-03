@@ -177,7 +177,7 @@ The **`desktop` profile is the default** for development. Running `cargo build` 
 |-----------|-------------|
 | **Desktop-first development** | `default = ["desktop"]` ensures `cargo build` works on any developer machine |
 | **No hardware required** | Desktop profile uses mock sensors, desktop hotkeys, CPU inference |
-| **Explicit platform builds** | Rockchip-specific features require `--features rockchip` |
+| **Explicit platform builds** | **Recommended for Rockchip builds**: `cargo build --no-default-features --features rockchip` (Rockchip-only, no desktop defaults). The dev-only combo `cargo build --features rockchip` keeps `desktop` enabled and is intended only for advanced local testing. |
 | **Additive composition** | Features are additive; enabling `rockchip` doesn't disable `desktop` features |
 
 ## Platform support
