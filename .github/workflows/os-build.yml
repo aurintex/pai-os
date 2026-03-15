@@ -1,0 +1,42 @@
+# Build paiOS image with debos. Uploads compressed image as artifact.
+# Triggers: tag (v*), workflow_dispatch, daily schedule.
+# Artifacts: os-image-radxa-rock5c (tag/manual, 90d) or os-image-unstable (schedule, 7d).
+# Download and run: gunzip radxa-rock5c.img.gz
+name: OS Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  build:
+    name: Build OS image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build image with debos
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/build" -w /build \
+            --cap-add SYS_ADMIN \
+            godebos/debos \
+            debos --disable-fakemachine -t machine:radxa-rock5c os/image.yaml
+
+      - name: Verify image exists
+        run: test -f radxa-rock5c.img
+
+      - name: Compress image
+        run: gzip -k radxa-rock5c.img
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event_name == 'schedule' && 'os-image-unstable' || 'os-image-radxa-rock5c' }}
+          path: radxa-rock5c.img.gz
+          retention-days: ${{ github.event_name == 'schedule' && 7 || 90 }}

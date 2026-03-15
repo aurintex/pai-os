@@ -1,0 +1,10 @@
+# Top-level build entry. Pass machine (and optionally architecture) via -t.
+# Example: debos -t machine:radxa-rock5c os/image.yaml
+{{- $machine := or .machine "radxa-rock5c" }}
+{{- $architecture := or .architecture "arm64" }}
+
+architecture: {{ $architecture }}
+
+actions:
+  - action: recipe
+    recipe: recipes/machines/{{ $machine }}.yaml

@@ -1,0 +1,70 @@
+# Verify a paiOS image boots to a login prompt using QEMU aarch64.
+# Downloads the artifact from the OS Build workflow and runs os/tests/run-qemu.sh.
+# Triggers: workflow_run (after os-build), workflow_dispatch.
+name: OS Verify
+
+on:
+  workflow_run:
+    workflows: ["OS Build"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "OS Build workflow run ID to download artifact from (leave blank to use latest)"
+        required: false
+
+jobs:
+  verify:
+    name: Verify OS image (QEMU)
+    runs-on: ubuntu-latest
+    # Only run if the triggering build succeeded (or if manually dispatched)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve workflow run ID
+        id: resolve_run
+        run: |
+          if [ -n "${{ github.event.inputs.run_id }}" ]; then
+            echo "run_id=${{ github.event.inputs.run_id }}" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ github.event.workflow_run.id }}" ]; then
+            echo "run_id=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
+          else
+            # Fall back to latest successful OS Build run
+            RUN_ID=$(gh run list \
+              --workflow os-build.yml \
+              --status success \
+              --limit 1 \
+              --json databaseId \
+              --jq '.[0].databaseId')
+            echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Download OS image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: os-image-radxa-rock5c
+          run-id: ${{ steps.resolve_run.outputs.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Decompress image
+        run: gunzip -k radxa-rock5c.img.gz
+
+      - name: Install QEMU and expect
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            qemu-system-arm \
+            ovmf \
+            expect
+
+      - name: Run QEMU boot verification
+        run: os/tests/run-qemu.sh radxa-rock5c.img
+        env:
+          QEMU_BOOT_TIMEOUT: "180"
