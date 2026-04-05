@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::{ArgAction, Parser};
+use pai_core::domain::SessionManager;
 use std::path::PathBuf;
 use tracing::{error, info};
 use tracing_subscriber::FmtSubscriber;
@@ -33,8 +34,12 @@ async fn main() -> Result<()> {
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
-    // 3. Bootstrap engine (placeholder for now)
-    info!("Booting paiOS engine workspace...");
+    // 3. Bootstrap engine — core session orchestration (adapters wire in later)
+    let session = SessionManager::new();
+    info!(
+        "Booting paiOS engine workspace (session state: {:?})...",
+        session.state_machine().state()
+    );
 
     if let Some(path) = args.config {
         info!("Using configuration from: {}", path.display());
