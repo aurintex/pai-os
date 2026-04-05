@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Resolve workflow run ID
         id: resolve_run
@@ -47,7 +47,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Download OS image artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: os-image-radxa-rock5c
           run-id: ${{ steps.resolve_run.outputs.run_id }}
