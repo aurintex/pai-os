@@ -36,3 +36,6 @@ tasks/
 .cursor/hooks/state/
 
 tmp/
+
+# OS build artifacts
+*.img

@@ -126,14 +126,20 @@ cargo test
 ```
 
 ### 2. Build the OS Image
-*Requires Linux (Debian/Ubuntu recommended)*
+*Requires Docker*
 ```bash
-cd os
-# Build the image (defaults to paiLink profile)
-sudo debos image.yaml
+# 1. Build the pai-engine .deb (placeholder binary by default)
+bash os/packaging/build-deb.sh
+
+# 2. Build the image via the godebos/debos container
+docker run --rm \
+  -v "$(pwd):/build" -w /build \
+  --cap-add SYS_ADMIN \
+  godebos/debos \
+  --disable-fakemachine -t machine:radxa-rock5c os/image.yaml
 ```
 
-> **Note:** For flashing instructions, hardware compatibility lists (Radxa Rock 5C), and detailed architecture guides, please consult the [Documentation](https://docs.aurintex.com/).
+> **Note:** For flashing instructions, hardware targets, and the full OS build guide, see the [Documentation](https://docs.aurintex.com/architecture/operating-system/).
 
 ## 🤝 Contributing
 

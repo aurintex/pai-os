@@ -1,0 +1,20 @@
+[Unit]
+Description=paiEngine AI Inference Daemon
+Documentation=https://paibox.ai/docs
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/pai-engine
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/pai-engine
+
+[Install]
+WantedBy=multi-user.target

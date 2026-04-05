@@ -20,13 +20,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Build pai-engine .deb
+        run: bash os/packaging/build-deb.sh
+
       - name: Build image with debos
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/build" -w /build \
             --cap-add SYS_ADMIN \
             godebos/debos \
-            debos --disable-fakemachine -t machine:radxa-rock5c os/image.yaml
+            --disable-fakemachine -t machine:radxa-rock5c os/image.yaml
 
       - name: Verify image exists
         run: test -f radxa-rock5c.img

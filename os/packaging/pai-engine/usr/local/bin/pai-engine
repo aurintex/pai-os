@@ -1,0 +1,4 @@
+#!/bin/sh
+# Placeholder pai-engine binary.
+# Replace this file with the real compiled engine binary before running build-deb.sh.
+exec true

@@ -1,0 +1,19 @@
+architecture: arm64
+
+actions:
+  - action: debootstrap
+    suite: bookworm
+    variant: minbase
+    components:
+      - main
+    mirror: http://deb.debian.org/debian
+
+  - action: apt
+    packages:
+      - systemd
+      - systemd-sysv
+      - procps
+      - kmod
+      - net-tools
+      - iproute2
+      - network-manager

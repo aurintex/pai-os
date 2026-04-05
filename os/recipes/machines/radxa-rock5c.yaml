@@ -1,0 +1,52 @@
+architecture: arm64
+
+actions:
+  - action: recipe
+    recipe: ../base-arm64.yaml
+
+  - action: recipe
+    recipe: ../app/pai-engine-arm64.yaml
+
+  - action: apt
+    packages:
+      - linux-image-arm64
+
+  - action: overlay
+    source: overlays/radxa-rock5c
+
+  - action: run
+    chroot: true
+    command: mkdir -p /data
+
+  - action: image-partition
+    imagename: radxa-rock5c.img
+    imagesize: 8G
+    partitiontype: gpt
+    partitions:
+      - name: boot
+        fs: vfat
+        start: 4M
+        end: 132M
+        flags: [ boot ]
+      - name: rootfs
+        fs: ext4
+        start: 132M
+        end: 4132M
+      - name: data
+        fs: ext4
+        start: 4132M
+        end: 100%
+
+  - action: filesystem-deploy
+    description: Deploy rootfs to image
+
+  # U-Boot for Rockchip RK3588: idbloader at sector 64, u-boot.itb at sector 16384.
+  # Place idbloader.img and u-boot.itb in overlays/radxa-rock5c/bootloader/ (next to this recipe) to enable.
+  - action: run
+    chroot: false
+    script: |
+      set -e
+      [ -z "${IMAGE}" ] || [ ! -f "${IMAGE}" ] && exit 0
+      BL="${RECIPEDIR}/overlays/radxa-rock5c/bootloader"
+      [ -f "${BL}/idbloader.img" ] && dd if="${BL}/idbloader.img" of="${IMAGE}" seek=64 conv=notrunc bs=512
+      [ -f "${BL}/u-boot.itb" ] && dd if="${BL}/u-boot.itb" of="${IMAGE}" seek=16384 conv=notrunc bs=512

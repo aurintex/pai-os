@@ -1,0 +1,26 @@
+# App layer: install pai-engine via Debian package.
+# Run os/packaging/build-deb.sh first to produce the .deb, then trigger a debos build.
+architecture: arm64
+
+actions:
+  # Copy the pre-built .deb from the host into the image's /tmp.
+  # RECIPEDIR = os/recipes/app/, so ../../packaging/dist/ = os/packaging/dist/
+  - action: run
+    chroot: false
+    script: |
+      set -e
+      DEB="${RECIPEDIR}/../../packaging/dist/pai-engine_0.1.0-1_arm64.deb"
+      if [ ! -f "$DEB" ]; then
+        echo "ERROR: .deb not found at $DEB"
+        echo "Run os/packaging/build-deb.sh first."
+        exit 1
+      fi
+      cp "$DEB" "${ROOTDIR}/tmp/pai-engine.deb"
+
+  # Install the package. postinst runs systemctl enable automatically.
+  - action: run
+    chroot: true
+    script: |
+      set -e
+      dpkg -i /tmp/pai-engine.deb
+      rm -f /tmp/pai-engine.deb

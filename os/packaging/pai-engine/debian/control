@@ -1,0 +1,14 @@
+Source: pai-engine
+Section: misc
+Priority: optional
+Maintainer: paiOS Contributors <hello@paibox.ai>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+
+Package: pai-engine
+Architecture: arm64
+Depends: systemd, ${misc:Depends}
+Description: paiEngine AI inference daemon
+ The paiEngine daemon runs on-device AI inference for paiOS.
+ It communicates over gRPC via Unix Domain Sockets, exposing
+ local-only inference to on-device applications.

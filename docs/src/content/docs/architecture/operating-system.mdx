@@ -65,10 +65,14 @@ Custom Debian-based OS built with [Debos](/architecture/adr/002-os-building-tool
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| **Kernel** | Radxa Vendor Kernel (via APT) | Hardware support for RK3588S2 |
+| **Kernel** | Generic Debian ARM64 kernel (`linux-image-arm64`) | Bootable baseline; vendor kernel planned (see note below) |
 | **Drivers** | NPU, GPU, USB Gadget, i2s | Hardware access for AI processing |
 | **systemd** | Service Manager | Manages `pai-engine` daemon and network startup |
 | **Updates** | RAUC | A/B Update System for atomic OTA updates *(Note: Assumed/[pending ADR](/architecture/adr/003-update-system/))* |
+
+<Aside type="note">
+The current image uses the generic Debian ARM64 kernel. This boots on QEMU and provides a working baseline, but full RK3588S2 support (NPU, RGA, MIPI-CSI, hardware video) requires the Radxa vendor kernel. Replacing it is tracked as a separate task.
+</Aside>
 
 <Aside type="note">
 The adoption of **RAUC** for OTA updates is currently assumed as a placeholder pending a formal ADR process.

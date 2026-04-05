@@ -1,0 +1,6 @@
+pai-engine (0.1.0-1) bookworm; urgency=low
+
+  * Initial packaging. Placeholder binary; real engine binary is injected
+    by the build pipeline before calling dpkg-deb.
+
+ -- paiOS Contributors <hello@paibox.ai>  Mon, 23 Mar 2026 22:03:00 +0100
