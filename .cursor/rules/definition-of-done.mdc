@@ -13,7 +13,8 @@ Before declaring any task as "finished" or "done", you MUST:
 
 1.  **Read the DoD Section**: Open and review the "Definition of Done" section in `docs/src/content/docs/guides/contributing/standards.mdx`.
 2.  **Verify Every Point**: Go through each requirement (Functional, Quality, Documentation, Compliance) as defined there.
-3.  **Documentation Sync Check**: If the Rust API was touched, ensure `npm run build` was executed in the `docs/` directory.
+3.  **Rust formatting (engine/)**: If any file under `engine/` changed, run `cargo fmt --all -- --check` with working directory `engine/` (same command as CI). Fix with `cargo fmt --all` in `engine/` if needed.
+4.  **Documentation Sync Check**: If the Rust API was touched, ensure `npm run build` was executed in the `docs/` directory.
 
 ## Final Statement Requirement
 In your final response to the user, you MUST explicitly state:

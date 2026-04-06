@@ -1,0 +1,12 @@
+# Optional: install with `pip install pre-commit && pre-commit install`
+# Mirrors the "Format check" step in .github/workflows/ci.yml (working-directory: engine).
+
+repos:
+  - repo: local
+    hooks:
+      - id: rustfmt-check-engine
+        name: cargo fmt --check (engine)
+        language: system
+        entry: bash -c 'cd engine && cargo fmt --all -- --check'
+        pass_filenames: false
+        files: ^engine/.*\.rs$

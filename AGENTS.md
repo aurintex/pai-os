@@ -27,6 +27,7 @@ Before writing code, **always** check these files for the latest standards:
 - **GitHub issues**: When creating issues (e.g. via MCP or CLI), use **Conventional Commits** for the title: `type(scope): short description` (e.g. `feat(common): add config format detection`). See [Workflow](docs/src/content/docs/guides/contributing/workflow.mdx) for types, scope, and branch naming.
 - **Documentation**: When editing docs, link to the [Glossary](docs/src/content/docs/glossary.mdx) for terms that have an entry (e.g. IPC, gRPC, HITL, UDS). Use `[Term](/glossary/#letter)`.
 - **Rust code**: When writing or reviewing Rust in `engine/`, follow [Rust Style and Best Practices](docs/src/content/docs/guides/contributing/rust-style.mdx) (stack vs heap, generics vs `Box<dyn Trait>`, formatting).
+- **Rust formatting (CI parity)**: Before you commit or open a PR for Rust changes, run the same check as CI from the repo root: `cd engine && cargo fmt --all -- --check`. If it fails, run `cargo fmt --all` in `engine/` and re-check. Optional: install [pre-commit](https://pre-commit.com/) and run `pre-commit install` once so commits are blocked locally when fmt would fail (see `.pre-commit-config.yaml`). With the repo `.vscode/settings.json`, Rust files format on save when using rust-analyzer in Cursor/VS Code.
 
 ## 4. Architecture Summary
 - **Engine**: Rust daemon (`engine/`) running distinct threads for inference (NPU/CPU/GPU).

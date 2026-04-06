@@ -1,0 +1,17 @@
+---
+description: >-
+  Run the same rustfmt check as CI before finishing Rust work under engine/.
+globs: engine/**/*.rs
+alwaysApply: false
+---
+
+# Rust engine: format check (CI parity)
+
+CI runs `cargo fmt --all -- --check` with working directory `engine/` (see `.github/workflows/ci.yml`).
+
+Before you mark Rust work complete or commit:
+
+1. `cd engine && cargo fmt --all -- --check`
+2. If it fails: `cd engine && cargo fmt --all`, then re-run the check.
+
+Optional: `pre-commit install` uses `.pre-commit-config.yaml` to run this on commit when `engine/**/*.rs` changes.

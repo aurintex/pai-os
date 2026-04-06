@@ -14,7 +14,9 @@ node_modules/
 
 # Editor directories and files
 .idea
-.vscode
+# Track shared editor defaults; keep other .vscode/* local
+.vscode/*
+!.vscode/settings.json
 *.suo
 *.ntvs*
 *.njsproj

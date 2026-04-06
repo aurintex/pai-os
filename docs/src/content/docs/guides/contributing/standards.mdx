@@ -51,6 +51,7 @@ All changes must meet these requirements before they can be merged:
 ### 1. Correctness & Quality
 - Code builds without errors (`cargo build`).
 - All tests pass (`cargo test`).
+- Rust code is rustfmt-clean: from the `engine/` directory, `cargo fmt --all -- --check` passes (same as CI; fix with `cargo fmt --all`).
 - No clippy warnings.
 - Solution follows KISS and Hexagonal Architecture principles.
 
