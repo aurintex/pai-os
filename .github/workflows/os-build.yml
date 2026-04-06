@@ -38,7 +38,7 @@ jobs:
         run: gzip -k radxa-rock5c.img
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ github.event_name == 'schedule' && 'os-image-unstable' || 'os-image-radxa-rock5c' }}
           path: radxa-rock5c.img.gz
