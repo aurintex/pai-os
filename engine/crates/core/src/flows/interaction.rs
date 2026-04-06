@@ -74,9 +74,9 @@ mod tests {
 
     #[test]
     fn session_manager_delegates_handle_interaction() {
-        use crate::domain::SessionManager;
+        use crate::domain::session_manager_for_interaction_tests;
 
-        let mut mgr = SessionManager::new();
+        let mut mgr = session_manager_for_interaction_tests();
         mgr.handle_interaction(InteractionEvent::ShortPressStartListen)
             .unwrap();
         assert_eq!(mgr.state_machine().state(), SessionState::Listening);

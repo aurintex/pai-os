@@ -9,6 +9,7 @@ repository = "https://github.com/aurintex/pai-os"
 [dependencies]
 common = { path = "../common", version = "0.1.0" }
 thiserror = "2.0"
+tokio = { version = "1.50", features = ["sync", "rt", "macros"] }
 
 [features]
 default = []
