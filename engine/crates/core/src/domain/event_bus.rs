@@ -2,6 +2,7 @@
 
 use crate::domain::events::DomainEvent;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::error::TrySendError;
 
 /// Single-consumer bounded channel for [`DomainEvent`] delivery.
 ///
@@ -24,15 +25,37 @@ impl EventBus {
         self.sender.clone()
     }
 
-    /// Non-blocking publish; returns the event back if the buffer is full.
-    pub fn try_publish(&self, event: DomainEvent) -> Result<(), DomainEvent> {
-        self.sender.try_send(event).map_err(|e| e.into_inner())
+    /// Non-blocking publish. On failure, use [`TrySendError::into_inner`] to recover the event.
+    pub fn try_publish(&self, event: DomainEvent) -> Result<(), TrySendError<DomainEvent>> {
+        self.sender.try_send(event)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tokio::sync::mpsc::error::TrySendError;
+
+    #[tokio::test]
+    async fn try_publish_returns_full_when_buffer_saturated() {
+        let (bus, mut rx) = EventBus::channel(1);
+        bus.try_publish(DomainEvent::InferenceRequested {
+            prompt: "first".into(),
+        })
+        .unwrap();
+
+        let ev = DomainEvent::InferenceRequested {
+            prompt: "second".into(),
+        };
+        let err = bus.try_publish(ev.clone()).unwrap_err();
+        let got = match err {
+            TrySendError::Full(e) => e,
+            other => panic!("expected Full, got {other:?}"),
+        };
+        assert_eq!(got, ev);
+
+        rx.recv().await;
+    }
 
     #[tokio::test]
     async fn send_and_receive_round_trip() {
