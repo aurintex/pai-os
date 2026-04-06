@@ -73,3 +73,34 @@ The repo ships with **Taskmaster** in `.cursor/mcp.json` so contributors can try
 - Start from the GitHub issue: treat it as the single source of truth; restate its goal and acceptance criteria before touching code, and keep any local tools (including Taskmaster) consistent with it.
 - Use planning mode for real complexity, not every change: if the work has 3+ steps, crosses domains, or the solution shape is fuzzy, spend a few minutes in planning mode to produce a short, ordered checklist; if the change fits in 1–2 sentences and ~1–2 files, skip formal planning and just implement.
 - Use Taskmaster only for big/ongoing work: for multi-day, multi-PR, or multi-person issues, optionally mirror the GitHub issue into a small Taskmaster breakdown to track subtasks locally; for everything else, keep the workflow lightweight and work directly from the issue plus a simple plan.
+
+## Cursor Cloud specific instructions
+
+### Services overview
+
+| Service | Directory | Run command | Notes |
+|---------|-----------|-------------|-------|
+| **paiEngine** (Rust daemon) | `engine/` | `cargo run` | Boots with stub/mock adapters on desktop. Exits cleanly on Ctrl+C. |
+| **Docs site** (Astro Starlight) | `docs/` | `npm run dev` | Dev server on port 4321. |
+
+### Rust toolchain
+
+The VM ships with Rust 1.83 which is too old for the project's dependencies (`wit-bindgen` requires `edition2024`). The update script runs `rustup update stable && rustup default stable` to pull a compatible toolchain. If `cargo fetch` or `cargo build` fails with an "edition2024" error, re-run those two commands.
+
+### Key commands
+
+See `README.md` "Quick Start for Developers" and `CONTRIBUTING.md` for the canonical list. Summary:
+
+- **Build engine**: `cd engine && cargo build`
+- **Test engine**: `cd engine && cargo test`
+- **Lint (fmt)**: `cd engine && cargo fmt --all -- --check`
+- **Lint (clippy)**: `cd engine && cargo clippy --all-targets --all-features -- -D warnings`
+- **Docs dev server**: `cd docs && npm run dev`
+- **Docs build (Astro only)**: `cd docs && npm run build:docs`
+- **Full docs build** (includes rustdoc + proto generation): `cd docs && npm run build`
+
+### Gotchas
+
+- `npm run build` in `docs/` runs `gen:rustdoc` first, which calls `cargo rustdoc` on the workspace root. This fails because `engine/Cargo.toml` is a virtual manifest. Use `npm run build:docs` for Astro-only builds, or run `npm run gen:rustdoc` and `npm run gen:proto` separately targeting individual crates if needed.
+- The engine uses feature flags (`desktop` vs `rockchip`). The default is `desktop`, which uses mock/stub adapters, so it runs anywhere without real hardware.
+- No databases, Docker containers, or external services are required for development.
