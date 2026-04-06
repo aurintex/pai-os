@@ -44,11 +44,11 @@ Like other domain crates, `common` follows the Hexagonal Architecture pattern. F
 
 - **Contract:** Defines how system and hardware configuration is retrieved.
 - **Adapter:** `FileConfigAdapter`: Parses static configuration files from the local filesystem (e.g., `hardware.toml`).
-- **Supported formats:** TOML, YAML, or JSON. The adapter must detect the format automatically (via file extension or content sniffing) or be configured explicitly at initialization.
+- **Supported formats:** TOML, YAML, or JSON. Resolution order: (1) optional fixed format via `FileConfigAdapter::with_format` at construction, (2) else file extension (`.toml`, `.yaml`, `.yml`, `.json`), (3) else lightweight content sniffing (e.g. `{` → JSON, `[[` / `[table]` → TOML, `---` → YAML). Helpers: `FileConfigAdapter`, `sniff_format` in `engine/crates/common`.
 - Domain crates depend only on the `ConfigProvider` trait; they never depend on file formats or filesystem details.
 
 <Aside type="note">
-**Implementation detail:** The format detection/configuration mechanism for `FileConfigAdapter` needs to be defined during implementation. Options include file extension-based detection (`.toml`, `.yaml`, `.json`) or explicit format specification in the adapter constructor. Tracked in [GitHub Issue #36](https://github.com/aurintex/pai-os/issues/36).
+**Implementation:** `FileConfigAdapter` and `sniff_format` are implemented under `engine/crates/common` (`src/adapters/file_config.rs`). Background: [Issue #36](https://github.com/aurintex/pai-os/issues/36).
 </Aside>
 
 ### PermissionManager Port & SQLitePermissionAdapter
