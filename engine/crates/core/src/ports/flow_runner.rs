@@ -44,6 +44,8 @@ pub enum FlowError {
     Inference(#[from] InferenceError),
     #[error("event bus is full; could not publish domain event")]
     EventBusFull,
+    #[error("event bus is closed (no receiver); could not publish domain event")]
+    EventBusClosed,
     #[error("inference prompt was empty")]
     EmptyPrompt,
     #[error("session state does not allow this flow (state={0:?})")]

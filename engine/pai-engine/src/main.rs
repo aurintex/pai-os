@@ -8,7 +8,7 @@ use pai_core::domain::{EventBus, SessionManager};
 use pai_core::ports::{InferenceError, InferencePort};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{debug, info};
 use tracing_subscriber::FmtSubscriber;
 
 /// Command line arguments for the paiOS engine.
@@ -53,12 +53,21 @@ async fn main() -> Result<()> {
         }
     }
 
-    let (event_bus, _event_rx) = EventBus::channel(64);
+    let (event_bus, event_rx) = EventBus::channel(64);
     let flow_runner = Arc::new(HardcodedFlowRunner::new(
         Arc::new(StubInference),
         event_bus.clone(),
     ));
     let session = SessionManager::new(flow_runner, event_bus);
+
+    // Keep the sole consumer alive so the mpsc channel stays open; drain events so publishes never
+    // fail with Closed/Full during normal operation.
+    tokio::spawn(async move {
+        let mut event_rx = event_rx;
+        while let Some(ev) = event_rx.recv().await {
+            debug!(target: "pai_engine::event_bus", ?ev, "domain event");
+        }
+    });
     info!(
         target: "pai_engine::bootstrap",
         "session orchestration ready (state: {:?})",
@@ -74,7 +83,7 @@ async fn main() -> Result<()> {
 
     info!(
         target: "pai_engine::bootstrap",
-        "shutdown complete — exiting pai-engine"
+        "shutdown complete; exiting pai-engine"
     );
 
     Ok(())

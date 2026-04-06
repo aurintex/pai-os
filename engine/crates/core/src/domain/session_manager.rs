@@ -6,6 +6,7 @@ use crate::domain::{EventBus, SessionState};
 use crate::flows::interaction::{apply_interaction_event, InteractionEvent};
 use crate::ports::{FlowError, FlowRunner, FlowType, SessionContext};
 use std::sync::Arc;
+use tracing::warn;
 
 /// Coordinates session lifecycle; owns the global [`StateMachine`] and delegates flows to [`FlowRunner`].
 pub struct SessionManager {
@@ -66,7 +67,13 @@ impl SessionManager {
                 Ok(flow.response)
             }
             Err(e) => {
-                let _ = self.state_machine.transition_to(SessionState::Error);
+                if let Err(transition_err) = self.state_machine.transition_to(SessionState::Error) {
+                    warn!(
+                        flow_error = ?e,
+                        transition_error = ?transition_err,
+                        "failed to transition to Error state after flow failure"
+                    );
+                }
                 Err(e)
             }
         }
