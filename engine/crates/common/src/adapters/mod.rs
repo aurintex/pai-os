@@ -2,4 +2,4 @@
 
 mod file_config;
 
-pub use file_config::{ConfigFileFormat, FileConfigAdapter, sniff_format};
+pub use file_config::{sniff_format, ConfigFileFormat, FileConfigAdapter};

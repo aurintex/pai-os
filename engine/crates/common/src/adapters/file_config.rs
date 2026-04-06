@@ -84,7 +84,8 @@ fn parse_config<T: DeserializeOwned>(
 /// Infer format from leading content when extension is missing or unknown.
 ///
 /// Heuristics: JSON objects start with `{`; TOML array-of-tables with `[[`; a single TOML table
-/// `[name]` is distinguished from a JSON array; YAML documents may start with `---` or `%YAML`.
+/// `[name]` is distinguished from a JSON array; YAML may start with `---` / `%YAML`, or the first
+/// non-empty, non-comment line may look like `key: value` (no `=`).
 pub fn sniff_format(content: &str) -> ConfigFileFormat {
     let t = content.trim_start();
     if t.is_empty() {
@@ -110,6 +111,15 @@ pub fn sniff_format(content: &str) -> ConfigFileFormat {
     }
     if t.starts_with("---") || t.starts_with("%YAML") {
         return ConfigFileFormat::Yaml;
+    }
+    if let Some(first_non_empty) = t
+        .lines()
+        .map(str::trim_start)
+        .find(|line| !line.is_empty() && !line.starts_with('#'))
+    {
+        if first_non_empty.contains(':') && !first_non_empty.contains('=') {
+            return ConfigFileFormat::Yaml;
+        }
     }
     ConfigFileFormat::Toml
 }
@@ -153,11 +163,7 @@ count = 2
     fn extension_yaml() {
         let dir = tempfile::tempdir().expect("tempdir");
         let path = dir.path().join("cfg.yaml");
-        fs::write(
-            &path,
-            "name: pai\ncount: 2\n",
-        )
-        .unwrap();
+        fs::write(&path, "name: pai\ncount: 2\n").unwrap();
         let adapter = FileConfigAdapter::new();
         let v: Sample = adapter.load(&path).expect("load");
         assert_eq!(
@@ -173,11 +179,7 @@ count = 2
     fn extension_json() {
         let dir = tempfile::tempdir().expect("tempdir");
         let path = dir.path().join("cfg.json");
-        fs::write(
-            &path,
-            r#"{"name": "pai", "count": 2}"#,
-        )
-        .unwrap();
+        fs::write(&path, r#"{"name": "pai", "count": 2}"#).unwrap();
         let adapter = FileConfigAdapter::new();
         let v: Sample = adapter.load(&path).expect("load");
         assert_eq!(
@@ -205,7 +207,6 @@ count = 2
         let path = dir.path().join("noext");
         let mut f = fs::File::create(&path).unwrap();
         write!(f, r#"{{"name": "x", "count": 1}}"#).unwrap();
-        drop(f);
         let adapter = FileConfigAdapter::new();
         let v: Sample = adapter.load(&path).expect("load");
         assert_eq!(v.name, "x");
@@ -228,5 +229,20 @@ count = 2
         assert_eq!(sniff_format("[table]\na=1"), ConfigFileFormat::Toml);
         assert_eq!(sniff_format("[1,2]"), ConfigFileFormat::Json);
         assert_eq!(sniff_format("---\nname: x"), ConfigFileFormat::Yaml);
+        assert_eq!(
+            sniff_format("name: pai\ncount: 1\n"),
+            ConfigFileFormat::Yaml
+        );
+    }
+
+    #[test]
+    fn extensionless_plain_yaml_sniffs_yaml() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("config");
+        fs::write(&path, "name: pai\ncount: 2\n").unwrap();
+        let adapter = FileConfigAdapter::new();
+        let v: Sample = adapter.load(&path).expect("load");
+        assert_eq!(v.name, "pai");
+        assert_eq!(v.count, 2);
     }
 }
