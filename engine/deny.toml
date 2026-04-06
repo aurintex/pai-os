@@ -25,6 +25,9 @@ ignore = ["RUSTSEC-2024-0320"]
 [bans]
 # Prevent multiple versions of the same crate
 multiple-versions = "deny"
+# `hashbrown` is pulled at multiple versions by unrelated transitive stacks (e.g. `indexmap` vs
+# `hashlink`/`yaml-rust2`). Allow until upstream aligns.
+skip = [{ name = "hashbrown" }]
 # Prevent wildcard dependencies
 wildcards = "deny"
 # Deny specific problematic crates
