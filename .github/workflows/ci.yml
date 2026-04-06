@@ -67,6 +67,14 @@ jobs:
           cargo --version
           cargo +nightly --version
 
+      # Astro 6 requires Node >=22.12.0 (see docs/package.json engines)
+      - name: Setup Node.js for documentation build
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+
       - name: Build documentation
         working-directory: docs
         run: |
