@@ -4,7 +4,7 @@ use crate::domain::error::CoreError;
 use crate::domain::state_machine::StateMachine;
 use crate::domain::{EventBus, SessionState};
 use crate::flows::interaction::{apply_interaction_event, InteractionEvent};
-use crate::ports::{FlowRunner, FlowType, SessionContext, FlowError};
+use crate::ports::{FlowError, FlowRunner, FlowType, SessionContext};
 use std::sync::Arc;
 
 /// Coordinates session lifecycle; owns the global [`StateMachine`] and delegates flows to [`FlowRunner`].
@@ -134,5 +134,4 @@ mod tests {
             crate::domain::DomainEvent::InferenceCompleted { .. }
         ));
     }
-
 }

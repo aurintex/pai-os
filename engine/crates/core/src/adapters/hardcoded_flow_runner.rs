@@ -73,9 +73,7 @@ mod tests {
         let (bus, _rx) = EventBus::channel(8);
         let runner = HardcodedFlowRunner::new(Arc::new(EchoInference), bus);
         let ctx = SessionContext::new(SessionState::Listening, "hi");
-        let out = runner
-            .execute(FlowType::InferenceEcho, &ctx)
-            .unwrap();
+        let out = runner.execute(FlowType::InferenceEcho, &ctx).unwrap();
         assert_eq!(out.response, "echo:hi");
     }
 }
