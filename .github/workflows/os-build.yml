@@ -31,7 +31,6 @@ jobs:
           docker run --rm \
             --privileged \
             -v "${{ github.workspace }}:/build" -w /build \
-            --cap-add SYS_ADMIN \
             godebos/debos \
             --disable-fakemachine -t machine:radxa-rock5c os/image.yaml
 
