@@ -27,7 +27,13 @@ ignore = ["RUSTSEC-2024-0320"]
 multiple-versions = "deny"
 # `hashbrown` is pulled at multiple versions by unrelated transitive stacks (e.g. `indexmap` vs
 # `hashlink`/`yaml-rust2`). Allow until upstream aligns.
-skip = [{ name = "hashbrown" }]
+# `getrandom` 0.2.x (via const-random-macro → const-random → dlv-list → ordered-multimap →
+# rust-ini → config) and 0.4.x (via tempfile dev-dep) are semver-incompatible major versions
+# pulled in by distinct transitive dep chains that cannot be unified. Allow both.
+skip = [
+    { name = "hashbrown" },
+    { name = "getrandom" },
+]
 # Prevent wildcard dependencies
 wildcards = "deny"
 # Deny specific problematic crates
