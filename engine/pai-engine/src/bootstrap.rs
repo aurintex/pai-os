@@ -5,7 +5,7 @@
 
 use anyhow::{Context, Result};
 use std::path::Path;
-use tracing::info;
+use tracing::{info, warn};
 
 /// Load optional TOML/JSON config from disk when the path exists; otherwise continue with defaults.
 pub fn load_config(path: Option<&Path>) -> Result<()> {
@@ -128,13 +128,27 @@ pub async fn wait_for_shutdown_signal() {
         use tokio::signal::unix::{signal, SignalKind};
         let mut sigterm = signal(SignalKind::terminate()).expect("register SIGTERM");
         tokio::select! {
-            _ = tokio::signal::ctrl_c() => {},
+            res = tokio::signal::ctrl_c() => {
+                if let Err(err) = res {
+                    warn!(
+                        target: "pai_engine::bootstrap",
+                        error = %err,
+                        "failed to listen for Ctrl-C; continuing shutdown wait on other signals"
+                    );
+                }
+            }
             _ = sigterm.recv() => {},
         }
     }
     #[cfg(not(unix))]
     {
-        tokio::signal::ctrl_c().await.expect("listen for ctrl-c");
+        if let Err(err) = tokio::signal::ctrl_c().await {
+            warn!(
+                target: "pai_engine::bootstrap",
+                error = %err,
+                "failed to listen for Ctrl-C; exiting shutdown wait"
+            );
+        }
     }
 }
 
