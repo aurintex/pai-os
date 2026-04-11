@@ -27,13 +27,7 @@ ignore = ["RUSTSEC-2024-0320"]
 multiple-versions = "deny"
 # `hashbrown` is pulled at multiple versions by unrelated transitive stacks (e.g. `indexmap` vs
 # `hashlink`/`yaml-rust2`). Allow until upstream aligns.
-# `getrandom` 0.2.x (via const-random-macro → const-random → dlv-list → ordered-multimap →
-# rust-ini → config) and 0.4.x (via tempfile dev-dep) are semver-incompatible major versions
-# pulled in by distinct transitive dep chains that cannot be unified. Allow both.
-skip = [
-    { name = "hashbrown" },
-    { name = "getrandom" },
-]
+skip = [{ name = "hashbrown" }]
 # Prevent wildcard dependencies
 wildcards = "deny"
 # Deny specific problematic crates
@@ -68,6 +62,9 @@ allow = [
     "Zlib",
     "Unicode-DFS-2016",
     "Unicode-3.0",
+    # CC0-1.0 is a public-domain dedication (used by tiny-keccak, a transitive dep of
+    # const-random-macro → config). It imposes no restrictions and is compatible with AGPL-3.0.
+    "CC0-1.0",
     # AGPL-3.0 itself (our project license) - both SPDX variants
     "AGPL-3.0",
     "AGPL-3.0-only",
