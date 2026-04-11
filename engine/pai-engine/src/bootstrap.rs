@@ -137,3 +137,43 @@ pub async fn wait_for_shutdown_signal() {
         tokio::signal::ctrl_c().await.expect("listen for ctrl-c");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[test]
+    fn load_config_none_ok() {
+        load_config(None).expect("built-in defaults path");
+    }
+
+    #[test]
+    fn load_config_missing_file_ok() {
+        let path = Path::new("/nonexistent/pai-engine-config-does-not-exist.toml");
+        load_config(Some(path)).expect("defaults when missing");
+    }
+
+    #[test]
+    fn load_config_existing_file_ok() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("app.toml");
+        std::fs::write(&path, "key = \"value\"\n").expect("write config");
+        load_config(Some(path.as_path())).expect("load existing");
+    }
+
+    #[test]
+    fn log_domain_stack_init_runs_without_panic() {
+        log_domain_stack_init();
+    }
+
+    #[tokio::test]
+    async fn wait_for_shutdown_signal_does_not_complete_without_signal() {
+        let result =
+            tokio::time::timeout(Duration::from_millis(50), wait_for_shutdown_signal()).await;
+        assert!(
+            result.is_err(),
+            "expected timeout before any shutdown signal"
+        );
+    }
+}
