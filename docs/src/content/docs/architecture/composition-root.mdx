@@ -20,6 +20,17 @@ The flow in `main.rs` is intentionally strict:
 
 So: *main.rs does init and wiring only.* It does not contain business logic or orchestration rules; those live in [Core](/architecture/modules/core/) and the domain crates.
 
+## Current engine skeleton (M0.1)
+
+The live binary tracks **[issue #86](https://github.com/aurintex/pai-os/issues/86)** (composition root) with a deliberate **skeleton** step:
+
+- **`pai-engine/src/bootstrap.rs`**: loads optional config from a CLI path when the file exists; logs which optional domain crates are linked for the active [feature profile](/architecture/workspace-and-build/#feature-flag-matrix-capabilities-vs-profiles); waits for shutdown on Ctrl-C and SIGTERM (Unix).
+- **`main.rs`**: wires [Core](/architecture/modules/core/) (`EventBus`, `SessionManager`, [`HardcodedFlowRunner`](/architecture/modules/core/#mvp-flows-flows-module)) with a small **stub** [`InferencePort`](https://github.com/aurintex/pai-os/blob/main/engine/crates/core/src/ports/inference.rs) implementation until the inference crate exposes a mock adapter.
+
+All seven workspace domain crates (`common`, `pai-core`, `vision`, `audio`, `inference`, `api`, `peripherals`) are **dependencies** of `pai-engine` when the selected features enable them; the skeleton **resolves** those dependencies and emits structured bootstrap logs. **Concrete mock adapters** inside each domain crate and **injection of every port into Core** are incremental follow-ups (for example mock inference in the inference crate), not blockers for closing the skeleton milestone. Track per-crate mocks and port wiring in follow-up issues (for example [#87](https://github.com/aurintex/pai-os/issues/87) for mock inference).
+
+The sketches below remain the **target** pattern once adapters exist.
+
 ## Where main.rs lives
 
 The Composition Root is not a separate domain crate. It is the **executable** that composes the domain crates:
