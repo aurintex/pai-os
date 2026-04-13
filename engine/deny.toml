@@ -62,6 +62,9 @@ allow = [
     "Zlib",
     "Unicode-DFS-2016",
     "Unicode-3.0",
+    # CC0-1.0 is a public-domain dedication (used by tiny-keccak, a transitive dep of
+    # const-random-macro → config). It imposes no restrictions and is compatible with AGPL-3.0.
+    "CC0-1.0",
     # AGPL-3.0 itself (our project license) - both SPDX variants
     "AGPL-3.0",
     "AGPL-3.0-only",

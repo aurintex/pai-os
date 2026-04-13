@@ -23,6 +23,15 @@ jobs:
       - name: Build pai-engine .deb
         run: bash os/packaging/build-deb.sh
 
+      # debos v1.1.7 switched from qemu-user-static to qemu-user-binfmt. The binfmt
+      # handlers are NOT auto-registered inside a Docker container, so arm64 binaries
+      # executed during debootstrap/chroot steps fail with EXEC_FORMAT_ERROR.
+      # Register QEMU arm64 binfmt handlers on the host before running debos.
+      - name: Set up QEMU for ARM64 cross-compilation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       # --privileged: debos with --disable-fakemachine needs loop devices (/dev/loop-control).
       # Default docker run does not expose them; GitHub-hosted runners otherwise fail with
       # "could not open /dev/loop-control".
