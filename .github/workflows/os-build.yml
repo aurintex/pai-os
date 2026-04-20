@@ -28,7 +28,7 @@ jobs:
       # executed during debootstrap/chroot steps fail with EXEC_FORMAT_ERROR.
       # Register QEMU arm64 binfmt handlers on the host before running debos.
       - name: Set up QEMU for ARM64 cross-compilation
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
 
