@@ -134,9 +134,8 @@ bash os/packaging/build-deb.sh
 # 2. Build the image via the godebos/debos container
 docker run --rm \
   -v "$(pwd):/build" -w /build \
-  --cap-add SYS_ADMIN \
   godebos/debos \
-  --disable-fakemachine -t machine:radxa-rock5c os/image.yaml
+  --fakemachine-backend=qemu -t machine:radxa-rock5c os/image.yaml
 ```
 
 > **Note:** For flashing instructions, hardware targets, and the full OS build guide, see the [Documentation](https://docs.aurintex.com/architecture/operating-system/).
