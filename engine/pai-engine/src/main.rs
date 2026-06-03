@@ -1,11 +1,14 @@
+mod bootstrap;
+
 use anyhow::Result;
+use bootstrap::{load_config, log_domain_stack_init, wait_for_shutdown_signal};
 use clap::{ArgAction, Parser};
 use pai_core::adapters::HardcodedFlowRunner;
 use pai_core::domain::{EventBus, SessionManager};
 use pai_core::ports::{InferenceError, InferencePort};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 use tracing_subscriber::FmtSubscriber;
 
 /// Command line arguments for the paiOS engine.
@@ -23,10 +26,8 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // 1. Parse command line arguments
     let args = Args::parse();
 
-    // 2. Initialize logging (tracing) based on verbosity
     let log_level = match args.verbose {
         0 => tracing::Level::INFO,
         1 => tracing::Level::DEBUG,
@@ -37,7 +38,12 @@ async fn main() -> Result<()> {
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
-    // 3. Bootstrap engine — core session orchestration (stub inference until real adapters wire in)
+    load_config(args.config.as_deref())?;
+
+    info!(target: "pai_engine::bootstrap", "pai-engine composition root starting");
+
+    log_domain_stack_init();
+
     #[derive(Debug)]
     struct StubInference;
 
@@ -63,24 +69,22 @@ async fn main() -> Result<()> {
         }
     });
     info!(
-        "Booting paiOS engine workspace (session state: {:?})...",
+        target: "pai_engine::bootstrap",
+        "session orchestration ready (state: {:?})",
         session.state_machine().state()
     );
 
-    if let Some(path) = args.config {
-        info!("Using configuration from: {}", path.display());
-    } else {
-        info!("No configuration file provided, using defaults.");
-    }
+    info!(
+        target: "pai_engine::bootstrap",
+        "engine main loop running (waiting for shutdown signal)"
+    );
 
-    // TODO: In future steps, construct adapters and wire domain crates via `core`.
+    wait_for_shutdown_signal().await;
 
-    // 4. Wait for shutdown signal to keep the process alive
-    if let Err(e) = tokio::signal::ctrl_c().await {
-        error!("Failed to listen for shutdown signal: {e}");
-    }
-
-    info!("Shutdown signal received. Exiting paiOS engine.");
+    info!(
+        target: "pai_engine::bootstrap",
+        "shutdown complete; exiting pai-engine"
+    );
 
     Ok(())
 }

@@ -575,6 +575,7 @@ dependencies = [
  "peripherals",
  "serde",
  "serde_json",
+ "tempfile",
  "tokio",
  "tokio-test",
  "tracing",
