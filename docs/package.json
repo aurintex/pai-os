@@ -16,18 +16,19 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
-    "@astrojs/starlight": "^0.38.2",
-    "@excalidraw/excalidraw": "^0.18.0",
+    "@astrojs/starlight": "^0.38.3",
+    "@excalidraw/excalidraw": "^0.18.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vercel/analytics": "^1.6.1",
-    "astro": "^6.1.0",
+    "astro": "^6.3.2",
     "astro-mermaid": "^1.4.0",
-    "mermaid": "^11.14.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "mermaid": "^11.15.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "sharp": "^0.34.5"
   },
+  "packageManager": "npm@10.9.2",
   "engines": {
     "node": ">=22.12.0"
   },
