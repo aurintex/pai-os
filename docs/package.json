@@ -28,6 +28,7 @@
     "react-dom": "^19.2.5",
     "sharp": "^0.34.5"
   },
+  "packageManager": "npm@10.9.2",
   "engines": {
     "node": ">=22.12.0"
   },
