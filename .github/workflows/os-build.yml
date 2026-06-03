@@ -1,5 +1,5 @@
 # Build paiOS image with debos. Uploads compressed image as artifact.
-# Triggers: tag (v*), workflow_dispatch, daily schedule.
+# Triggers: tag (v*), workflow_dispatch. Nightly schedule disabled until OS CI is stable.
 # Artifacts: os-image-radxa-rock5c (tag/manual, 90d) or os-image-unstable (schedule, 7d).
 # Download and run: gunzip radxa-rock5c.img.gz
 name: OS Build
@@ -8,8 +8,10 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
-  schedule:
-    - cron: "0 2 * * *"
+  # Nightly OS images paused: scheduled runs failed on fakemachine path mounts.
+  # Re-enable after a green workflow_dispatch or tag build on main.
+  # schedule:
+  #   - cron: "0 2 * * *"
 
 jobs:
   build:
@@ -23,25 +25,15 @@ jobs:
       - name: Build pai-engine .deb
         run: bash os/packaging/build-deb.sh
 
-      # debos v1.1.7 switched from qemu-user-static to qemu-user-binfmt. The binfmt
-      # handlers are NOT auto-registered inside a Docker container, so arm64 binaries
-      # executed during debootstrap/chroot steps fail with EXEC_FORMAT_ERROR.
-      # Register QEMU arm64 binfmt handlers on the host before running debos.
-      - name: Set up QEMU for ARM64 cross-compilation
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: arm64
-
-      # GitHub-hosted runners do not provide /dev/kvm, so the KVM backend is not available.
-      # Also avoid --disable-fakemachine here: debos then runs apt cleanup directly inside the
-      # Docker container, where systemd-nspawn cleanup can fail under /run/systemd/nspawn/propagate.
-      # Force the software-emulated qemu backend so debos keeps its isolated fakemachine path.
+      # --disable-fakemachine: qemu fakemachine mis-mounts ../../packaging/dist as
+      # os/recipes/packaging/dist (see pai-engine-arm64.yaml). Runs debootstrap in-container.
       - name: Build image with debos
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/build" -w /build \
+            --cap-add SYS_ADMIN \
             godebos/debos \
-            --fakemachine-backend=qemu -t machine:radxa-rock5c os/image.yaml
+            --disable-fakemachine -t machine:radxa-rock5c os/image.yaml
 
       - name: Verify image exists
         run: test -f radxa-rock5c.img
@@ -50,7 +42,7 @@ jobs:
         run: gzip -k radxa-rock5c.img
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ github.event_name == 'schedule' && 'os-image-unstable' || 'os-image-radxa-rock5c' }}
           path: radxa-rock5c.img.gz
