@@ -74,6 +74,50 @@ The repo ships with **Taskmaster** in `.cursor/mcp.json` so contributors can try
 - Use planning mode for real complexity, not every change: if the work has 3+ steps, crosses domains, or the solution shape is fuzzy, spend a few minutes in planning mode to produce a short, ordered checklist; if the change fits in 1–2 sentences and ~1–2 files, skip formal planning and just implement.
 - Use Taskmaster only for big/ongoing work: for multi-day, multi-PR, or multi-person issues, optionally mirror the GitHub issue into a small Taskmaster breakdown to track subtasks locally; for everything else, keep the workflow lightweight and work directly from the issue plus a simple plan.
 
+## Context Loading
+
+Load context in layers — only go deeper when needed:
+
+| Layer | What | When |
+|-------|------|------|
+| **L0** | This file (`AGENTS.md`) | Always — entry point |
+| **L1** | Linked GitHub issue | For any task or PR |
+| **L2** | Relevant ADR(s) in `docs/src/content/docs/architecture/adr/` | When architecture decisions are involved |
+| **L3** | Module doc + source files in `engine/crates/<crate>/` | When writing or reviewing code |
+
+**SSoT Context-Map** — what to load for common needs:
+
+| Need | Read |
+|------|------|
+| How should this crate be structured? | `docs/src/content/docs/architecture/modules/<crate>.mdx` |
+| Which feature flags apply? | `docs/src/content/docs/architecture/workspace-and-build.mdx` |
+| Is this the right architecture decision? | `docs/src/content/docs/architecture/adr/` (relevant ADR) |
+| Rust style / clippy rules | `docs/src/content/docs/guides/contributing/rust-style.mdx` |
+| PR / branch / commit conventions | `docs/src/content/docs/guides/contributing/workflow.mdx` |
+| Task status / next task | `.taskmaster/tasks/tasks.json` tag `m0`, or `task-master next --tag m0` |
+| Definition of done | `.cursor/rules/definition-of-done.mdc` |
+
+## Task Lifecycle
+
+When working through a Taskmaster task (tag `m0`):
+
+1. **Load** — read the task `details` field end-to-end before touching any file.
+2. **Fetch context** — follow every link in the "Load context" section of the details. Never rely on memory.
+3. **Check write-set** — the task declares which files you own. Only modify those files.
+4. **Implement** — work within scope. Surface blockers immediately (don't silently widen scope).
+5. **Verify** — run the exact command in the task's "Verify" section.
+6. **Mark done** — `task-master set-status --id <id> --status done --tag m0` only after verify passes.
+7. **Stop on BLOCKED/FAILED** — leave a comment with reason; do not proceed to the next task.
+
+**Terminal states:** `DONE` (verify passes), `BLOCKED` (dependency not done / human decision needed), `FAILED` (three failed verify attempts).
+
+## Keep This File Lean
+
+Prefer deleting stale content over accumulating facts that belong in docs. Rules of thumb:
+- If it belongs in `docs/src/content/docs/`, link to it here, don't copy it.
+- If it belongs in `.cursor/rules/`, keep it there, reference it here at most once.
+- "Learned Preferences" and "Learned Workspace Facts" below: keep only what isn't in the code or git history and is non-obvious.
+
 ## Cursor Cloud specific instructions
 
 ### Services overview

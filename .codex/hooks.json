@@ -1,0 +1,8 @@
+{
+  "PostToolUse": [
+    {
+      "matcher": "Edit|Write",
+      "command": "bash scripts/hooks/agent_hooks.sh format-rust 2>/dev/null || true"
+    }
+  ]
+}

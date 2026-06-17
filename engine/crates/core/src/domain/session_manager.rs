@@ -83,14 +83,24 @@ impl SessionManager {
 #[cfg(test)]
 pub(crate) fn session_manager_for_interaction_tests() -> SessionManager {
     use crate::adapters::HardcodedFlowRunner;
-    use crate::ports::{InferenceError, InferencePort};
+    use crate::ports::{InferenceError, InferencePort, InferenceRequest};
+    use crate::types::Token;
+    use tokio::sync::mpsc;
 
     #[derive(Debug)]
     struct StubInference;
 
     impl InferencePort for StubInference {
-        fn complete(&self, _prompt: &str) -> Result<String, InferenceError> {
-            Ok(String::new())
+        async fn infer(
+            &self,
+            req: InferenceRequest,
+        ) -> Result<mpsc::Receiver<Result<Token, InferenceError>>, InferenceError> {
+            let (tx, rx) = mpsc::channel(1);
+            tx.try_send(Ok(Token {
+                content: req.prompt,
+            }))
+            .ok();
+            Ok(rx)
         }
     }
 
@@ -104,22 +114,34 @@ pub(crate) fn session_manager_for_interaction_tests() -> SessionManager {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+
     use super::*;
     use crate::adapters::HardcodedFlowRunner;
     use crate::domain::SessionState;
-    use crate::ports::{InferenceError, InferencePort};
+    use crate::ports::{InferenceError, InferencePort, InferenceRequest};
+    use crate::types::Token;
+    use tokio::sync::mpsc;
 
     #[derive(Debug)]
     struct EchoInference;
 
     impl InferencePort for EchoInference {
-        fn complete(&self, prompt: &str) -> Result<String, InferenceError> {
-            Ok(format!("echo:{prompt}"))
+        async fn infer(
+            &self,
+            req: InferenceRequest,
+        ) -> Result<mpsc::Receiver<Result<Token, InferenceError>>, InferenceError> {
+            let (tx, rx) = mpsc::channel(1);
+            let content = format!("echo:{}", req.prompt);
+            tx.try_send(Ok(Token { content }))
+                .map_err(|_| InferenceError::Failed("channel send failed".into()))?;
+            Ok(rx)
         }
     }
 
-    #[test]
-    fn handle_flow_request_happy_path() {
+    // multi_thread required: handle_flow_request → execute → block_in_place needs ≥2 threads.
+    #[tokio::test(flavor = "multi_thread")]
+    async fn handle_flow_request_happy_path() {
         let (bus, mut rx) = EventBus::channel(8);
         let runner = Arc::new(HardcodedFlowRunner::new(
             Arc::new(EchoInference),
@@ -130,8 +152,8 @@ mod tests {
         assert_eq!(out, "echo:hello");
         assert_eq!(mgr.state_machine().state(), SessionState::Listening);
 
-        let e1 = rx.blocking_recv().expect("event 1");
-        let e2 = rx.blocking_recv().expect("event 2");
+        let e1 = rx.recv().await.expect("event 1");
+        let e2 = rx.recv().await.expect("event 2");
         assert!(matches!(
             e1,
             crate::domain::DomainEvent::InferenceRequested { .. }

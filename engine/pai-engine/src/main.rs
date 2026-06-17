@@ -5,11 +5,12 @@ use bootstrap::{load_config, log_domain_stack_init, wait_for_shutdown_signal};
 use clap::{ArgAction, Parser};
 use pai_core::adapters::HardcodedFlowRunner;
 use pai_core::domain::{EventBus, SessionManager};
-use pai_core::ports::{InferenceError, InferencePort};
+use pai_core::ports::{InferenceError, InferencePort, InferenceRequest};
+use pai_core::types::Token;
 use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::sync::mpsc;
 use tracing::{debug, info};
-use tracing_subscriber::FmtSubscriber;
 
 /// Command line arguments for the paiOS engine.
 #[derive(Parser, Debug)]
@@ -24,34 +25,48 @@ struct Args {
     verbose: u8,
 }
 
+#[derive(Debug)]
+struct StubInference;
+
+impl InferencePort for StubInference {
+    async fn infer(
+        &self,
+        req: InferenceRequest,
+    ) -> Result<mpsc::Receiver<Result<Token, InferenceError>>, InferenceError> {
+        let (tx, rx) = mpsc::channel(1);
+        let content = format!("[stub] {}", req.prompt);
+        // Spawn a task to honour the cancellation token and send the stub token.
+        tokio::spawn(async move {
+            tokio::select! {
+                _ = req.cancellation.cancelled() => {}
+                res = tx.send(Ok(Token { content })) => {
+                    let _ = res;
+                }
+            }
+        });
+        Ok(rx)
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    let log_level = match args.verbose {
-        0 => tracing::Level::INFO,
-        1 => tracing::Level::DEBUG,
-        _ => tracing::Level::TRACE,
+    // `RUST_LOG` overrides the verbosity flag; -v / -vv / -vvv set the fallback.
+    let default_level = match args.verbose {
+        0 => "info",
+        1 => "debug",
+        _ => "trace",
     };
 
-    let subscriber = FmtSubscriber::builder().with_max_level(log_level).finish();
-
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+    common::logging::try_init(default_level)
+        .map_err(|e| anyhow::anyhow!("tracing subscriber init failed: {e}"))?;
 
     load_config(args.config.as_deref())?;
 
     info!(target: "pai_engine::bootstrap", "pai-engine composition root starting");
 
     log_domain_stack_init();
-
-    #[derive(Debug)]
-    struct StubInference;
-
-    impl InferencePort for StubInference {
-        fn complete(&self, prompt: &str) -> Result<String, InferenceError> {
-            Ok(format!("[stub] {prompt}"))
-        }
-    }
 
     let (event_bus, event_rx) = EventBus::channel(64);
     let flow_runner = Arc::new(HardcodedFlowRunner::new(

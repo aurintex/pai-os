@@ -1,5 +1,6 @@
 pub mod adapters;
 pub mod domain;
+pub mod logging;
 pub mod ports;
 
 pub use adapters::{sniff_format, ConfigFileFormat, FileConfigAdapter};

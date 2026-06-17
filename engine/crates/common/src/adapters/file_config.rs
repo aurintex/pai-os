@@ -126,6 +126,8 @@ pub fn sniff_format(content: &str) -> ConfigFileFormat {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+
     use super::*;
     use serde::Deserialize;
     use std::io::Write;

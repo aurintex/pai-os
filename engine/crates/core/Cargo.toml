@@ -1,18 +1,22 @@
 [package]
 name = "pai-core"
-version = "0.1.0"
-edition = "2021"
-license = "AGPL-3.0-only"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "Core orchestrator and engine domain logic."
-repository = "https://github.com/aurintex/pai-os"
+repository.workspace = true
 
 [dependencies]
-common = { path = "../common", version = "0.1.0" }
-thiserror = "2.0"
-tokio = { version = "1.50", features = ["sync", "rt", "macros"] }
-tracing = "0.1"
+common    = { workspace = true }
+thiserror = { workspace = true }
+tokio      = { workspace = true, features = ["sync", "rt", "rt-multi-thread", "macros"] }
+tokio-util = { workspace = true }
+tracing   = { workspace = true }
 
 [features]
 default = []
 core_sysinfo = []
-core_mock = []
+core_mock    = []
+
+[lints]
+workspace = true

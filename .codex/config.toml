@@ -1,0 +1,10 @@
+# paiOS Codex CLI configuration
+# See: https://github.com/openai/codex
+
+[core]
+# Primary context file — Codex reads this on startup
+context_files = ["AGENTS.md"]
+
+[behavior]
+# Always read AGENTS.md context before any task
+always_read_context = true
