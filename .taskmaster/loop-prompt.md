@@ -9,6 +9,19 @@ subagents keeps your own context lean across many tasks.
 Run the loop session on **Sonnet** (`/model sonnet`); the loop spawns Opus only for
 cx≥7 tasks, of which the allow-list has none.
 
+## Start of run (once, before the first task)
+
+1. **Dedicated branch.** Never commit task work onto `main` or a release branch. Create (or
+   reuse) a dedicated branch and switch to it:
+   ```bash
+   git checkout -b chore/m0-autoloop 2>/dev/null || git checkout chore/m0-autoloop
+   ```
+2. **Clean tree.** `git status --porcelain` must be empty. If it is dirty, stop and report —
+   do not auto-commit unknown WIP.
+3. **Wave selection.** Default is Wave 1. Run Wave 2 (`--wave 2`, includes task 8 wired with
+   the mock adapter) **only** if this run was explicitly started in wave-2 mode (e.g.
+   `/paios-loop wave2`).
+
 ## Scope (allow-list — never work anything outside it)
 
 The selector script owns the allow-list and the model policy. Do not hardcode ids here.

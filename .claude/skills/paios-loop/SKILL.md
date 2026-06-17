@@ -16,20 +16,31 @@ You are the **driver** of the autonomous paiOS M0 loop. The full operating
 instructions live in `.taskmaster/loop-prompt.md` — read that file first and
 follow it exactly. This skill is the entry point and the guardrails.
 
-## Before you start
+## Argument
 
-1. **Pin the model:** this session should run on Sonnet (`/model sonnet`). The loop
-   spawns Opus only for cx≥7 tasks; the allow-list has none, so the run is Sonnet-only.
-2. **Clean tree:** `git status` must be clean (commit/stash any WIP first). Each task
-   produces exactly one commit on the current branch, so the base must be clean.
-3. **Pre-flight:** `gh auth status` (issues must be readable) and
-   `python3 scripts/dev/loop_next_task.py` (must print a task id, e.g. `4`).
+`/paios-loop` runs **Wave 1**. `/paios-loop wave2` (argument `$ARGUMENTS` contains `wave2`)
+is the human's explicit OK to also run **Wave 2** — tasks 8, 9, 10, 16, with task 8 wired to
+the mock adapter as the desktop default. Never enable Wave 2 without that argument.
+
+## Before you start (the agent does all of this — no manual setup needed)
+
+1. **Pin the model:** run on Sonnet (`/model sonnet`). The loop spawns Opus only for cx≥7
+   tasks; the allow-list has none, so the run is Sonnet-only.
+2. **Dedicated branch:** `git checkout -b chore/m0-autoloop 2>/dev/null || git checkout
+   chore/m0-autoloop`. Task commits must never land on `main`/release branches.
+3. **Clean tree:** `git status --porcelain` must be empty. If dirty, stop and report — do not
+   auto-commit unknown WIP.
+4. **Pre-flight:** `gh auth status` (issues readable) and `python3
+   scripts/dev/loop_next_task.py` (must print a task id, e.g. `4`).
+
+This skill is built to run unattended (e.g. overnight with `--dangerously-skip-permissions`):
+it stays inside the allow-list and each task's write-set, commits to a dedicated branch, and
+stops cleanly when no eligible task remains.
 
 ## Scope
 
 - Default = **Wave 1**: tasks 4, 5, 6, 11, 15, 19 (fully autonomous, zero decisions).
-- **Wave 2** (`--wave 2`): + 8, 9, 10, 16 — ONLY after the human explicitly OK'd wiring
-  task 8 with the mock adapter. Do not enable it on your own.
+- **Wave 2** (only with the `wave2` argument): + 8, 9, 10, 16; pass `--wave 2` to the selector.
 - **Never touch** the backlog 7, 12, 13, 14, 17, 18, 20 (external build / routing-security /
   HF-network / NPU-hardware / on-device-E2E — human decisions).
 
