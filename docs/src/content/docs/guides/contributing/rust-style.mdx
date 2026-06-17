@@ -57,7 +57,7 @@ Use **`Box<dyn Trait>`** when you must choose the implementation at **runtime** 
 Library crates use **crate-local `thiserror` enums** for typed, documented errors. The binary (`pai-engine`) uses **`anyhow`** for app-level propagation with context.
 
 ```rust
-// Illustrative example — the real implementation may differ.
+// Illustrative example: the real implementation may differ.
 // Library crate: typed error with thiserror
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {

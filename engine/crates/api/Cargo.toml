@@ -8,7 +8,6 @@ repository.workspace = true
 
 [dependencies]
 common    = { workspace = true }
-pai_core  = { workspace = true }
 thiserror = { workspace = true }
 
 [features]

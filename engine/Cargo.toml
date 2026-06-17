@@ -42,14 +42,14 @@ config = "0.15"
 # CLI argument parsing
 clap = { version = "4.5", features = ["derive"] }
 
-# Internal crates
-common      = { path = "crates/common" }
-pai_core    = { package = "pai-core", path = "crates/core" }
-vision      = { path = "crates/vision" }
-audio       = { path = "crates/audio" }
-inference   = { path = "crates/inference" }
-api         = { path = "crates/api" }
-peripherals = { path = "crates/peripherals" }
+# Internal crates (version required for workspace inheritance + cargo-deny wildcard lint)
+common      = { path = "crates/common", version = "0.1.0" }
+pai_core    = { package = "pai-core", path = "crates/core", version = "0.1.0" }
+vision      = { path = "crates/vision", version = "0.1.0" }
+audio       = { path = "crates/audio", version = "0.1.0" }
+inference   = { path = "crates/inference", version = "0.1.0" }
+api         = { path = "crates/api", version = "0.1.0" }
+peripherals = { path = "crates/peripherals", version = "0.1.0" }
 
 # Dev dependencies
 tempfile   = "3"

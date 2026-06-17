@@ -31,7 +31,7 @@ REQUIRED_FOR_VALIDATION = ["Load context", "Acceptance", "Verify"]
 
 def trim_kontext(details: str) -> str:
     """Remove trailing whitespace from each line, collapse 3+ blank lines to 2."""
-    lines = [l.rstrip() for l in details.splitlines()]
+    lines = [line.rstrip() for line in details.splitlines()]
     result = []
     blank_count = 0
     for line in lines:

@@ -72,7 +72,6 @@ name = "api"
 version = "0.1.0"
 dependencies = [
  "common",
- "pai-core",
  "thiserror",
 ]
 
@@ -437,7 +436,6 @@ name = "inference"
 version = "0.1.0"
 dependencies = [
  "common",
- "pai-core",
  "thiserror",
 ]
 

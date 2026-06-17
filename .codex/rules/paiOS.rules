@@ -96,7 +96,7 @@ You are reviewing paiOS Rust code. Load the relevant standards first, then asses
 - [ADR-004 Architecture](docs/src/content/docs/architecture/adr/004-system-architecture.mdx) — hexagonal, ports, feature flags, YAGNI
 - [Standards](docs/src/content/docs/guides/contributing/standards.mdx) — code style, test requirements
 - [Workflow](docs/src/content/docs/guides/contributing/workflow.mdx) — PR/branch/commit conventions
-- [Definition of Done](.cursor/rules/definition-of-done.mdc)
+- [Definition of Done](docs/src/content/docs/guides/contributing/standards.mdx) — see DoD section
 
 ## Review dimensions (check all)
 

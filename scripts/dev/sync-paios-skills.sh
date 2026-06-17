@@ -33,6 +33,10 @@ echo "[sync] Syncing to native skills adapters (.claude/skills, .cursor/skills).
 for dest in "${NATIVE_DESTS[@]}"; do
   mkdir -p "${dest}"
   for skill in "${SKILLS[@]}"; do
+    if [ -z "${skill}" ] || [ -z "${dest}" ]; then
+      echo "[sync] ERROR: empty skill or dest path" >&2
+      exit 1
+    fi
     rm -rf "${dest}/${skill}"
     cp -r "${SRC}/${skill}" "${dest}/${skill}"
     echo "[sync]   ${SRC}/${skill} -> ${dest}/${skill}"
