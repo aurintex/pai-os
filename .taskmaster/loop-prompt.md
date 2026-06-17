@@ -61,7 +61,7 @@ Repeat until the selector prints `NONE`:
 | Role | cx 1-4 | cx 5-6 | cx 7-8 |
 |------|--------|--------|--------|
 | Context-loader (Explore) | sonnet / low | sonnet / low | sonnet / low |
-| Implementer | sonnet / medium | sonnet / high | opus / high (xhigh: 12,14,18) |
+| Implementer | sonnet / medium | sonnet / high | opus / high (xhigh if cx ≥ 8) |
 | Adversarial reviewer | sonnet / high | sonnet / high | opus / high |
 | Driver (this session) | sonnet | sonnet | sonnet (opus only if a cx≥7 is allow-listed) |
 
