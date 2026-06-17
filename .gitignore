@@ -39,5 +39,8 @@ tasks/
 
 tmp/
 
+# cargo-device: per-machine SSH + toolchain overrides (committed template: .cargo/device.local.toml.example)
+.cargo/device.local.toml
+
 # OS build artifacts
 *.img

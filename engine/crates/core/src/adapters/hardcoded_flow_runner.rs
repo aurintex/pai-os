@@ -1,18 +1,25 @@
 //! MVP [`FlowRunner`](crate::ports::FlowRunner) — static request → inference → response.
 
 use crate::domain::{DomainEvent, EventBus};
-use crate::ports::{FlowError, FlowResult, FlowRunner, FlowType, InferencePort, SessionContext};
+use crate::ports::{
+    FlowError, FlowResult, FlowRunner, FlowType, InferenceError, InferencePort, InferenceRequest,
+    SessionContext,
+};
 use std::sync::Arc;
 use tokio::sync::mpsc::error::TrySendError;
 
 /// Built-in flows only; user-defined scripting is out of scope (see issue #38).
-pub struct HardcodedFlowRunner {
-    inference: Arc<dyn InferencePort>,
+///
+/// `I` is monomorphised at the composition root — one concrete inference adapter per build.
+/// Using a generic instead of `Arc<dyn InferencePort>` avoids a vtable indirection and is the
+/// preferred pattern when the type is known at compile time (see architecture docs).
+pub struct HardcodedFlowRunner<I: InferencePort> {
+    inference: Arc<I>,
     event_bus: EventBus,
 }
 
-impl HardcodedFlowRunner {
-    pub fn new(inference: Arc<dyn InferencePort>, event_bus: EventBus) -> Self {
+impl<I: InferencePort> HardcodedFlowRunner<I> {
+    pub fn new(inference: Arc<I>, event_bus: EventBus) -> Self {
         Self {
             inference,
             event_bus,
@@ -27,7 +34,7 @@ impl HardcodedFlowRunner {
     }
 }
 
-impl FlowRunner for HardcodedFlowRunner {
+impl<I: InferencePort + 'static> FlowRunner for HardcodedFlowRunner<I> {
     fn execute(
         &self,
         flow_type: FlowType,
@@ -43,7 +50,23 @@ impl FlowRunner for HardcodedFlowRunner {
                     prompt: context.prompt.clone(),
                 })?;
 
-                let response = self.inference.complete(&context.prompt)?;
+                let req = InferenceRequest::simple(context.prompt.clone());
+
+                // Bridge: async InferencePort → sync FlowRunner.
+                // block_in_place moves the calling worker off the thread pool so that
+                // Handle::current().block_on(...) can drive the async future to completion.
+                // Both the engine binary and tests use the multi-thread Tokio runtime, which
+                // is required for block_in_place to work correctly.
+                let response = tokio::task::block_in_place(|| {
+                    tokio::runtime::Handle::current().block_on(async {
+                        let mut rx = self.inference.infer(req).await?;
+                        let mut s = String::new();
+                        while let Some(tok) = rx.recv().await {
+                            s.push_str(&tok?.content);
+                        }
+                        Ok::<String, InferenceError>(s)
+                    })
+                })?;
 
                 self.publish(DomainEvent::InferenceCompleted {
                     response: response.clone(),
@@ -57,20 +80,33 @@ impl FlowRunner for HardcodedFlowRunner {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+
     use super::*;
     use crate::domain::SessionState;
-    use crate::ports::InferenceError;
+    use crate::types::Token;
+    use tokio::sync::mpsc;
 
     #[derive(Debug)]
     struct EchoInference;
 
     impl InferencePort for EchoInference {
-        fn complete(&self, prompt: &str) -> Result<String, InferenceError> {
-            Ok(format!("echo:{prompt}"))
+        async fn infer(
+            &self,
+            req: InferenceRequest,
+        ) -> Result<mpsc::Receiver<Result<Token, InferenceError>>, InferenceError> {
+            let (tx, rx) = mpsc::channel(1);
+            let content = format!("echo:{}", req.prompt);
+            // try_send completes synchronously; no spawned task needed for the stub
+            tx.try_send(Ok(Token { content }))
+                .map_err(|_| InferenceError::Failed("channel send failed".into()))?;
+            Ok(rx)
         }
     }
 
-    #[tokio::test]
+    // multi_thread required: execute() bridges sync→async via block_in_place,
+    // which needs at least 2 threads in the runtime.
+    #[tokio::test(flavor = "multi_thread")]
     async fn inference_echo_end_to_end() {
         let (bus, mut rx) = EventBus::channel(8);
         let runner = HardcodedFlowRunner::new(Arc::new(EchoInference), bus);

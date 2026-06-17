@@ -28,8 +28,11 @@ multiple-versions = "deny"
 # `hashbrown` is pulled at multiple versions by unrelated transitive stacks (e.g. `indexmap` vs
 # `hashlink`/`yaml-rust2`). Allow until upstream aligns.
 skip = [{ name = "hashbrown" }]
-# Prevent wildcard dependencies
+# Prevent wildcard dependencies (version = "*" on crates.io).
 wildcards = "deny"
+# Workspace members use `{ workspace = true }` for internal path deps without a per-crate
+# version; cargo-deny treats that as a wildcard. Allow path workspace inheritance only.
+allow-wildcard-paths = true
 # Deny specific problematic crates
 deny = []
 

@@ -1,0 +1,12 @@
+# Per-machine overrides for cargo-device (gitignored).
+# Copy this file to .cargo/device.local.toml and fill in your values.
+# Run scripts/radxa/install-bootlin-toolchain.sh once to get the linker + sysroot paths.
+#
+# The paiBox target (Debian bookworm) requires glibc <= 2.36. The Bootlin
+# aarch64--glibc--stable SDK ships a matching glibc 2.34 sysroot.
+
+[device.paibox]
+ssh_host  = "radxa@<YOUR_PAIBOX_IP>"      # or set up an SSH alias in ~/.ssh/config
+ssh_key   = "~/.ssh/id_ed25519_paibox"
+linker    = "/path/to/bootlin/bin/aarch64-buildroot-linux-gnu-gcc"
+sysroot   = "/path/to/bootlin/aarch64-buildroot-linux-gnu/sysroot"

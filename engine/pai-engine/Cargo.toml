@@ -1,46 +1,46 @@
 [package]
 name = "pai-engine"
-version = "0.1.0"
-edition = "2021"
-license = "AGPL-3.0-only"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "The core intelligence engine for paiOS."
-repository = "https://github.com/aurintex/pai-os"
+repository.workspace = true
 readme = "README.md"
 keywords = ["ai", "agent", "automation", "edge-ai", "platform"]
 categories = ["artificial-intelligence", "embedded"]
 
 [dependencies]
-common = { path = "../crates/common", version = "0.1.0" }
-pai_core = { path = "../crates/core", version = "0.1.0", package = "pai-core" }
-vision = { path = "../crates/vision", version = "0.1.0", optional = true }
-audio = { path = "../crates/audio", version = "0.1.0", optional = true }
-inference = { path = "../crates/inference", version = "0.1.0", optional = true }
-api = { path = "../crates/api", version = "0.1.0", optional = true }
-peripherals = { path = "../crates/peripherals", version = "0.1.0", optional = true }
+common      = { workspace = true }
+pai_core    = { workspace = true }
+vision      = { workspace = true, optional = true }
+audio       = { workspace = true, optional = true }
+inference   = { workspace = true, optional = true }
+api         = { workspace = true, optional = true }
+peripherals = { workspace = true, optional = true }
 
-# Async runtime & system
-tokio = { version = "1.50", features = ["full"] }
+# Async runtime
+tokio = { workspace = true, features = ["full"] }
 
-# Error handling: anyhow for app-level propagation and context (no typed API); domain crates use thiserror for their error types
-anyhow = "1.0.102"
+# Error handling: anyhow for app-level propagation and context (no typed API);
+# domain crates use thiserror for their error types.
+anyhow = { workspace = true }
 
-# Logging & tracing
-tracing = "0.1.44"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# Logging & tracing — subscriber init is handled by common::logging::try_init.
+tracing = { workspace = true }
 
 # Configuration management
-config = "0.15"
+config = { workspace = true }
 
 # CLI argument parsing
-clap = { version = "4.5", features = ["derive"] }
+clap = { workspace = true }
 
-# Serialization & deserialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+# Serialization
+serde      = { workspace = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
-tempfile = "3"
-tokio-test = "0.4"
+tempfile   = { workspace = true }
+tokio-test = { workspace = true }
 
 [features]
 default = ["desktop"]
@@ -76,39 +76,42 @@ rockchip = [
     "core_sysinfo",
 ]
 
-# Capability feature re-exports into domain crates
-# Optional deps: list crate name first so the optional dependency is enabled, then the inner feature.
+# Capability feature re-exports into domain crates.
+# Optional deps: list crate name first to enable the dep, then the inner feature.
 
-vision_v4l2 = ["vision", "vision/vision_v4l2"]
-vision_rga = ["vision", "vision/vision_rga"]
+vision_v4l2  = ["vision", "vision/vision_v4l2"]
+vision_rga   = ["vision", "vision/vision_rga"]
 vision_image = ["vision", "vision/vision_image"]
-vision_mock = ["vision", "vision/vision_mock"]
+vision_mock  = ["vision", "vision/vision_mock"]
 
-audio_cpal = ["audio", "audio/audio_cpal"]
+audio_cpal   = ["audio", "audio/audio_cpal"]
 audio_webrtc = ["audio", "audio/audio_webrtc"]
-audio_mock = ["audio", "audio/audio_mock"]
+audio_mock   = ["audio", "audio/audio_mock"]
 
 infer_llamacpp_cpu = ["inference", "inference/infer_llamacpp_cpu"]
-infer_rknn = ["inference", "inference/infer_rknn"]
-infer_rkllm = ["inference", "inference/infer_rkllm"]
-infer_sherpa = ["inference", "inference/infer_sherpa"]
-infer_hailo = ["inference", "inference/infer_hailo"]
-infer_mcp_client = ["inference", "inference/infer_mcp_client"]
-infer_mock = ["inference", "inference/infer_mock"]
+infer_rknn         = ["inference", "inference/infer_rknn"]
+infer_rkllm        = ["inference", "inference/infer_rkllm"]
+infer_sherpa       = ["inference", "inference/infer_sherpa"]
+infer_hailo        = ["inference", "inference/infer_hailo"]
+infer_mcp_client   = ["inference", "inference/infer_mcp_client"]
+infer_mock         = ["inference", "inference/infer_mock"]
 
-api_grpc_uds = ["api", "api/api_grpc_uds"]
-api_grpc_tcp = ["api", "api/api_grpc_tcp"]
-api_http = ["api", "api/api_http"]
+api_grpc_uds  = ["api", "api/api_grpc_uds"]
+api_grpc_tcp  = ["api", "api/api_grpc_tcp"]
+api_http      = ["api", "api/api_http"]
 api_mcp_server = ["api", "api/api_mcp_server"]
-api_mock = ["api", "api/api_mock"]
+api_mock      = ["api", "api/api_mock"]
 
-periph_desktop = ["peripherals", "peripherals/periph_desktop"]
+periph_desktop     = ["peripherals", "peripherals/periph_desktop"]
 periph_desktop_hid = ["peripherals", "peripherals/periph_desktop_hid"]
-periph_gpio = ["peripherals", "peripherals/periph_gpio"]
-periph_evdev = ["peripherals", "peripherals/periph_evdev"]
-periph_usb_hid = ["peripherals", "peripherals/periph_usb_hid"]
-periph_mock = ["peripherals", "peripherals/periph_mock"]
+periph_gpio        = ["peripherals", "peripherals/periph_gpio"]
+periph_evdev       = ["peripherals", "peripherals/periph_evdev"]
+periph_usb_hid     = ["peripherals", "peripherals/periph_usb_hid"]
+periph_mock        = ["peripherals", "peripherals/periph_mock"]
 
 # pai_core is a required dependency; only the inner feature is needed.
 core_sysinfo = ["pai_core/core_sysinfo"]
-core_mock = ["pai_core/core_mock"]
+core_mock    = ["pai_core/core_mock"]
+
+[lints]
+workspace = true

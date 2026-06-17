@@ -1,0 +1,28 @@
+# Device profiles for cargo-device — see README.md and .cargo/device.local.toml.example.
+#
+# Per-machine SSH + toolchain/sysroot paths live in .cargo/device.local.toml (gitignored).
+# This file holds only portable, path-free fields.
+#
+# Usage:
+#   cargo device build paibox    # cross-compile for paiBox (Radxa Rock 5C / aarch64)
+#   cargo device run   paibox    # build + rsync deploy + SSH run
+#   cargo device list            # show configured devices
+#
+# Note: native aarch64 cross-compile settings for plain `cargo build --target …` (used by
+# CI and the .deb packaging pipeline in os/packaging/) will be added in Task 20 under
+# [target.aarch64-unknown-linux-gnu]. Those are separate from the cargo-device profiles here.
+
+[device.desktop]
+# Native desktop build — no cross-compile, no deploy.
+
+[device.paibox]
+# Radxa Rock 5C / RK3588S2 (Debian 12 bookworm, glibc 2.36, aarch64).
+# The official production deploy path is image-based (.deb built by os/packaging/build-deb.sh
+# installed via debos). cargo-device is the inner-loop dev tool for iterating on a live device.
+target             = "aarch64-unknown-linux-gnu"
+package            = "pai-engine"
+binary             = "pai-engine"
+no_default_features = true
+features           = ["rockchip"]
+deploy_path        = "/home/radxa/pai-engine"
+# ssh_host, ssh_key, linker, sysroot → .cargo/device.local.toml (gitignored, per-machine)

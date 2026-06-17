@@ -1,22 +1,24 @@
 [package]
 name = "inference"
-version = "0.1.0"
-edition = "2021"
-license = "AGPL-3.0-only"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "Inference domain: LLMs, audio/vision ML backends, and tool execution."
-repository = "https://github.com/aurintex/pai-os"
+repository.workspace = true
 
 [dependencies]
-common = { path = "../common", version = "0.1.0" }
-thiserror = "2.0"
+common    = { workspace = true }
+thiserror = { workspace = true }
 
 [features]
 default = []
 infer_llamacpp_cpu = []
-infer_rknn = []
-infer_rkllm = []
-infer_sherpa = []
-infer_hailo = []
-infer_mcp_client = []
-infer_mock = []
+infer_rknn         = []
+infer_rkllm        = []
+infer_sherpa       = []
+infer_hailo        = []
+infer_mcp_client   = []
+infer_mock         = []
 
+[lints]
+workspace = true

@@ -122,6 +122,10 @@ pub fn log_domain_stack_init() {
 }
 
 /// Block until Ctrl-C or SIGTERM (Unix). Used as the engine main-loop shutdown trigger.
+#[allow(
+    clippy::expect_used,
+    reason = "OS signal registration is infallible on supported platforms"
+)]
 pub async fn wait_for_shutdown_signal() {
     #[cfg(unix)]
     {
@@ -154,6 +158,8 @@ pub async fn wait_for_shutdown_signal() {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+
     use super::*;
     use std::time::Duration;
 

@@ -1,18 +1,20 @@
 [package]
 name = "audio"
-version = "0.1.0"
-edition = "2021"
-license = "AGPL-3.0-only"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "Audio domain: capture, playback, and signal conditioning."
-repository = "https://github.com/aurintex/pai-os"
+repository.workspace = true
 
 [dependencies]
-common = { path = "../common", version = "0.1.0" }
-thiserror = "2.0"
+common    = { workspace = true }
+thiserror = { workspace = true }
 
 [features]
 default = []
-audio_cpal = []
+audio_cpal   = []
 audio_webrtc = []
-audio_mock = []
+audio_mock   = []
 
+[lints]
+workspace = true

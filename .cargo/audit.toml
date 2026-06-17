@@ -1,0 +1,11 @@
+# cargo-audit configuration for paiOS.
+# Mirrors advisory ignores from engine/deny.toml.
+# Checked in CI (audit.yml, scheduled weekly) and locally via:
+#   cargo install cargo-audit --locked && cd engine && cargo audit
+
+[advisories]
+ignore = [
+    # yaml-rust is unmaintained; pulled in transitively by the `config` crate.
+    # Revisit when `config` drops yaml-rust or upgrades to yaml-rust2.
+    "RUSTSEC-2024-0320",
+]

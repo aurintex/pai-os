@@ -52,10 +52,39 @@ Use **`Box<dyn Trait>`** when you must choose the implementation at **runtime** 
 | Runtime selection of implementation | `Box<dyn Trait>` | Single type, flexible. |
 | Many dependencies, type list explodes | `Box<dyn Trait>` | Keep APIs and call sites manageable. |
 
+## Error handling
+
+Library crates use **crate-local `thiserror` enums** for typed, documented errors. The binary (`pai-engine`) uses **`anyhow`** for app-level propagation with context.
+
+```rust
+// Illustrative example: the real implementation may differ.
+// Library crate: typed error with thiserror
+#[derive(Debug, thiserror::Error)]
+pub enum ConfigError {
+    #[error("failed to read {path}: {source}")]
+    Io { path: PathBuf, #[source] source: std::io::Error },
+    #[error("failed to parse {format} config {path}: {message}")]
+    Parse { path: PathBuf, format: &'static str, message: String },
+}
+
+// Binary: anyhow for propagation and context
+fn load() -> anyhow::Result<Config> {
+    let raw = std::fs::read_to_string("cfg.toml").context("read config")?;
+    toml::from_str(&raw).context("parse config")
+}
+```
+
+Rules enforced via `[workspace.lints]`:
+
+- No bare `unwrap()` or `expect()` in library production code (`clippy::unwrap_used`, `clippy::expect_used` are denied). Use `?`, `unwrap_or_else`, or add a `#[allow]` with a reason comment for genuinely infallible paths.
+- No `panic!` or `todo!` in production code (`clippy::panic`, `clippy::todo` are denied). Test modules use `#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]` at their top.
+- No `unsafe` without a `#[allow(unsafe_code)]` annotation and a safety comment (`unsafe_code` is denied workspace-wide).
+
 ## Formatting and tooling
 
-- Run **`cargo fmt`** (we use default [rustfmt](https://github.com/rust-lang/rustfmt) settings).
-- Aim for **zero clippy warnings**; fix or document exceptions.
+- Run **`cargo fmt`** from the repo root (settings in `rustfmt.toml`: `max_width = 100`, `edition = "2021"`).
+- Aim for **zero clippy warnings**: `cd engine && cargo clippy --all-targets --all-features -- -D warnings`.
+- The workspace enforces a deny-list via `[workspace.lints.clippy]` (panic policy, correctness, suspicious); see `engine/Cargo.toml`.
 - See [Development Standards](/guides/contributing/standards/) for DoD and required checks.
 
 ## Documentation

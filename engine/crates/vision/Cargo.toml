@@ -1,19 +1,21 @@
 [package]
 name = "vision"
-version = "0.1.0"
-edition = "2021"
-license = "AGPL-3.0-only"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "Vision domain: camera capture and frame conditioning."
-repository = "https://github.com/aurintex/pai-os"
+repository.workspace = true
 
 [dependencies]
-common = { path = "../common", version = "0.1.0" }
-thiserror = "2.0"
+common    = { workspace = true }
+thiserror = { workspace = true }
 
 [features]
 default = []
-vision_mock = []
-vision_v4l2 = []
-vision_rga = []
+vision_mock  = []
+vision_v4l2  = []
+vision_rga   = []
 vision_image = []
 
+[lints]
+workspace = true
