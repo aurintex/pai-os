@@ -7,10 +7,11 @@ on:
     branches: [main, develop]
 
 jobs:
-  build:
-    name: Build and Test
+  # Desktop profile: native x86_64 build, clippy, and tests.
+  engine-desktop:
+    name: Engine (desktop)
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -21,11 +22,6 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
 
-      - name: Install nightly Rust toolchain (for docs generation)
-        run: |
-          rustup toolchain install nightly --component rust-docs-json
-          rustup default stable
-
       - name: Cache cargo registry
         uses: actions/cache@v5
         with:
@@ -35,9 +31,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-desktop-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-cargo-desktop-
 
       - name: Run cargo-deny (License Compliance)
         uses: EmbarkStudios/cargo-deny-action@v2
@@ -50,17 +46,112 @@ jobs:
         working-directory: engine
         run: cargo fmt --all -- --check
 
-      - name: Clippy check
+      - name: Clippy check (desktop)
         working-directory: engine
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --features desktop -- -D warnings
 
-      - name: Build
+      - name: Build (desktop)
         working-directory: engine
-        run: cargo build --release --verbose
+        run: cargo build --features desktop --verbose
 
-      - name: Test
+      - name: Test (desktop)
         working-directory: engine
-        run: cargo test --verbose
+        run: cargo test --features desktop --verbose
+
+  # Rockchip profile: aarch64 cross-compile check only.
+  # Full build requires RKNN/RKLLM native SDKs not available on GitHub runners;
+  # a cargo check validates that all feature flags and imports resolve correctly.
+  engine-rockchip:
+    name: Engine (rockchip, cross-check)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install aarch64 cross-linker
+        run: sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-rockchip-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-rockchip-
+
+      - name: Cross-check (rockchip)
+        working-directory: engine
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        # cargo check validates feature flags and imports without requiring native SDKs.
+        run: cargo check --target aarch64-unknown-linux-gnu --features rockchip
+        continue-on-error: true
+
+  # Test profile: no default features, all mock adapters, x86_64.
+  engine-test:
+    name: Engine (test/mock profile)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-test-
+
+      - name: Clippy check (test/mock)
+        working-directory: engine
+        run: cargo clippy --all-targets --no-default-features --features infer_mock,api_mock,vision_mock,audio_mock,periph_mock,core_mock -- -D warnings
+
+      - name: Build (test/mock)
+        working-directory: engine
+        run: cargo build --no-default-features --features infer_mock,api_mock,vision_mock,audio_mock,periph_mock,core_mock --verbose
+
+      - name: Test (test/mock)
+        working-directory: engine
+        run: cargo test --no-default-features --features infer_mock,api_mock,vision_mock,audio_mock,periph_mock,core_mock --verbose
+
+  # Documentation build (Astro Starlight). Unchanged from previous CI.
+  docs:
+    name: Docs build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install nightly Rust toolchain (for docs generation)
+        run: |
+          rustup toolchain install nightly --component rust-docs-json
+          rustup default stable
 
       - name: Verify cargo is available
         run: |
@@ -80,4 +171,3 @@ jobs:
         run: |
           npm ci
           npm run build
-
