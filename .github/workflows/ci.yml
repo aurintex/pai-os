@@ -96,8 +96,7 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         # cargo check validates feature flags and imports without requiring native SDKs.
-        run: cargo check --target aarch64-unknown-linux-gnu --features rockchip
-        continue-on-error: true
+        run: cargo check --target aarch64-unknown-linux-gnu --no-default-features --features rockchip
 
   # Test profile: no default features, all mock adapters, x86_64.
   engine-test:
