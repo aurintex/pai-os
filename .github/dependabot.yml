@@ -44,6 +44,13 @@ updates:
     commit-message:
       prefix: "chore(docs)"
       include: "scope"
+    groups:
+      docs-production:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     # Ignore major version updates for now to avoid breaking changes
     ignore:
       - dependency-name: "*"

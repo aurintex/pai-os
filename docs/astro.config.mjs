@@ -204,7 +204,7 @@ export default defineConfig({
 					items: [
 						{
 							label: 'Rust API (Internal)',
-							autogenerate: { directory: 'reference/rust' },
+							items: [{ autogenerate: { directory: 'reference/rust' } }],
 						},
 						{
 							label: 'Rust API (Standard rustdoc)',
