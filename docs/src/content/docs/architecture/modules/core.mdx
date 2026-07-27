@@ -302,18 +302,34 @@ A **Driving Adapter** that belongs directly to `core`'s infrastructure layer, by
 Because the SystemMonitorAdapter is part of Core's infrastructure, it is not subject to the API Gateway's port isolation matrix. It is a local, in-process adapter. On the Driving/Left side of the hexagon, it connects directly to the `SystemStatus` Port of the `SessionManager`.
 </Aside>
 
+### DeviceControlPort
+
+A **Driving (incoming)** port for privileged device lifecycle operations. Restricted to local/IPC callers only (see routing matrix in [API module](/architecture/modules/api/)):
+
+- **Reboot and factory reset**: destructive or disruptive operations gated by the API layer before reaching Core.
+- **Power state query**: returns whether the device is operating normally, in low-power mode, or degraded.
+
+```rust
+pub trait DeviceControlPort: Send + Sync {
+    fn reboot(&self) -> Result<(), DeviceControlError>;
+    fn factory_reset(&self) -> Result<(), DeviceControlError>;
+    fn power_state(&self) -> Result<DevicePowerState, DeviceControlError>;
+}
+```
+
 ### SessionConfigPort
 
-A **Driving (incoming)** port through which runtime configuration changes are delivered into the `SessionManager` without requiring a full restart of the engine:
+A **Driving (incoming)** port through which runtime configuration is read and written without requiring a full restart of the engine:
 
-- **Push-based**: The `ConfigAdapter` (from `common`) observes config file changes or API-config commands and pushes validated `SessionConfig` structs through this port.
+- **Key-value API**: configuration is addressed by string keys (e.g. `"inference.max_tokens"`, `"audio.sensitivity"`) and serialised string values.
 - **Allows live updates** for parameters such as: active wake-word model path, language, inference backend selection, and audio sensitivity thresholds.
 - **Safety**: Config updates only take effect at a clean `Idle` state boundary; the `StateMachine` defers application of changes until the current flow is fully torn down, preventing mid-flow configuration drift.
 
 ```rust
 pub trait SessionConfigPort: Send + Sync {
-    /// Called when the config subsystem detects a validated config change.
-    fn apply_config(&mut self, config: SessionConfig) -> Result<()>;
+    fn get_config(&self, key: &str) -> Result<ConfigEntry, SessionConfigError>;
+    fn set_config(&self, key: &str, value: &str) -> Result<(), SessionConfigError>;
+    fn list_config(&self) -> Result<Vec<ConfigEntry>, SessionConfigError>;
 }
 ```
 
@@ -329,17 +345,19 @@ pub trait SessionConfigPort: Send + Sync {
 
 A **Driving (incoming)** port through which the `APIManager` forwards external sensor relay requests into the `SessionManager`. The `SessionManager` then decides whether to approve the request (based on current state and `PermissionManager` policy) and signals the Vision/Audio domains to begin streaming to the requesting caller:
 
+- **Sensor-keyed relay**: relays are addressed by `sensor_id` (e.g. `"microphone"`, `"imu"`), not by caller identity.
 - **Caller is an external client** (MCP agent, local service, gRPC client): it requests raw audio or video frames via the API Gateway.
 - **Core is the permission and state gatekeeper**: The `SessionManager` checks current `StateMachine` state (e.g., only allow camera relay when in `Idle` or `Streaming` state) and evaluates the `PermissionManager` policy.
 - **Vision/Audio do the actual streaming**: If approved, the Core instructs the relevant domain crate to push frames to the caller. The Core itself does not touch hardware.
 - **Session-aware teardown**: If the session ends, the user interrupts, or a permission is revoked mid-relay, the `SessionManager` signals the relay to stop via the same port, coordinating cleanup across Vision/Audio without the caller needing to know.
+- **AFIT**: uses async fn in trait (same pattern as `InferencePort`); concrete adapters are monomorphised at the composition root.
 
 ```rust
+#[allow(async_fn_in_trait)]
 pub trait SensorRelayPort: Send + Sync {
-    /// External caller requests a sensor relay (e.g. live audio frames).
-    fn request_relay(&mut self, caller_id: ClientId, kind: MediaKind) -> Result<()>;
-    /// Core signals that an active relay must be terminated.
-    fn terminate_relay(&mut self, caller_id: ClientId) -> Result<()>;
+    async fn start_relay(&self, sensor_id: &str) -> Result<(), SensorRelayError>;
+    async fn stop_relay(&self, sensor_id: &str) -> Result<(), SensorRelayError>;
+    async fn next_reading(&self, sensor_id: &str) -> Result<Option<SensorReading>, SensorRelayError>;
 }
 ```
 
